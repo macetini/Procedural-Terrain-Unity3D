@@ -15,13 +15,17 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int viewDistanceChunks = 3;
     public int dataBuffer = 1;
 
+    [Header("LOD Settings")]
+    public float lodDist1 = 50f; // Distance to switch to Medium detail
+    public float lodDist2 = 100f; // Distance to switch to Low detail
+
     [Header("Prefabs")]
     public GameObject chunkPrefab;
 
     private readonly Dictionary<Vector2Int, TileMeshData[,]> masterData = new();
     private readonly Dictionary<Vector2Int, TerrainChunk> chunkDict = new();
 
-    void Update()
+    void Start()
     {
         UpdateVisibleChunks();
     }
@@ -29,15 +33,16 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void UpdateVisibleChunks()
     {
         // Calculate the current chunk coordinates based on camera position
-        int currentChunkX = Mathf.RoundToInt(playerCamera.position.x / (chunkSize * tileSize));
-        int currentChunkZ = Mathf.RoundToInt(playerCamera.position.z / (chunkSize * tileSize));
+        // Use FloorToInt to get a consistent "Bottom-Left" anchor
+        int currentChunkX = Mathf.FloorToInt(playerCamera.position.x / (chunkSize * tileSize));
+        int currentChunkZ = Mathf.FloorToInt(playerCamera.position.z / (chunkSize * tileSize));
 
         // PASS 1: Generate and Sanitize Raw Data for all chunks in the data radius
         FirstPass(currentChunkX, currentChunkZ);
         // PASS 2: Spawn Meshes in the actual view radius
         SecondPass(currentChunkX, currentChunkZ);
         // PASS 3: Cleanup distant chunks
-        ThirdPass(currentChunkX, currentChunkZ);
+        ThirdPass();
     }
 
     private void FirstPass(int currentChunkX, int currentChunkZ)
@@ -85,11 +90,16 @@ public class TerrainChunksGenerator : MonoBehaviour
                     // are already sanitized in Pass 1.
                     SpawnChunkMesh(coord);
                 }
+                else
+                {
+                    // Existing chunk: just refresh to check LOD
+                    chunkDict[coord].UpdateLOD();
+                }
             }
         }
     }
 
-    private void ThirdPass(int currentChunkX, int currentChunkZ)
+    private void ThirdPass()
     {
         List<Vector2Int> chunksToRemove = new();
         foreach (var chunkEntry in chunkDict)
@@ -169,13 +179,16 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SpawnChunkMesh(Vector2Int coord)
     {
-        Vector3 pos = new(coord.x * chunkSize * tileSize, 0, coord.y * chunkSize * tileSize);
-        GameObject go = Instantiate(chunkPrefab, pos, Quaternion.identity, transform);
+        float chunkBoundSize = chunkSize * tileSize;
+        float xPos = coord.x * chunkBoundSize - (chunkBoundSize * 0.5f);
+        float zPos = coord.y * chunkBoundSize + chunkBoundSize;
+        Vector3 pos = new(xPos, 0, zPos);
 
+        GameObject go = Instantiate(chunkPrefab, pos, Quaternion.identity, transform);
         TerrainChunk chunk = go.GetComponent<TerrainChunk>();
 
         // Pass the Generator reference so the chunk can "Look up" neighbor data
-        chunk.Build(this, coord);
+        chunk.InitBuild(this, coord);
 
         chunkDict.Add(coord, chunk);
         go.name = $"Chunk_{coord.x}_{coord.y}";

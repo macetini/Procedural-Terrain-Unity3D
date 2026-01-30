@@ -206,7 +206,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.2588191, y: 0, z: 0, w: 0.9659258}
-  m_LocalPosition: {x: 0, y: 10, z: -15}
+  m_LocalPosition: {x: 0, y: 10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -420,6 +420,8 @@ MonoBehaviour:
   playerCamera: {fileID: 330585546}
   viewDistanceChunks: 3
   dataBuffer: 1
+  lodDist1: 50
+  lodDist2: 100
   chunkPrefab: {fileID: 7322690783629769986, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
 --- !u!4 &555491514
 Transform:

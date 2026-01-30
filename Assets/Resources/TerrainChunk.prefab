@@ -125,11 +125,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 318d0253f45be51489d8e4ca0b339e71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquareGridGenerator
-  rows: 50
-  columns: 50
-  tileSize: 1
-  elevationStepHeight: 0.5
-  noiseScale: 0.025
-  maxElevation: 5
   terrainMaterial: {fileID: 2100000, guid: eccacde216d90f84da5dbd324acc8b9b, type: 2}
   DrawGizmos: 0
