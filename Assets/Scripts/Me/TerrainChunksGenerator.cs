@@ -1,0 +1,158 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TerrainChunksGenerator : MonoBehaviour
+{
+    [Header("Generation Settings")]
+    public int chunkSize = 20;
+    public float tileSize = 1.0f;
+    public float elevationStepHeight = 1.0f;
+    public float noiseScale = 0.05f;
+    public int maxElevation = 5;
+
+    [Header("Infinite Settings")]
+    public Transform playerCamera;
+    public int viewDistanceChunks = 3; // How many chunks out to spawn
+    public GameObject chunkPrefab;
+
+    // MASTER DATA: Stores the grid data for every chunk coord
+    private readonly Dictionary<Vector2Int, TileMeshData[,]> masterData = new();
+    private readonly Dictionary<Vector2Int, TerrainChunk> chunkDict = new();
+
+    void Update()
+    {
+        UpdateVisibleChunks();
+    }
+
+    void UpdateVisibleChunks()
+    {
+        int currentChunkX = Mathf.RoundToInt(playerCamera.position.x / (chunkSize * tileSize));
+        int currentChunkZ = Mathf.RoundToInt(playerCamera.position.z / (chunkSize * tileSize));
+
+        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
+        {
+            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+            {
+                Vector2Int chunkCoord = new(currentChunkX + x, currentChunkZ + z);
+
+                // Only process if we haven't spawned this mesh yet
+                if (!chunkDict.ContainsKey(chunkCoord))
+                {
+                    // 1. Ensure 3x3 data exists for neighbors
+                    EnsureDataExists(chunkCoord);
+
+                    // 2. Smooth it ONCE
+                    SanitizeGlobalChunk(chunkCoord);
+
+                    // 3. Spawn
+                    SpawnChunkMesh(chunkCoord);
+                }
+            }
+        }
+    }
+
+    private void EnsureDataExists(Vector2Int coord)
+    {
+        // To smooth a chunk at 'coord', we actually need a 3x3 of data
+        // around it to handle the edges and vertex heights correctly.
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                Vector2Int neighborCoord = coord + new Vector2Int(x, z);
+                if (!masterData.ContainsKey(neighborCoord))
+                {
+                    masterData.Add(neighborCoord, GenerateRawData(neighborCoord));
+                }
+            }
+        }
+    }
+
+    private void SanitizeGlobalChunk(Vector2Int coord)
+    {
+        TileMeshData[,] data = masterData[coord];
+        int startX = coord.x * chunkSize;
+        int startZ = coord.y * chunkSize;
+
+        // Run 2-3 passes to smooth the cliffs
+        for (int i = 0; i < 2; i++)
+        {
+            for (int x = 0; x < chunkSize; x++)
+            {
+                for (int z = 0; z < chunkSize; z++)
+                {
+                    TileMeshData current = data[x, z];
+                    // Check North and East neighbors via Global Lookup
+                    TileMeshData east = GetTileAt(startX + x + 1, startZ + z);
+                    TileMeshData north = GetTileAt(startX + x, startZ + z + 1);
+
+                    if (east != null)
+                        ClampNeighbor(current, east);
+                    if (north != null)
+                        ClampNeighbor(current, north);
+                }
+            }
+        }
+    }
+
+    private static void ClampNeighbor(TileMeshData a, TileMeshData b)
+    {
+        if (Mathf.Abs(a.Elevation - b.Elevation) > 1)
+        {
+            b.Elevation = a.Elevation + (b.Elevation > a.Elevation ? 1 : -1);
+        }
+    }
+
+    private TileMeshData[,] GenerateRawData(Vector2Int coord)
+    {
+        TileMeshData[,] data = new TileMeshData[chunkSize, chunkSize];
+        int offsetX = coord.x * chunkSize;
+        int offsetZ = coord.y * chunkSize;
+
+        for (int x = 0; x < chunkSize; x++)
+        {
+            for (int z = 0; z < chunkSize; z++)
+            {
+                float noise = Mathf.PerlinNoise(
+                    (offsetX + x) * noiseScale,
+                    (offsetZ + z) * noiseScale
+                );
+                int elevation = Mathf.FloorToInt(noise * (maxElevation + 1));
+                elevation = Mathf.Clamp(elevation, 0, maxElevation);
+                data[x, z] = new TileMeshData(x, z, elevation);
+            }
+        }
+        return data;
+    }
+
+    void SpawnChunkMesh(Vector2Int coord)
+    {
+        Vector3 pos = new(coord.x * chunkSize * tileSize, 0, coord.y * chunkSize * tileSize);
+        GameObject go = Instantiate(chunkPrefab, pos, Quaternion.identity, transform);
+
+        TerrainChunk chunk = go.GetComponent<TerrainChunk>();
+
+        // Pass the Generator reference so the chunk can "Look up" neighbor data
+        chunk.Build(this, coord);
+
+        chunkDict.Add(coord, chunk);
+        go.name = $"Chunk_{coord.x}_{coord.y}";
+    }
+
+    // Global Lookup Function for Chunks
+    public TileMeshData GetTileAt(int globalX, int globalZ)
+    {
+        int cx = Mathf.FloorToInt((float)globalX / chunkSize);
+        int cz = Mathf.FloorToInt((float)globalZ / chunkSize);
+
+        // Local index inside the chunk array
+        int lx = globalX - (cx * chunkSize);
+        int lz = globalZ - (cz * chunkSize);
+
+        if (masterData.TryGetValue(new Vector2Int(cx, cz), out TileMeshData[,] grid))
+        {
+            return grid[lx, lz];
+        }
+        return null;
+    }
+}
