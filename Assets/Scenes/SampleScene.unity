@@ -412,7 +412,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f23820a541d100428e81a89e1d1dd90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainChunksGenerator
-  chunkSize: 25
+  chunkSize: 32
   tileSize: 1
   elevationStepHeight: 0.5
   noiseScale: 0.025

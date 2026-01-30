@@ -54,34 +54,62 @@ public class TerrainChunk : MonoBehaviour
 
         float dist = Vector3.Distance(chunkCenter, generator.playerCamera.position);
         if (dist > generator.lodDist2)
+        {
             return 4;
+        }
         if (dist > generator.lodDist1)
+        {
             return 2;
+        }
         return 1;
     }
 
     private void BuildProceduralMesh()
     {
-        float skirtHeight = 2.0f; // How far down the "curtain" goes
-        Mesh mesh = new() { name = "TerrainChunk" };
+        // 1. GENERATE VERTICES AND UVs
         List<Vector3> vertices = new();
         List<Vector2> uvs = new();
-        List<int> triangles = new();
+        GenerateVerticesAndUVs(vertices, uvs);
 
-        // 1. GENERATE VERTICES AND UVs
+        // 2. GENERATE TRIANGLES
+        List<int> triangles = new();
+        int vertsPerRow = (chunkSize / currentStep) + 1;
+        GenerateTriangles(triangles, vertsPerRow);        
+
+        // 4. CREATE THE MESH
+        Mesh mesh = new() { name = "TerrainChunk" };
+        mesh.SetVertices(vertices);
+        mesh.SetTriangles(triangles, 0);
+        mesh.SetUVs(0, uvs);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        // 5. Assign to components
+        GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<MeshCollider>().sharedMesh = mesh;
+
+        // 6. Assign material
+        if (terrainMaterial != null)
+        {
+            GetComponent<MeshRenderer>().material = terrainMaterial;
+        }
+    }
+
+    private void GenerateVerticesAndUVs(List<Vector3> vertices, List<Vector2> UVs)
+    {
         for (int x = 0; x <= chunkSize; x += currentStep)
         {
             for (int z = 0; z <= chunkSize; z += currentStep)
             {
                 float height = GetVertexElevation(x, z);
                 vertices.Add(new Vector3(x * tileSize, height * elevationStepHeight, z * tileSize));
-                uvs.Add(new Vector2((float)x / chunkSize, (float)z / chunkSize));
+                UVs.Add(new Vector2((float)x / chunkSize, (float)z / chunkSize));
             }
         }
+    }
 
-        // 2. GENERATE TRIANGLES
-        // 3. Generate Triangles with adjusted indexing
-        int vertsPerRow = (chunkSize / currentStep) + 1;
+    private void GenerateTriangles(List<int> triangles, int vertsPerRow)
+    {
         for (int x = 0; x < vertsPerRow - 1; x++)
         {
             for (int z = 0; z < vertsPerRow - 1; z++)
@@ -99,46 +127,6 @@ public class TerrainChunk : MonoBehaviour
                 triangles.Add(br);
             }
         }
-
-        // --- 3. GENERATE SKIRTS (The Fix) ---
-        // We add a loop to create vertical walls on the 4 edges
-        AddSkirt(vertices, triangles, uvs, vertsPerRow, skirtHeight);
-
-        mesh.SetVertices(vertices);
-        mesh.SetTriangles(triangles, 0);
-        mesh.SetUVs(0, uvs);
-
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-
-        // Assign to components
-        GetComponent<MeshFilter>().mesh = mesh;
-        GetComponent<MeshCollider>().sharedMesh = mesh;
-
-        if (terrainMaterial != null)
-        {
-            GetComponent<MeshRenderer>().material = terrainMaterial;
-        }
-    }
-
-    private void AddSkirt(
-        List<Vector3> verts,
-        List<int> tris,
-        List<Vector2> uvs,
-        int vPerRow,
-        float sHeight
-    )
-    {
-        int surfaceVertCount = verts.Count;
-
-        // This is a simplified logic:
-        // You essentially duplicate the edge vertices,
-        // set their Y position to (OriginalY - sHeight),
-        // and create triangles between the original edge and the new lower edge.
-
-        // For a cleaner Martian look, would you like the full Skirt helper method,
-        // or should we try to fix the "T-Junctions" by forcing the edges
-        // to always stay at LOD 0?
     }
 
     private float GetVertexElevation(int vx, int vz)
