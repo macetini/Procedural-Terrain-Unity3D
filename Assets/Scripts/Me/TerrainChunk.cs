@@ -55,13 +55,13 @@ public class TerrainChunk : MonoBehaviour
         float dist = Vector3.Distance(chunkCenter, generator.playerCamera.position);
         if (dist > generator.lodDist2)
         {
-            return 4;
+            return 4; // LOD 2
         }
         if (dist > generator.lodDist1)
         {
-            return 2;
+            return 2; // LOD 1
         }
-        return 1;
+        return 1; // LOD 0 (full detail)
     }
 
     private void BuildProceduralMesh()
@@ -74,7 +74,11 @@ public class TerrainChunk : MonoBehaviour
         // 2. GENERATE TRIANGLES
         List<int> triangles = new();
         int vertsPerRow = (chunkSize / currentStep) + 1;
-        GenerateTriangles(triangles, vertsPerRow);        
+        GenerateTriangles(triangles, vertsPerRow);
+
+        // 3. ADD SKIRT
+        //float skirtHeight = 10; // Adjust as needed
+        //AddSkirt(vertices, uvs, triangles, skirtHeight);
 
         // 4. CREATE THE MESH
         Mesh mesh = new() { name = "TerrainChunk" };
@@ -97,6 +101,36 @@ public class TerrainChunk : MonoBehaviour
 
     private void GenerateVerticesAndUVs(List<Vector3> vertices, List<Vector2> UVs)
     {
+        float edgeDrop = 0.2f; // A small dip to hide the gap
+
+        for (int x = 0; x <= chunkSize; x += currentStep)
+        {
+            for (int z = 0; z <= chunkSize; z += currentStep)
+            {
+                float height = GetVertexElevation(x, z);
+
+                // Convert to world-relative float position
+                float xPos = x * tileSize;
+                float zPos = z * tileSize;
+                float yPos = height * elevationStepHeight;
+
+                // --- THE TRICK ---
+                // If we are on ANY edge, pull the vertex down slightly.
+                // This creates a "seam-cover" that hides the T-junctions.
+                if (currentStep > 1 && (x == 0 || x == chunkSize || z == 0 || z == chunkSize))
+                {
+                    yPos -= edgeDrop;
+                }
+
+                vertices.Add(new Vector3(xPos, yPos, zPos));
+                UVs.Add(new Vector2((float)x / chunkSize, (float)z / chunkSize));
+            }
+        }
+    }
+
+    // OLD
+    private void GenerateVerticesAndUVs_OLD(List<Vector3> vertices, List<Vector2> UVs)
+    {
         for (int x = 0; x <= chunkSize; x += currentStep)
         {
             for (int z = 0; z <= chunkSize; z += currentStep)
@@ -104,6 +138,75 @@ public class TerrainChunk : MonoBehaviour
                 float height = GetVertexElevation(x, z);
                 vertices.Add(new Vector3(x * tileSize, height * elevationStepHeight, z * tileSize));
                 UVs.Add(new Vector2((float)x / chunkSize, (float)z / chunkSize));
+            }
+        }
+    }
+
+    // OLD
+    private void AddSkirt_DISABLED(
+        List<Vector3> vertices,
+        List<Vector2> uvs,
+        List<int> triangles,
+        float skirtHeight
+    )
+    {
+        int surfaceVertCount = vertices.Count;
+        float worldChunkSize = chunkSize * tileSize;
+
+        // We loop through the surface vertices and find the ones on the 4 edges
+        for (int i = 0; i < surfaceVertCount; i++)
+        {
+            Vector3 v = vertices[i];
+
+            // Is this vertex on the edge of the chunk?
+            bool onLeft = v.x == 0;
+            bool onRight = v.x == worldChunkSize;
+            bool onBack = v.z == 0;
+            bool onForward = v.z == worldChunkSize;
+
+            if (onLeft || onRight || onBack || onForward)
+            {
+                // 1. Add the "bottom" vertex
+                int topIndex = i;
+                int bottomIndex = vertices.Count;
+                vertices.Add(new Vector3(v.x, v.y - skirtHeight, v.z));
+                uvs.Add(uvs[i]);
+
+                // 2. Find the NEXT vertex along the edge to form a quad
+                // This is a bit complex due to indexing, so we look for a neighbor
+                // that is also an edge vertex within 'currentStep' distance.
+                for (int j = i + 1; j < surfaceVertCount; j++)
+                {
+                    Vector3 v2 = vertices[j];
+                    float dist = Vector3.Distance(
+                        new Vector3(v.x, 0, v.z),
+                        new Vector3(v2.x, 0, v2.z)
+                    );
+
+                    // If this is the immediate next neighbor on the same edge
+                    if (dist <= (currentStep * tileSize) + 0.1f)
+                    {
+                        bool sameEdge =
+                            (onLeft && v2.x == 0)
+                            || (onRight && v2.x == worldChunkSize)
+                            || (onBack && v2.z == 0)
+                            || (onForward && v2.z == worldChunkSize);
+
+                        if (sameEdge)
+                        {
+                            int nextTop = j;
+                            int nextBottom = vertices.Count; // This will be the next one we haven't added yet
+
+                            // We will add the triangles once we find the next pair
+                            // For simplicity in this logic, we stitch as we go:
+                            // (CurrentTop, NextTop, CurrentBottom) and (NextTop, NextBottom, CurrentBottom)
+                            // Note: Depending on the edge, you might need to flip winding order for normals
+                            triangles.Add(topIndex);
+                            triangles.Add(nextTop);
+                            triangles.Add(bottomIndex);
+                        }
+                    }
+                }
             }
         }
     }
