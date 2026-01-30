@@ -4,37 +4,33 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class TerrainChunk : MonoBehaviour
 {
-    [Header("Chunk Settings")]
-    public int chunkSize = 20;
-    public float tileSize = 1.0f;
-    public float elevationStepHeight = 1.0f;
-
-    [Header("Noise Settings")]
-    public float noiseScale = 0.1f;
-    public int maxElevation = 4;
-
     [Header("Material Settings")]
     public Material terrainMaterial;
 
     [Header("Debug Settings")]
     public bool DrawGizmos = false;
 
-    private TileMeshData[,] gridTilesData;
-    public Vector2Int coord;
     private TerrainChunksGenerator generator;
+    private Vector2Int coord;
+    private int chunkSize;
+    private float tileSize;
+    private float elevationStepHeight;
+    private int maxElevation;
 
-    public void Build(TerrainChunksGenerator generator, Vector2Int chunkCoord)
+    private TileMeshData[,] gridTilesData;
+
+    public void Build(TerrainChunksGenerator gen, Vector2Int chunkCoord)
     {
-        this.generator = generator;
-        this.coord = chunkCoord;
+        generator = gen;
+        coord = chunkCoord;
 
-        this.chunkSize = generator.chunkSize;
-        this.tileSize = generator.tileSize;
-        this.elevationStepHeight = generator.elevationStepHeight;
+        chunkSize = generator.chunkSize;
+        tileSize = generator.tileSize;
+        elevationStepHeight = generator.elevationStepHeight;
+        maxElevation = generator.maxElevation;
 
         // Note: We don't call GenerateRawGridData anymore!
         // The data is already in the generator.
-
         BuildProceduralMesh();
     }
 

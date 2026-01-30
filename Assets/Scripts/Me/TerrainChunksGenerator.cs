@@ -28,10 +28,21 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void UpdateVisibleChunks()
     {
+        // Calculate the current chunk coordinates based on camera position
         int currentChunkX = Mathf.RoundToInt(playerCamera.position.x / (chunkSize * tileSize));
         int currentChunkZ = Mathf.RoundToInt(playerCamera.position.z / (chunkSize * tileSize));
 
-        // PASS 1a: Ensure RAW data exists for the whole area first
+        // PASS 1: Generate and Sanitize Raw Data for all chunks in the data radius
+        FirstPass(currentChunkX, currentChunkZ);
+        // PASS 2: Spawn Meshes in the actual view radius
+        SecondPass(currentChunkX, currentChunkZ);
+        // PASS 3: Cleanup distant chunks
+        ThirdPass(currentChunkX, currentChunkZ);
+    }
+
+    private void FirstPass(int currentChunkX, int currentChunkZ)
+    {
+        // PASS 1A: Generate raw data for all chunks in the view radius
         int dataRadius = viewDistanceChunks + dataBuffer;
         for (int x = -dataRadius; x <= dataRadius; x++)
         {
@@ -45,8 +56,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
         }
-
-        // PASS 1b: Now that all raw data is guaranteed to exist, sanitize
+        // PASS 1B: Now that all raw data is guaranteed to exist, sanitize
         for (int x = -dataRadius; x <= dataRadius; x++)
         {
             for (int z = -dataRadius; z <= dataRadius; z++)
@@ -59,8 +69,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
         }
+    }
 
-        // PASS 2: Spawn Meshes in the actual view radius
+    private void SecondPass(int currentChunkX, int currentChunkZ)
+    {
         for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
         {
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
@@ -75,8 +87,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
         }
+    }
 
-        // PASS 3: Cleanup distant chunks
+    private void ThirdPass(int currentChunkX, int currentChunkZ)
+    {
         List<Vector2Int> chunksToRemove = new();
         foreach (var chunkEntry in chunkDict)
         {
