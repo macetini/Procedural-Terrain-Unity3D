@@ -415,10 +415,11 @@ MonoBehaviour:
   chunkSize: 25
   tileSize: 1
   elevationStepHeight: 0.5
-  noiseScale: 0.05
-  maxElevation: 5
+  noiseScale: 0.025
+  maxElevation: 4
   playerCamera: {fileID: 330585546}
   viewDistanceChunks: 3
+  dataBuffer: 1
   chunkPrefab: {fileID: 7322690783629769986, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
 --- !u!4 &555491514
 Transform:

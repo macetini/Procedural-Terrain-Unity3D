@@ -12,13 +12,12 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     [Header("Infinite Settings")]
     public Transform playerCamera;
-    public int viewDistanceChunks = 3; // How many chunks out to spawn
+    public int viewDistanceChunks = 3;
     public int dataBuffer = 1;
 
     [Header("Prefabs")]
     public GameObject chunkPrefab;
 
-    // MASTER DATA: Stores the grid data for every chunk coord
     private readonly Dictionary<Vector2Int, TileMeshData[,]> masterData = new();
     private readonly Dictionary<Vector2Int, TerrainChunk> chunkDict = new();
 
@@ -27,23 +26,35 @@ public class TerrainChunksGenerator : MonoBehaviour
         UpdateVisibleChunks();
     }
 
-    void UpdateVisibleChunks()
+    private void UpdateVisibleChunks()
     {
         int currentChunkX = Mathf.RoundToInt(playerCamera.position.x / (chunkSize * tileSize));
         int currentChunkZ = Mathf.RoundToInt(playerCamera.position.z / (chunkSize * tileSize));
 
-        // PASS 1: Pre-generate and Sanitize Data in a wider radius
+        // PASS 1a: Ensure RAW data exists for the whole area first
         int dataRadius = viewDistanceChunks + dataBuffer;
         for (int x = -dataRadius; x <= dataRadius; x++)
         {
             for (int z = -dataRadius; z <= dataRadius; z++)
             {
                 Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
-
-                // Only generate data if we haven't yet
                 if (!masterData.ContainsKey(coord))
                 {
-                    EnsureDataExists(coord);
+                    // Just generate raw noise, don't sanitize yet
+                    masterData.Add(coord, GenerateRawData(coord));
+                }
+            }
+        }
+
+        // PASS 1b: Now that all raw data is guaranteed to exist, sanitize
+        for (int x = -dataRadius; x <= dataRadius; x++)
+        {
+            for (int z = -dataRadius; z <= dataRadius; z++)
+            {
+                Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
+                // We only need to sanitize if the mesh hasn't been built yet
+                if (!chunkDict.ContainsKey(coord))
+                {
                     SanitizeGlobalChunk(coord);
                 }
             }
@@ -82,23 +93,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         {
             Destroy(chunkDict[coord].gameObject);
             chunkDict.Remove(coord);
-        }
-    }
-
-    private void EnsureDataExists(Vector2Int coord)
-    {
-        // To smooth a chunk at 'coord', we actually need a 3x3 of data
-        // around it to handle the edges and vertex heights correctly.
-        for (int x = -1; x <= 1; x++)
-        {
-            for (int z = -1; z <= 1; z++)
-            {
-                Vector2Int neighborCoord = coord + new Vector2Int(x, z);
-                if (!masterData.ContainsKey(neighborCoord))
-                {
-                    masterData.Add(neighborCoord, GenerateRawData(neighborCoord));
-                }
-            }
         }
     }
 
@@ -159,7 +153,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         return data;
     }
 
-    void SpawnChunkMesh(Vector2Int coord)
+    private void SpawnChunkMesh(Vector2Int coord)
     {
         Vector3 pos = new(coord.x * chunkSize * tileSize, 0, coord.y * chunkSize * tileSize);
         GameObject go = Instantiate(chunkPrefab, pos, Quaternion.identity, transform);
