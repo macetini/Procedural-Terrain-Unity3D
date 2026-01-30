@@ -13,6 +13,9 @@ public class TerrainChunksGenerator : MonoBehaviour
     [Header("Infinite Settings")]
     public Transform playerCamera;
     public int viewDistanceChunks = 3; // How many chunks out to spawn
+    public int dataBuffer = 1;
+
+    [Header("Prefabs")]
     public GameObject chunkPrefab;
 
     // MASTER DATA: Stores the grid data for every chunk coord
@@ -29,25 +32,56 @@ public class TerrainChunksGenerator : MonoBehaviour
         int currentChunkX = Mathf.RoundToInt(playerCamera.position.x / (chunkSize * tileSize));
         int currentChunkZ = Mathf.RoundToInt(playerCamera.position.z / (chunkSize * tileSize));
 
+        // PASS 1: Pre-generate and Sanitize Data in a wider radius
+        int dataRadius = viewDistanceChunks + dataBuffer;
+        for (int x = -dataRadius; x <= dataRadius; x++)
+        {
+            for (int z = -dataRadius; z <= dataRadius; z++)
+            {
+                Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
+
+                // Only generate data if we haven't yet
+                if (!masterData.ContainsKey(coord))
+                {
+                    EnsureDataExists(coord);
+                    SanitizeGlobalChunk(coord);
+                }
+            }
+        }
+
+        // PASS 2: Spawn Meshes in the actual view radius
         for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
         {
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
             {
-                Vector2Int chunkCoord = new(currentChunkX + x, currentChunkZ + z);
+                Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
 
-                // Only process if we haven't spawned this mesh yet
-                if (!chunkDict.ContainsKey(chunkCoord))
+                if (!chunkDict.ContainsKey(coord))
                 {
-                    // 1. Ensure 3x3 data exists for neighbors
-                    EnsureDataExists(chunkCoord);
-
-                    // 2. Smooth it ONCE
-                    SanitizeGlobalChunk(chunkCoord);
-
-                    // 3. Spawn
-                    SpawnChunkMesh(chunkCoord);
+                    // By now, we GUARANTEE that coord and all its neighbors
+                    // are already sanitized in Pass 1.
+                    SpawnChunkMesh(coord);
                 }
             }
+        }
+
+        // PASS 3: Cleanup distant chunks
+        List<Vector2Int> chunksToRemove = new();
+        foreach (var chunkEntry in chunkDict)
+        {
+            if (
+                Vector3.Distance(playerCamera.position, chunkEntry.Value.transform.position)
+                > (viewDistanceChunks + 2) * chunkSize * tileSize
+            )
+            {
+                chunksToRemove.Add(chunkEntry.Key);
+            }
+        }
+
+        foreach (var coord in chunksToRemove)
+        {
+            Destroy(chunkDict[coord].gameObject);
+            chunkDict.Remove(coord);
         }
     }
 
