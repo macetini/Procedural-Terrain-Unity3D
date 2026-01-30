@@ -417,7 +417,7 @@ MonoBehaviour:
   elevationStepHeight: 0.5
   noiseScale: 0.025
   maxElevation: 4
-  playerCamera: {fileID: 330585546}
+  cameraReference: {fileID: 330585545}
   viewDistanceChunks: 3
   dataBuffer: 1
   lodDist1: 64

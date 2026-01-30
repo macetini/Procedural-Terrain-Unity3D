@@ -68,6 +68,7 @@
     },
     "dotnet.defaultSolution": "SSHexMap.sln",
     "cSpell.words": [
+        "AABB",
         "Lerp",
         "Mathf",
         "verts"

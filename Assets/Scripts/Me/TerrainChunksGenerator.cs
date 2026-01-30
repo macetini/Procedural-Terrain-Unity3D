@@ -11,7 +11,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int maxElevation = 5;
 
     [Header("Infinite Settings")]
-    public Transform playerCamera;
+    public Camera cameraReference;
     public int viewDistanceChunks = 3;
     public int dataBuffer = 1;
 
@@ -25,17 +25,22 @@ public class TerrainChunksGenerator : MonoBehaviour
     private readonly Dictionary<Vector2Int, TileMeshData[,]> masterData = new();
     private readonly Dictionary<Vector2Int, TerrainChunk> chunkDict = new();
 
-    void Start()
+    private void Update()
     {
         UpdateVisibleChunks();
+        RunVisibilityCheck();
     }
 
     private void UpdateVisibleChunks()
     {
         // Calculate the current chunk coordinates based on camera position
         // Use FloorToInt to get a consistent "Bottom-Left" anchor
-        int currentChunkX = Mathf.FloorToInt(playerCamera.position.x / (chunkSize * tileSize));
-        int currentChunkZ = Mathf.FloorToInt(playerCamera.position.z / (chunkSize * tileSize));
+        int currentChunkX = Mathf.FloorToInt(
+            cameraReference.transform.position.x / (chunkSize * tileSize)
+        );
+        int currentChunkZ = Mathf.FloorToInt(
+            cameraReference.transform.position.z / (chunkSize * tileSize)
+        );
 
         // PASS 1: Generate and Sanitize Raw Data for all chunks in the data radius
         FirstPass(currentChunkX, currentChunkZ);
@@ -105,7 +110,10 @@ public class TerrainChunksGenerator : MonoBehaviour
         foreach (var chunkEntry in chunkDict)
         {
             if (
-                Vector3.Distance(playerCamera.position, chunkEntry.Value.transform.position)
+                Vector3.Distance(
+                    cameraReference.transform.position,
+                    chunkEntry.Value.transform.position
+                )
                 > (viewDistanceChunks + 2) * chunkSize * tileSize
             )
             {
@@ -209,5 +217,17 @@ public class TerrainChunksGenerator : MonoBehaviour
             return grid[lx, lz];
         }
         return null;
+    }
+
+    private void RunVisibilityCheck()
+    {
+        // 1. Calculate the 6 planes of the camera's view frustum
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
+
+        // 2. Loop through all existing chunks and update their active state
+        foreach (var chunk in chunkDict.Values)
+        {
+            chunk.UpdateVisibility(planes);
+        }
     }
 }

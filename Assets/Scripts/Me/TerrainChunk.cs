@@ -21,6 +21,15 @@ public class TerrainChunk : MonoBehaviour
     private int maxElevation;
     private int currentStep = -1;
     private float chunkBoundSize;
+    private Bounds chunkBounds;
+    private MeshRenderer rendererReference;
+
+    void Awake()
+    {
+        // Get the bounds of the mesh (this was calculated in BuildProceduralMesh)
+        chunkBounds = GetComponent<MeshRenderer>().bounds;
+        rendererReference = GetComponent<MeshRenderer>();
+    }
 
     public void InitBuild(TerrainChunksGenerator gen, Vector2Int chunkCoord)
     {
@@ -55,7 +64,7 @@ public class TerrainChunk : MonoBehaviour
         float zPos = transform.position.z - chunkBoundSize;
         Vector3 chunkCenter = new(xPos, 0, zPos);
 
-        float dist = Vector3.Distance(chunkCenter, generator.playerCamera.position);
+        float dist = Vector3.Distance(chunkCenter, generator.cameraReference.transform.position);
         if (dist > generator.lodDist2)
         {
             return 4; // LOD 2
@@ -83,6 +92,8 @@ public class TerrainChunk : MonoBehaviour
         mesh.SetUVs(0, uvs);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
+        // Expand bounds by a few units so they don't pop out too early
+        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 5f);
 
         GetComponent<MeshFilter>().mesh = mesh;
         GetComponent<MeshCollider>().sharedMesh = mesh;
@@ -161,6 +172,12 @@ public class TerrainChunk : MonoBehaviour
             }
         }
         return maxHeight;
+    }
+
+    public void UpdateVisibility(Plane[] planes)
+    {
+        bool isVisible = GeometryUtility.TestPlanesAABB(planes, rendererReference.bounds);
+        rendererReference.enabled = isVisible;
     }
 
     void OnDrawGizmosSelected()
