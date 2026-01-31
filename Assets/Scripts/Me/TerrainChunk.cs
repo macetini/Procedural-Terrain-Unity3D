@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class TerrainChunk : MonoBehaviour
 {
-    private const float LOD_SKIRT_HEIGHT = 0.2f;
+    private const float LOD_SKIRT_HEIGHT = 0.0f;
     private const string MESH_NAME = "TerrainChunk";
 
     [Header("Material Settings")]
@@ -13,6 +12,8 @@ public class TerrainChunk : MonoBehaviour
     [Header("Debug Settings")]
     public bool DrawGizmos = false;
 
+    public bool IsVisible { get; private set; } = true;
+
     private TerrainChunksGenerator generator;
     private Vector2Int coord;
     private int chunkSize;
@@ -20,15 +21,18 @@ public class TerrainChunk : MonoBehaviour
     private float elevationStepHeight;
     private int maxElevation;
     private int currentStep = -1;
-    private float chunkBoundSize;
-    private Bounds chunkBounds;
+
+    //private float chunkBoundSize;
+
     private MeshRenderer rendererReference;
+    private MeshFilter filterReference;
+    private MeshCollider colliderReference;
 
     void Awake()
     {
-        // Get the bounds of the mesh (this was calculated in BuildProceduralMesh)
-        chunkBounds = GetComponent<MeshRenderer>().bounds;
         rendererReference = GetComponent<MeshRenderer>();
+        filterReference = GetComponent<MeshFilter>();
+        colliderReference = GetComponent<MeshCollider>();
     }
 
     public void InitBuild(TerrainChunksGenerator gen, Vector2Int chunkCoord)
@@ -41,7 +45,11 @@ public class TerrainChunk : MonoBehaviour
         elevationStepHeight = generator.elevationStepHeight;
         maxElevation = generator.maxElevation;
 
-        chunkBoundSize = chunkSize * tileSize;
+        //chunkBoundSize = chunkSize * tileSize;
+        if (terrainMaterial != null)
+        {
+            rendererReference.material = terrainMaterial;
+        }
 
         UpdateLOD(true);
     }
@@ -60,9 +68,9 @@ public class TerrainChunk : MonoBehaviour
 
     private int GetTargetStep()
     {
-        float xPos = transform.position.x + chunkBoundSize * 0.5f;
-        float zPos = transform.position.z - chunkBoundSize;
-        Vector3 chunkCenter = new(xPos, 0, zPos);
+        // Calculate center for more accurate LOD switching
+        float halfSize = chunkSize * tileSize * 0.5f;
+        Vector3 chunkCenter = transform.position + new Vector3(halfSize, 0, halfSize);
 
         float dist = Vector3.Distance(chunkCenter, generator.cameraReference.transform.position);
         if (dist > generator.lodDist2)
@@ -78,60 +86,85 @@ public class TerrainChunk : MonoBehaviour
 
     private void BuildProceduralMesh()
     {
-        List<Vector3> vertices = new();
-        List<Vector2> uvs = new();
+        // Calculate exactly how many verts we need (Array is faster than List)
+        int vertsPerRow = (chunkSize / currentStep) + 1;
+        int totalVerts = vertsPerRow * vertsPerRow;
+
+        Vector3[] vertices = new Vector3[totalVerts];
+        Vector2[] uvs = new Vector2[totalVerts];
+
         GenerateVerticesAndUVs(vertices, uvs);
 
-        List<int> triangles = new();
-        int vertsPerRow = (chunkSize / currentStep) + 1;
+        // Calculate triangles
+        int numSquares = vertsPerRow - 1;
+        int[] triangles = new int[numSquares * numSquares * 6];
         GenerateTriangles(triangles, vertsPerRow);
 
-        Mesh mesh = new() { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
-        mesh.SetVertices(vertices);
-        mesh.SetTriangles(triangles, 0);
-        mesh.SetUVs(0, uvs);
+        // CLEANUP: Prevent Memory Leak in WebGL
+        // If we don't destroy the old mesh, it sits in browser RAM forever.
+        if (filterReference.sharedMesh != null)
+        {
+            Destroy(filterReference.sharedMesh);
+        }
+
+        Mesh mesh = new()
+        {
+            name = $"{MESH_NAME}_{coord.x}_{coord.y}",
+            vertices = vertices,
+            triangles = triangles,
+            uv = uvs,
+        };
+
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-        // Expand bounds by a few units so they don't pop out too early
-        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 5f);
 
-        GetComponent<MeshFilter>().mesh = mesh;
-        GetComponent<MeshCollider>().sharedMesh = mesh;
+        // Expand bounds slightly to prevent frustum popping at edges
+        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 2f);
 
-        if (terrainMaterial != null)
+        filterReference.mesh = mesh;
+
+        // OPTIMIZATION: Only update collider for high-detail chunks
+        // WebGL hates physics updates; distant chunks don't need colliders.
+        if (currentStep == 1)
         {
-            GetComponent<MeshRenderer>().material = terrainMaterial;
+            colliderReference.enabled = true;
+            colliderReference.sharedMesh = mesh;
+        }
+        else
+        {
+            colliderReference.enabled = false;
         }
     }
 
-    private void GenerateVerticesAndUVs(List<Vector3> vertices, List<Vector2> UVs)
+    private void GenerateVerticesAndUVs(Vector3[] vertices, Vector2[] UVs)
     {
+        int i = 0;
         for (int x = 0; x <= chunkSize; x += currentStep)
         {
             for (int z = 0; z <= chunkSize; z += currentStep)
             {
                 float height = GetVertexElevation(x, z);
 
-                // Convert to world-relative float position
                 float xPos = x * tileSize;
                 float zPos = z * tileSize;
                 float yPos = height * elevationStepHeight;
 
-                // If we are on ANY edge and OVER LOD 0, pull the vertex down slightly.
-                // This creates a "seam-cover" that hides the T-junctions.
+                // Skirt logic to hide gaps at LOD seams
                 if (currentStep > 1 && (x == 0 || x == chunkSize || z == 0 || z == chunkSize))
                 {
                     yPos -= LOD_SKIRT_HEIGHT;
                 }
 
-                vertices.Add(new Vector3(xPos, yPos, zPos));
-                UVs.Add(new Vector2((float)x / chunkSize, (float)z / chunkSize));
+                vertices[i] = new Vector3(xPos, yPos, zPos);
+                UVs[i] = new Vector2((float)x / chunkSize, (float)z / chunkSize);
+                i++;
             }
         }
     }
 
-    private void GenerateTriangles(List<int> triangles, int vertsPerRow)
+    private static void GenerateTriangles(int[] triangles, int vertsPerRow)
     {
+        int triIndex = 0;
         for (int x = 0; x < vertsPerRow - 1; x++)
         {
             for (int z = 0; z < vertsPerRow - 1; z++)
@@ -141,12 +174,12 @@ public class TerrainChunk : MonoBehaviour
                 int br = (x + 1) * vertsPerRow + z;
                 int tr = br + 1;
 
-                triangles.Add(bl);
-                triangles.Add(tl);
-                triangles.Add(br);
-                triangles.Add(tl);
-                triangles.Add(tr);
-                triangles.Add(br);
+                triangles[triIndex++] = bl;
+                triangles[triIndex++] = tl;
+                triangles[triIndex++] = br;
+                triangles[triIndex++] = tl;
+                triangles[triIndex++] = tr;
+                triangles[triIndex++] = br;
             }
         }
     }
@@ -154,20 +187,21 @@ public class TerrainChunk : MonoBehaviour
     private float GetVertexElevation(int vx, int vz)
     {
         int maxHeight = 0;
-        // Calculate the Global X/Z of this corner
         int globalStartX = coord.x * chunkSize;
         int globalStartZ = coord.y * chunkSize;
 
-        // Look at the 4 tiles touching this vertex
         for (int tx = vx - 1; tx <= vx; tx++)
         {
             for (int tz = vz - 1; tz <= vz; tz++)
             {
-                // PEEK INTO THE GLOBAL DATA
-                TileMeshData tile = generator.GetTileAt(globalStartX + tx, globalStartZ + tz);
-                if (tile != null && tile.Elevation > maxHeight)
+                bool foundTile = generator.GetTileAt(
+                    globalStartX + tx,
+                    globalStartZ + tz,
+                    out TileMeshStruct outTile
+                );
+                if (foundTile && outTile.Elevation > maxHeight)
                 {
-                    maxHeight = tile.Elevation;
+                    maxHeight = outTile.Elevation;
                 }
             }
         }
@@ -176,17 +210,15 @@ public class TerrainChunk : MonoBehaviour
 
     public void UpdateVisibility(Plane[] planes)
     {
-        bool isVisible = GeometryUtility.TestPlanesAABB(planes, rendererReference.bounds);
-        rendererReference.enabled = isVisible;
+        IsVisible = GeometryUtility.TestPlanesAABB(planes, rendererReference.bounds);
+        rendererReference.enabled = IsVisible;
     }
 
     void OnDrawGizmosSelected()
     {
-        // Safety check: ensure generator and data exist
         if (!DrawGizmos || generator == null)
             return;
 
-        // Gizmos now represent the Logic Tiles by asking the generator for data
         for (int x = 0; x < chunkSize; x++)
         {
             for (int z = 0; z < chunkSize; z++)
@@ -194,17 +226,22 @@ public class TerrainChunk : MonoBehaviour
                 int globalX = (coord.x * chunkSize) + x;
                 int globalZ = (coord.y * chunkSize) + z;
 
-                TileMeshData tile = generator.GetTileAt(globalX, globalZ);
-                if (tile == null)
-                    continue;
-
-                Gizmos.color = Color.HSVToRGB(tile.Elevation / (float)maxElevation, 0.7f, 1f);
-                Vector3 center = new(
-                    transform.position.x + (x * tileSize),
-                    tile.Elevation * elevationStepHeight,
-                    transform.position.z + (z * tileSize)
-                );
-                Gizmos.DrawWireCube(center, new Vector3(tileSize, 0.1f, tileSize));
+                if (generator.GetTileAt(globalX, globalZ, out TileMeshStruct outTile))
+                {
+                    Gizmos.color = Color.HSVToRGB(
+                        outTile.Elevation / (float)maxElevation,
+                        0.7f,
+                        1f
+                    );
+                    Vector3 center =
+                        transform.position
+                        + new Vector3(
+                            x * tileSize,
+                            outTile.Elevation * elevationStepHeight,
+                            z * tileSize
+                        );
+                    Gizmos.DrawWireCube(center, new Vector3(tileSize, 0.1f, tileSize));
+                }
             }
         }
     }
