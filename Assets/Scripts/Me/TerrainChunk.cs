@@ -13,6 +13,7 @@ public class TerrainChunk : MonoBehaviour
     public bool DrawGizmos = false;
 
     public bool IsVisible { get; private set; } = true;
+    public int CurrentStep { get; private set; } = -1;
 
     private TerrainChunksGenerator generator;
     private Vector2Int coord;
@@ -20,7 +21,6 @@ public class TerrainChunk : MonoBehaviour
     private float tileSize;
     private float elevationStepHeight;
     private int maxElevation;
-    private int currentStep = -1;
 
     //private float chunkBoundSize;
 
@@ -59,9 +59,9 @@ public class TerrainChunk : MonoBehaviour
         int targetStep = GetTargetStep();
 
         // Only rebuild if the LOD changed OR we are forcing it (initial build)
-        if (targetStep != currentStep || force)
+        if (targetStep != CurrentStep || force)
         {
-            currentStep = targetStep;
+            CurrentStep = targetStep;
             BuildProceduralMesh();
         }
     }
@@ -87,7 +87,7 @@ public class TerrainChunk : MonoBehaviour
     private void BuildProceduralMesh()
     {
         // Calculate exactly how many verts we need (Array is faster than List)
-        int vertsPerRow = (chunkSize / currentStep) + 1;
+        int vertsPerRow = (chunkSize / CurrentStep) + 1;
         int totalVerts = vertsPerRow * vertsPerRow;
 
         Vector3[] vertices = new Vector3[totalVerts];
@@ -125,7 +125,7 @@ public class TerrainChunk : MonoBehaviour
 
         // OPTIMIZATION: Only update collider for high-detail chunks
         // WebGL hates physics updates; distant chunks don't need colliders.
-        if (currentStep == 1)
+        if (CurrentStep == 1)
         {
             colliderReference.enabled = true;
             colliderReference.sharedMesh = mesh;
@@ -139,9 +139,9 @@ public class TerrainChunk : MonoBehaviour
     private void GenerateVerticesAndUVs(Vector3[] vertices, Vector2[] UVs)
     {
         int i = 0;
-        for (int x = 0; x <= chunkSize; x += currentStep)
+        for (int x = 0; x <= chunkSize; x += CurrentStep)
         {
-            for (int z = 0; z <= chunkSize; z += currentStep)
+            for (int z = 0; z <= chunkSize; z += CurrentStep)
             {
                 float height = GetVertexElevation(x, z);
 
@@ -150,7 +150,7 @@ public class TerrainChunk : MonoBehaviour
                 float yPos = height * elevationStepHeight;
 
                 // Skirt logic to hide gaps at LOD seams
-                if (currentStep > 1 && (x == 0 || x == chunkSize || z == 0 || z == chunkSize))
+                if (CurrentStep > 1 && (x == 0 || x == chunkSize || z == 0 || z == chunkSize))
                 {
                     yPos -= LOD_SKIRT_HEIGHT;
                 }
@@ -210,8 +210,28 @@ public class TerrainChunk : MonoBehaviour
 
     public void UpdateVisibility(Plane[] planes)
     {
-        IsVisible = GeometryUtility.TestPlanesAABB(planes, rendererReference.bounds);
+        // Use mesh bounds if available, otherwise calculate a proxy bound based on settings
+        Bounds checkBounds;
+        if (filterReference.sharedMesh != null)
+        {
+            checkBounds = rendererReference.bounds;
+        }
+        else
+        {
+            // Proxy bound: Center of the chunk with a height based on maxElevation
+            float size = chunkSize * tileSize;
+            Vector3 center =
+                transform.position
+                + new Vector3(size / 2, (maxElevation * elevationStepHeight) / 2, size / 2);
+            Vector3 boxSize = new Vector3(size, maxElevation * elevationStepHeight, size);
+            checkBounds = new Bounds(center, boxSize);
+        }
+
+        IsVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
+        // Toggle the renderer so the GPU skips hidden chunks
         rendererReference.enabled = IsVisible;
+        // Optimization: If it's hidden, stop the script's UpdateLOD checks too
+        this.enabled = IsVisible;
     }
 
     void OnDrawGizmosSelected()

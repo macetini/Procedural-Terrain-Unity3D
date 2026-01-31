@@ -17,9 +17,9 @@ public class TerrainChunksGenerator : MonoBehaviour
     [Header("Infinite Settings")]
     public Camera cameraReference;
     public int viewDistanceChunks = 3;
-    public int dataBuffer = 1;
 
     [Header("Build Settings")]
+    public int initialBuildsPerFrame = 5;
     public int buildsPerFrame = 1; // Start with 1 to ensure 60fps on WebGL
 
     [Header("LOD Settings")]
@@ -67,7 +67,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     {
         // Calculate the current chunk coordinates based on camera position
         // Use FloorToInt to get a consistent "Bottom-Left" anchor
-        int dataRadius = viewDistanceChunks + dataBuffer;
 
         System.Diagnostics.Stopwatch sw0 = new();
         System.Diagnostics.Stopwatch sw1 = new();
@@ -77,6 +76,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         sw0.Start();
 
         sw1.Start();
+        int dataRadius = viewDistanceChunks + 1;
         GenerateFullMeshData(currentCameraPosition, dataRadius);
         sw1.Stop();
         ms = sw1.Elapsed.TotalMilliseconds;
@@ -262,10 +262,11 @@ public class TerrainChunksGenerator : MonoBehaviour
     private IEnumerator ProcessBuildQueue()
     {
         isProcessingQueue = true;
+        int buildsCount = initialBuildsPerFrame;
 
         while (buildQueue.Count > 0)
         {
-            for (int i = 0; i < buildsPerFrame && buildQueue.Count > 0; i++)
+            for (int i = 0; i < buildsCount && buildQueue.Count > 0; i++)
             {
                 // Always take the first item (the closest one)
                 Vector2Int coord = buildQueue[0];
@@ -276,24 +277,34 @@ public class TerrainChunksGenerator : MonoBehaviour
                     SpawnChunkMesh(coord);
                 }
             }
-
+            buildsCount = buildsPerFrame;
             yield return null;
         }
-
         isProcessingQueue = false;
     }
 
     private void SpawnChunkMesh(Vector2Int coord)
     {
         float chunkBoundSize = chunkSize * tileSize;
-        float xPos = coord.x * chunkBoundSize; // - (chunkBoundSize * 0.5f);
-        float zPos = coord.y * chunkBoundSize; // + chunkBoundSize;
-        Vector3 position = new(xPos, 0, zPos);
+        Vector3 position = new(coord.x * chunkBoundSize, 0, coord.y * chunkBoundSize);
 
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
 
-        // Pass the Generator reference so the chunk can "Look up" neighbor data
+        // 1. Setup variables (No Build yet)
         chunk.InitBuild(this, coord);
+
+        // 2. Immediate Frustum Check
+        cameraPlanes ??= GeometryUtility.CalculateFrustumPlanes(cameraReference);
+
+        chunk.UpdateVisibility(cameraPlanes);
+
+        // 3. ONLY build the mesh if it's actually on screen
+        // If not, it stays as an empty object until VisibilityCheckRoutine finds it
+        if (chunk.IsVisible)
+        {
+            chunk.UpdateLOD(true);
+        }
+
         chunksDict.Add(coord, chunk);
     }
 
@@ -352,6 +363,12 @@ public class TerrainChunksGenerator : MonoBehaviour
             foreach (var chunk in chunksDict.Values)
             {
                 chunk.UpdateVisibility(cameraPlanes);
+
+                // If it just became visible and was never built (currentStep is -1)
+                if (chunk.IsVisible && chunk.CurrentStep < 0)
+                {
+                    chunk.UpdateLOD(true);
+                }
             }
             yield return WaitForSeconds0_2;
         }
