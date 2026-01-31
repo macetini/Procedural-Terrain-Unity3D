@@ -5,7 +5,7 @@ using UnityEngine;
 public class TerrainChunksGenerator : MonoBehaviour
 {
     //private const float MOVE_THRESHOLD = 1f;
-    private static readonly WaitForSeconds WaitForSeconds0_2_5 = new(0.2f);
+    private static readonly WaitForSeconds WaitForSeconds0_2 = new(0.2f);
 
     [Header("Generation Settings")]
     public int chunkSize = 16;
@@ -27,7 +27,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     public float lodDist2 = 100f; // Distance to switch to Low detail
 
     [Header("Prefabs")]
-    public GameObject chunkPrefab;
+    public TerrainChunk chunkPrefab;
 
     private Vector2Int currentCameraPosition = Vector2Int.zero;
 
@@ -290,8 +290,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         float zPos = coord.y * chunkBoundSize; // + chunkBoundSize;
         Vector3 position = new(xPos, 0, zPos);
 
-        GameObject go = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
-        TerrainChunk chunk = go.GetComponent<TerrainChunk>();
+        TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
 
         // Pass the Generator reference so the chunk can "Look up" neighbor data
         chunk.InitBuild(this, coord);
@@ -354,123 +353,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             {
                 chunk.UpdateVisibility(cameraPlanes);
             }
-            yield return WaitForSeconds0_2_5;
-        }
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------------------
-    // OLD CODE - KEEP FOR REFERENCE (will be deleted later)
-    // ---------------------------------------------------------------------------------------------------------------------------
-
-    private void RunVisibilityCheck()
-    {
-        // 1. Calculate the 6 planes of the camera's view frustum
-        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
-        // 2. Loop through all existing chunks and update their active state
-        foreach (var chunk in chunksDict.Values)
-        {
-            //chunk.UpdateVisibility(planes);
-        }
-    }
-
-    private void FirstPass_OLD(int currentChunkX, int currentChunkZ)
-    {
-        // PASS 1A: Generate raw data for all chunks in the view radius
-        int dataRadius = viewDistanceChunks + dataBuffer;
-        /*for (int x = -dataRadius; x <= dataRadius; x++)
-        {
-            for (int z = -dataRadius; z <= dataRadius; z++)
-            {
-                Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
-                if (!fullTileMeshData.ContainsKey(coord))
-                {
-                    // Just generate raw noise, don't sanitize yet
-                    TileMeshData[,] rawData = GenerateRawData(coord);
-                    fullTileMeshData.Add(coord, rawData);
-                }
-            }
-        }
-        */
-        // PASS 1B: Now that all raw data is guaranteed to exist, sanitize
-        for (int x = -dataRadius; x <= dataRadius; x++)
-        {
-            for (int z = -dataRadius; z <= dataRadius; z++)
-            {
-                Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
-                // We only need to sanitize if the mesh hasn't been built yet
-                if (!chunksDict.ContainsKey(coord))
-                {
-                    SanitizeGlobalChunk(coord);
-                }
-            }
-        }
-    }
-
-    private void SecondPass_OLD(int currentChunkX, int currentChunkZ)
-    {
-        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
-        {
-            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
-            {
-                Vector2Int coord = new(currentChunkX + x, currentChunkZ + z);
-
-                if (!chunksDict.ContainsKey(coord))
-                {
-                    // By now, we GUARANTEE that coord and all its neighbors
-                    // are already sanitized in Pass 1.
-                    SpawnChunkMesh(coord);
-                }
-                else
-                {
-                    // Existing chunk: just refresh to check LOD
-                    chunksDict[coord].UpdateLOD();
-                }
-            }
-        }
-    }
-
-    private void ThirdPass(int currentChunkX, int currentChunkZ)
-    {
-        List<Vector2Int> chunksToRemove = new();
-        foreach (var chunkEntry in chunksDict)
-        {
-            if (
-                Vector3.Distance(
-                    cameraReference.transform.position,
-                    chunkEntry.Value.transform.position
-                )
-                > (viewDistanceChunks + 2) * chunkSize * tileSize
-            )
-            {
-                chunksToRemove.Add(chunkEntry.Key);
-            }
-        }
-
-        foreach (var coord in chunksToRemove)
-        {
-            Destroy(chunksDict[coord].gameObject);
-            chunksDict.Remove(coord);
-        }
-
-        List<Vector2Int> dataToRemove = new();
-        int cleanupThreshold = viewDistanceChunks + dataBuffer + 2;
-
-        foreach (var dataCoord in fullTileMeshData.Keys)
-        {
-            float dist = Vector2.Distance(
-                new Vector2(currentChunkX, currentChunkZ),
-                new Vector2(dataCoord.x, dataCoord.y)
-            );
-
-            if (dist > cleanupThreshold)
-            {
-                dataToRemove.Add(dataCoord);
-            }
-        }
-
-        foreach (var coord in dataToRemove)
-        {
-            fullTileMeshData.Remove(coord);
+            yield return WaitForSeconds0_2;
         }
     }
 }

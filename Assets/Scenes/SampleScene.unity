@@ -440,7 +440,7 @@ MonoBehaviour:
   buildsPerFrame: 1
   lodDist1: 256
   lodDist2: 512
-  chunkPrefab: {fileID: 7322690783629769986, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
+  chunkPrefab: {fileID: 581305705177285490, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
 --- !u!4 &555491514
 Transform:
   m_ObjectHideFlags: 0
