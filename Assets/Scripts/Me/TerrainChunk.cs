@@ -85,21 +85,18 @@ public class TerrainChunk : MonoBehaviour
 
     private void BuildProceduralMesh()
     {
+        // 1. Data Allocation & Geometry Generation
         int resolution = (chunkSize / CurrentStep) + 1;
         int gridVertCount = resolution * resolution;
         int totalVerts = gridVertCount + (resolution * 4);
 
         Vector3[] vertices = new Vector3[totalVerts];
         Vector2[] uvs = new Vector2[totalVerts];
-
         GenerateGeometry(vertices, uvs);
 
-        int gridTris = (resolution - 1) * (resolution - 1) * 6;
-        int skirtTris = (resolution - 1) * 4 * 6;
-        int[] tris = new int[gridTris + skirtTris];
+        int[] tris = GenerateTriangleIndices(resolution);
 
-        GenerateTriangles(tris, resolution);
-
+        // 2. Mesh Construction
         if (filterReference.sharedMesh != null)
             Destroy(filterReference.sharedMesh);
 
@@ -109,9 +106,27 @@ public class TerrainChunk : MonoBehaviour
             vertices = vertices,
             triangles = tris,
             uv = uvs,
+            // 3. Normal & Lighting Calculations
+            normals = CalculateSlopeNormals(vertices, resolution, gridVertCount)
         };
 
-        // --- NORMAL LOGIC START ---
+        // 4. Finalizing and Component Assignment
+        FinalizeMesh(mesh);
+    }
+
+    private int[] GenerateTriangleIndices(int resolution)
+    {
+        int gridTris = (resolution - 1) * (resolution - 1) * 6;
+        int skirtTris = (resolution - 1) * 4 * 6;
+        int[] tris = new int[gridTris + skirtTris];
+
+        GenerateTriangles(tris, resolution);
+        return tris;
+    }
+
+    private Vector3[] CalculateSlopeNormals(Vector3[] vertices, int resolution, int gridVertCount)
+    {
+        int totalVerts = vertices.Length;
         Vector3[] normals = new Vector3[totalVerts];
 
         // 1. Process the Main Grid for 45-degree slope shading
@@ -122,7 +137,7 @@ public class TerrainChunk : MonoBehaviour
                 int index = x * resolution + z;
                 float h = vertices[index].y;
 
-                // Sample heights. Using Step-aware indexing (resolution based)
+                // Step-aware indexing
                 float hL = (x > 0) ? vertices[(x - 1) * resolution + z].y : h;
                 float hR = (x < resolution - 1) ? vertices[(x + 1) * resolution + z].y : h;
                 float hB = (z > 0) ? vertices[x * resolution + (z - 1)].y : h;
@@ -154,16 +169,25 @@ public class TerrainChunk : MonoBehaviour
             ).normalized;
             normals[n] = new Vector3(dir.x, 0, dir.z);
         }
-        mesh.normals = normals;
-        // --- NORMAL LOGIC END ---
 
+        return normals;
+    }
+
+    private void FinalizeMesh(Mesh mesh)
+    {
         mesh.RecalculateBounds();
+        // Padding prevents frustum culling from popping the mesh out at the edges
         mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 2f);
+
         filterReference.mesh = mesh;
 
-        colliderReference.enabled = (CurrentStep == 1);
-        if (colliderReference.enabled)
+        // Handle Physics: Only high detail gets a collider to save WebGL performance
+        bool highDetail = (CurrentStep == 1);
+        colliderReference.enabled = highDetail;
+        if (highDetail)
+        {
             colliderReference.sharedMesh = mesh;
+        }
     }
 
     private void GenerateGeometry(Vector3[] vertices, Vector2[] UVs)
