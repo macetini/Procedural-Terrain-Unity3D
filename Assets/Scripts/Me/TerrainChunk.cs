@@ -182,7 +182,6 @@ public class TerrainChunk : MonoBehaviour
         }
 
         // 2. Skirt (Matching the exact order used in GenerateTriangles)
-        float skirtDepth = 5.0f;
 
         // South Edge (z = 0)
         for (int x = 0; x <= chunkSize; x += CurrentStep)
