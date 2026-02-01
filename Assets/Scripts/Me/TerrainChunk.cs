@@ -107,7 +107,7 @@ public class TerrainChunk : MonoBehaviour
             triangles = tris,
             uv = uvs,
             // 3. Normal & Lighting Calculations
-            normals = CalculateSlopeNormals(vertices, resolution, gridVertCount)
+            normals = CalculateSlopeNormals(vertices, resolution, gridVertCount),
         };
 
         // 4. Finalizing and Component Assignment

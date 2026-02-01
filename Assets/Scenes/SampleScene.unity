@@ -436,7 +436,7 @@ MonoBehaviour:
   noiseScale: 0.0125
   cameraReference: {fileID: 330585545}
   viewDistanceChunks: 3
-  initialBuildBurst: 8
+  initialBuildBurst: 12
   buildsPerFrame: 1
   lodDist1: 384
   lodDist2: 704

@@ -38,7 +38,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private Plane[] cameraPlanes;
 
-    private float chunkBoundSize => chunkSize * tileSize;
+    private float ChunkBoundSize => chunkSize * tileSize;
 
     void Start()
     {
@@ -48,16 +48,30 @@ public class TerrainChunksGenerator : MonoBehaviour
         StartCoroutine(VisibilityCheckRoutine());
     }
 
-    private void UpdateCurrentCameraPosition()
-    {
-        int currentX = Mathf.FloorToInt(cameraReference.transform.position.x / chunkBoundSize);
-        int currentZ = Mathf.FloorToInt(cameraReference.transform.position.z / chunkBoundSize);
-        currentCameraPosition = new Vector2Int(currentX, currentZ);
-    }
-
     void Update()
     {
+        Vector2Int previousPos = currentCameraPosition;
         UpdateCurrentCameraPosition();
+
+        // Only recalculate the world if we've actually moved into a different chunk
+        if (currentCameraPosition != previousPos)
+        {
+            UpdateVisibleChunks();
+            SortBuildQueue();
+
+            // Ensure the build process is running
+            if (!isProcessingQueue && buildQueue.Count > 0)
+            {
+                StartCoroutine(ProcessBuildQueue());
+            }
+        }
+    }
+
+    private void UpdateCurrentCameraPosition()
+    {
+        int currentX = Mathf.FloorToInt(cameraReference.transform.position.x / ChunkBoundSize);
+        int currentZ = Mathf.FloorToInt(cameraReference.transform.position.z / ChunkBoundSize);
+        currentCameraPosition = new Vector2Int(currentX, currentZ);
     }
 
     private void FirstPass()
@@ -282,7 +296,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SpawnChunkMesh(Vector2Int coord)
     {
-        Vector3 position = new(coord.x * chunkBoundSize, 0, coord.y * chunkBoundSize);
+        Vector3 position = new(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
 
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
         // 1. Setup variables (No Build yet)
@@ -326,8 +340,8 @@ public class TerrainChunksGenerator : MonoBehaviour
             (a, b) =>
             {
                 // Calculate world positions for both coordinates
-                Vector3 posA = new(a.x * chunkBoundSize, 0, a.y * chunkBoundSize);
-                Vector3 posB = new(b.x * chunkBoundSize, 0, b.y * chunkBoundSize);
+                Vector3 posA = new(a.x * ChunkBoundSize, 0, a.y * ChunkBoundSize);
+                Vector3 posB = new(b.x * ChunkBoundSize, 0, b.y * ChunkBoundSize);
 
                 float distA = Vector3.SqrMagnitude(camPos - posA);
                 float distB = Vector3.SqrMagnitude(camPos - posB);
@@ -352,6 +366,62 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
             yield return WaitForSeconds0_2;
+        }
+    }
+
+    private void UpdateVisibleChunks()
+    {
+        // 1. Calculate which chunks SHOULD exist based on current position
+        //int dataRadius = viewDistanceChunks + 1; // Buffer for sanitization
+        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
+        {
+            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+            {
+                Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
+                // If we don't have the data for this chunk yet, generate and sanitize it
+                if (!fullTileMeshData.ContainsKey(coord))
+                {
+                    // Ensure neighbors exist for sanitization (Radius of 1 around the new chunk)
+                    GenerateFullMeshData(coord, 1);
+                    SanitizeCurrentTileMeshData(coord, 0);
+                }
+                // If the chunk object doesn't exist, add it to the build queue
+                if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
+                {
+                    buildQueue.Add(coord);
+                    // We'll sort the queue after the loops to keep it efficient
+                }
+                else if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                {
+                    // If it exists, just update its LOD based on the new camera position
+                    chunk.UpdateLOD();
+                }
+            }
+        }
+
+        // 2. Clean up chunks that are way too far away (Memory Management)
+        List<Vector2Int> keysToRemove = new();
+        float maxDist = (viewDistanceChunks + 2) * ChunkBoundSize;
+
+        foreach (var chunkEntry in chunksDict)
+        {
+            if (
+                Vector3.Distance(
+                    cameraReference.transform.position,
+                    chunkEntry.Value.transform.position
+                ) > maxDist
+            )
+            {
+                keysToRemove.Add(chunkEntry.Key);
+            }
+        }
+
+        foreach (var key in keysToRemove)
+        {
+            Destroy(chunksDict[key].gameObject);
+            chunksDict.Remove(key);
+            // Note: We keep the 'fullTileMeshData' so if the player turns back,
+            // the mountains are exactly the same as before.
         }
     }
 }
