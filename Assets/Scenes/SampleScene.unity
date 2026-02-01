@@ -432,11 +432,11 @@ MonoBehaviour:
   chunkSize: 64
   tileSize: 4
   elevationStepHeight: 1
-  maxElevation: 8
+  maxElevationStep: 5
   noiseScale: 0.0125
   cameraReference: {fileID: 330585545}
   viewDistanceChunks: 3
-  initialBuildBurst: 5
+  initialBuildBurst: 8
   buildsPerFrame: 1
   lodDist1: 384
   lodDist2: 704
@@ -610,7 +610,7 @@ Transform:
   m_GameObject: {fileID: 1695441041}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 8, z: 100}
+  m_LocalPosition: {x: 2, y: 7, z: 102}
   m_LocalScale: {x: 20, y: 10, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []

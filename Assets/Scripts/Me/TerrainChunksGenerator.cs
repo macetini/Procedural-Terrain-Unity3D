@@ -4,14 +4,13 @@ using UnityEngine;
 
 public class TerrainChunksGenerator : MonoBehaviour
 {
-    //private const float MOVE_THRESHOLD = 1f;
     private static readonly WaitForSeconds WaitForSeconds0_2 = new(0.2f);
 
     [Header("Generation Settings")]
     public int chunkSize = 16;
     public float tileSize = 1.0f;
     public float elevationStepHeight = 1.0f;
-    public int maxElevation = 5;
+    public int maxElevationStep = 5;
     public float noiseScale = 0.05f;
 
     [Header("Infinite Settings")]
@@ -39,6 +38,8 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private Plane[] cameraPlanes;
 
+    private float chunkBoundSize => chunkSize * tileSize;
+
     void Start()
     {
         UpdateCurrentCameraPosition();
@@ -49,12 +50,8 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void UpdateCurrentCameraPosition()
     {
-        int currentX = Mathf.FloorToInt(
-            cameraReference.transform.position.x / (chunkSize * tileSize)
-        );
-        int currentZ = Mathf.FloorToInt(
-            cameraReference.transform.position.z / (chunkSize * tileSize)
-        );
+        int currentX = Mathf.FloorToInt(cameraReference.transform.position.x / chunkBoundSize);
+        int currentZ = Mathf.FloorToInt(cameraReference.transform.position.z / chunkBoundSize);
         currentCameraPosition = new Vector2Int(currentX, currentZ);
     }
 
@@ -141,8 +138,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                 int tileZ = offsetZ + zTileOffset;
                 float noise = Mathf.PerlinNoise(tileX * noiseScale, tileZ * noiseScale);
 
-                int elevation = Mathf.FloorToInt(noise * (maxElevation + 1));
-                elevation = Mathf.Clamp(elevation, 0, maxElevation);
+                int elevation = Mathf.FloorToInt(noise * (maxElevationStep + 1));
+                elevation = Mathf.Clamp(elevation, 0, maxElevationStep);
 
                 tileData[xTileOffset, zTileOffset] = new TileMeshStruct(
                     xTileOffset,
@@ -285,7 +282,6 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SpawnChunkMesh(Vector2Int coord)
     {
-        float chunkBoundSize = chunkSize * tileSize;
         Vector3 position = new(coord.x * chunkBoundSize, 0, coord.y * chunkBoundSize);
 
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
@@ -330,16 +326,8 @@ public class TerrainChunksGenerator : MonoBehaviour
             (a, b) =>
             {
                 // Calculate world positions for both coordinates
-                Vector3 posA = new Vector3(
-                    a.x * chunkSize * tileSize,
-                    0,
-                    a.y * chunkSize * tileSize
-                );
-                Vector3 posB = new Vector3(
-                    b.x * chunkSize * tileSize,
-                    0,
-                    b.y * chunkSize * tileSize
-                );
+                Vector3 posA = new(a.x * chunkBoundSize, 0, a.y * chunkBoundSize);
+                Vector3 posB = new(b.x * chunkBoundSize, 0, b.y * chunkBoundSize);
 
                 float distA = Vector3.SqrMagnitude(camPos - posA);
                 float distB = Vector3.SqrMagnitude(camPos - posB);

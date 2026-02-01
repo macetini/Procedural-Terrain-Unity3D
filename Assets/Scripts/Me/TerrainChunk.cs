@@ -21,7 +21,7 @@ public class TerrainChunk : MonoBehaviour
     private int chunkSize;
     private float tileSize;
     private float elevationStepHeight;
-    private int maxElevation;
+    private int maxElevationStep;
     private float chunkBoundSize;
 
     private MeshRenderer rendererReference;
@@ -43,7 +43,7 @@ public class TerrainChunk : MonoBehaviour
         chunkSize = generator.chunkSize;
         tileSize = generator.tileSize;
         elevationStepHeight = generator.elevationStepHeight;
-        maxElevation = generator.maxElevation;
+        maxElevationStep = generator.maxElevationStep;
 
         chunkBoundSize = chunkSize * tileSize;
         if (terrainMaterial != null)
@@ -329,11 +329,11 @@ public class TerrainChunk : MonoBehaviour
         {
             // Proxy bound: Center of the chunk with a height based on maxElevation
             float halfBoundSize = chunkBoundSize * 0.5f;
-            float realElevationHight = maxElevation * elevationStepHeight;
+            float totalMaxElevationHight = maxElevationStep * elevationStepHeight;
             Vector3 center =
                 transform.position
-                + new Vector3(halfBoundSize, realElevationHight * 0.5f, halfBoundSize);
-            Vector3 boxSize = new(chunkBoundSize, realElevationHight, chunkBoundSize);
+                + new Vector3(halfBoundSize, totalMaxElevationHight * 0.5f, halfBoundSize);
+            Vector3 boxSize = new(chunkBoundSize, totalMaxElevationHight, chunkBoundSize);
             checkBounds = new Bounds(center, boxSize);
         }
 
@@ -360,7 +360,7 @@ public class TerrainChunk : MonoBehaviour
                 if (generator.GetTileAt(globalX, globalZ, out TileMeshStruct outTile))
                 {
                     Gizmos.color = Color.HSVToRGB(
-                        outTile.Elevation / (float)maxElevation,
+                        outTile.Elevation / (float)maxElevationStep,
                         0.7f,
                         1f
                     );
