@@ -69,7 +69,7 @@ public class CameraFlightController : MonoBehaviour
 
             // Stop all movement when Space is pressed
 
-            transform.position += moveDir.normalized * currentSpeed * Time.deltaTime;
+            transform.position += currentSpeed * Time.deltaTime * moveDir.normalized;
 
             // Unlock cursor
             if (Keyboard.current.escapeKey.wasPressedThisFrame)

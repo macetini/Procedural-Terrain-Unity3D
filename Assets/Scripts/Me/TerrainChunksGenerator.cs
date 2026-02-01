@@ -19,7 +19,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int viewDistanceChunks = 3;
 
     [Header("Build Settings")]
-    public int initialBuildsPerFrame = 5;
+    public int initialBuildBurst = 5;
     public int buildsPerFrame = 1; // Start with 1 to ensure 60fps on WebGL
 
     [Header("LOD Settings")]
@@ -74,8 +74,8 @@ public class TerrainChunksGenerator : MonoBehaviour
         double ms;
 
         sw0.Start();
-
         sw1.Start();
+
         int dataRadius = viewDistanceChunks + 1;
         GenerateFullMeshData(currentCameraPosition, dataRadius);
         sw1.Stop();
@@ -262,7 +262,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private IEnumerator ProcessBuildQueue()
     {
         isProcessingQueue = true;
-        int buildsCount = initialBuildsPerFrame;
+        int buildsCount = initialBuildBurst;
 
         while (buildQueue.Count > 0)
         {
@@ -289,13 +289,10 @@ public class TerrainChunksGenerator : MonoBehaviour
         Vector3 position = new(coord.x * chunkBoundSize, 0, coord.y * chunkBoundSize);
 
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
-
         // 1. Setup variables (No Build yet)
         chunk.InitBuild(this, coord);
-
         // 2. Immediate Frustum Check
         cameraPlanes ??= GeometryUtility.CalculateFrustumPlanes(cameraReference);
-
         chunk.UpdateVisibility(cameraPlanes);
 
         // 3. ONLY build the mesh if it's actually on screen
@@ -304,7 +301,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         {
             chunk.UpdateLOD(true);
         }
-
         chunksDict.Add(coord, chunk);
     }
 
@@ -321,7 +317,6 @@ public class TerrainChunksGenerator : MonoBehaviour
             tile = grid[lx, lz];
             return true;
         }
-
         // If no tile exists, we return a "blank" one and say 'false'
         tile = default;
         return false;
@@ -348,7 +343,6 @@ public class TerrainChunksGenerator : MonoBehaviour
 
                 float distA = Vector3.SqrMagnitude(camPos - posA);
                 float distB = Vector3.SqrMagnitude(camPos - posB);
-
                 // Sort Ascending (Smallest distance first)
                 return distA.CompareTo(distB);
             }
@@ -363,7 +357,6 @@ public class TerrainChunksGenerator : MonoBehaviour
             foreach (var chunk in chunksDict.Values)
             {
                 chunk.UpdateVisibility(cameraPlanes);
-
                 // If it just became visible and was never built (currentStep is -1)
                 if (chunk.IsVisible && chunk.CurrentStep < 0)
                 {

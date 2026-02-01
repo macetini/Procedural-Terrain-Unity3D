@@ -71,6 +71,7 @@
         "AABB",
         "Lerp",
         "Mathf",
+        "Tris",
         "verts"
     ]
 }
