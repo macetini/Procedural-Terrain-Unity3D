@@ -3,11 +3,12 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class TerrainChunk : MonoBehaviour
 {
-    private const float LOD_SKIRT_HEIGHT = 0.0f;
     private const string MESH_NAME = "TerrainChunk";
 
-    [Header("Material Settings")]
+    [Header("Settings")]
     public Material terrainMaterial;
+    public float boundPadding = 2f;
+    public float skirtDepth = 5f;
 
     [Header("Debug Settings")]
     public bool DrawGizmos = false;
@@ -68,9 +69,9 @@ public class TerrainChunk : MonoBehaviour
     {
         // Calculate center for more accurate LOD switching
         float halfSize = chunkBoundSize * 0.5f;
-        Vector3 chunkCenter = transform.position + new Vector3(halfSize, 0, halfSize);
+        Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
-        float dist = Vector3.Distance(chunkCenter, generator.cameraReference.transform.position);
+        float dist = Vector3.Distance(center, generator.cameraReference.transform.position);
         if (dist > generator.lodDist2)
         {
             return 4; // LOD 2
@@ -85,35 +86,40 @@ public class TerrainChunk : MonoBehaviour
     private void BuildProceduralMesh()
     {
         int resolution = (chunkSize / CurrentStep) + 1;
-        int terrainVertCount = resolution * resolution;
+        int gridVertCount = resolution * resolution;
 
         // Each of the 4 edges needs 'resolution' number of vertices for the bottom of the skirt
-        int totalVerts = terrainVertCount + (resolution * 4);
+        int totalVerts = gridVertCount + (resolution * 4);
 
         Vector3[] vertices = new Vector3[totalVerts];
         Vector2[] uvs = new Vector2[totalVerts];
 
-        GenerateVerticesAndUVs(vertices, uvs);
+        GenerateGeometry(vertices, uvs);
 
         // Each edge segment needs 2 triangles (6 indices). 4 edges * (resolution - 1) segments.
-        int terrainTris = (resolution - 1) * (resolution - 1) * 6;
+        int gridTris = (resolution - 1) * (resolution - 1) * 6;
         int skirtTris = (resolution - 1) * 4 * 6;
-        int[] triangles = new int[terrainTris + skirtTris];
+        int[] tris = new int[gridTris + skirtTris];
 
-        GenerateTriangles(triangles, resolution);
+        GenerateTriangles(tris, resolution);
 
         if (filterReference.sharedMesh != null)
+        {
             Destroy(filterReference.sharedMesh);
+        }
 
         Mesh mesh = new()
         {
             name = $"{MESH_NAME}_{coord.x}_{coord.y}",
             vertices = vertices,
-            triangles = triangles,
+            triangles = tris,
             uv = uvs,
         };
 
+        // --- NORMAL LOGIC START ---
+        // Basic recalculation for the flat parts
         mesh.RecalculateNormals();
+
         // Force every single normal to point straight up
         Vector3[] normals = new Vector3[vertices.Length];
         for (int n = 0; n < normals.Length; n++)
@@ -121,81 +127,77 @@ public class TerrainChunk : MonoBehaviour
             normals[n] = Vector3.up;
         }
         mesh.normals = normals;
+        // --- NORMAL LOGIC END ---
 
         mesh.RecalculateBounds();
-        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 2f);
+        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * boundPadding);
 
         filterReference.mesh = mesh;
 
         // Physics only for LOD 0
-        if (CurrentStep == 1)
+        colliderReference.enabled = CurrentStep == 1;
+        if (colliderReference.enabled)
         {
-            colliderReference.enabled = true;
             colliderReference.sharedMesh = mesh;
-        }
-        else
-        {
-            colliderReference.enabled = false;
         }
     }
 
-    private void GenerateVerticesAndUVs(Vector3[] vertices, Vector2[] UVs)
+    private void GenerateGeometry(Vector3[] verts, Vector2[] uvs)
     {
         int i = 0;
-        // 1. Top Terrain Grid
+
+        // 1. Generate Main Grid
         for (int x = 0; x <= chunkSize; x += CurrentStep)
         {
             for (int z = 0; z <= chunkSize; z += CurrentStep)
             {
                 float h = GetVertexElevation(x, z) * elevationStepHeight;
-                vertices[i] = new Vector3(x * tileSize, h, z * tileSize);
-                UVs[i] = new Vector2((float)x / chunkSize, (float)z / chunkSize);
+                verts[i] = new Vector3(x * tileSize, h, z * tileSize);
+                uvs[i] = new Vector2((float)x / chunkSize, (float)z / chunkSize);
                 i++;
             }
         }
 
-        // 2. Skirt Vertices (Hanging down)
-        float skirtDepth = 5.0f;
+        // 2. Generate Skirt (Reusing edge logic)
+        // South & North
+        for (int x = 0; x <= chunkSize; x += CurrentStep)
+        {
+            verts[i] = new Vector3(
+                x * tileSize,
+                GetVertexElevation(x, 0) * elevationStepHeight - skirtDepth,
+                0
+            );
+            uvs[i++] = new Vector2((float)x / chunkSize, 0);
 
-        // South Edge (z = 0)
-        for (int x = 0; x <= chunkSize; x += CurrentStep)
-        {
-            float h = GetVertexElevation(x, 0) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(x * tileSize, h, 0);
-            UVs[i] = new Vector2((float)x / chunkSize, 0); // Explicit UV
-            i++;
+            verts[i] = new Vector3(
+                x * tileSize,
+                GetVertexElevation(x, chunkSize) * elevationStepHeight - skirtDepth,
+                chunkSize * tileSize
+            );
+            uvs[i++] = new Vector2((float)x / chunkSize, 1);
         }
-        // North Edge (z = chunkSize)
-        for (int x = 0; x <= chunkSize; x += CurrentStep)
-        {
-            float h = GetVertexElevation(x, chunkSize) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(x * tileSize, h, chunkSize * tileSize);
-            UVs[i] = new Vector2((float)x / chunkSize, 1);
-            i++;
-        }
-        // West Edge (x = 0)
+        // West & East
         for (int z = 0; z <= chunkSize; z += CurrentStep)
         {
-            float h = GetVertexElevation(0, z) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(0, h, z * tileSize);
-            UVs[i] = new Vector2(0, (float)z / chunkSize);
-            i++;
-        }
-        // East Edge (x = chunkSize)
-        for (int z = 0; z <= chunkSize; z += CurrentStep)
-        {
-            float h = GetVertexElevation(chunkSize, z) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(chunkSize * tileSize, h, z * tileSize);
-            UVs[i] = new Vector2(1, (float)z / chunkSize);
-            i++;
+            verts[i] = new Vector3(
+                0,
+                GetVertexElevation(0, z) * elevationStepHeight - skirtDepth,
+                z * tileSize
+            );
+            uvs[i++] = new Vector2(0, (float)z / chunkSize);
+
+            verts[i] = new Vector3(
+                chunkSize * tileSize,
+                GetVertexElevation(chunkSize, z) * elevationStepHeight - skirtDepth,
+                z * tileSize
+            );
+            uvs[i++] = new Vector2(1, (float)z / chunkSize);
         }
     }
 
-    private static void GenerateTriangles(int[] triangles, int res)
+    private static void GenerateTriangles(int[] tris, int res)
     {
-        int triIndex = 0;
-        int terrainVertCount = res * res;
-
+        int trisIndex = 0;
         // 1. MAIN TERRAIN GRID
         for (int x = 0; x < res - 1; x++)
         {
@@ -206,12 +208,12 @@ public class TerrainChunk : MonoBehaviour
                 int br = (x + 1) * res + z;
                 int tr = br + 1;
 
-                triangles[triIndex++] = bl;
-                triangles[triIndex++] = tl;
-                triangles[triIndex++] = br;
-                triangles[triIndex++] = tl;
-                triangles[triIndex++] = tr;
-                triangles[triIndex++] = br;
+                tris[trisIndex++] = bl;
+                tris[trisIndex++] = tl;
+                tris[trisIndex++] = br;
+                tris[trisIndex++] = tl;
+                tris[trisIndex++] = tr;
+                tris[trisIndex++] = br;
             }
         }
 
@@ -220,7 +222,7 @@ public class TerrainChunk : MonoBehaviour
 
         // South Wall (z = 0)
         // Top indices: x * res | Bottom indices: terrainVertCount + x
-        int skirtStart = terrainVertCount;
+        int skirtStart = res * res;
         for (int x = 0; x < res - 1; x++)
         {
             int tL = x * res;
@@ -228,12 +230,12 @@ public class TerrainChunk : MonoBehaviour
             int bL = skirtStart + x;
             int bR = skirtStart + x + 1;
 
-            triangles[triIndex++] = tL;
-            triangles[triIndex++] = bR;
-            triangles[triIndex++] = tR;
-            triangles[triIndex++] = tL;
-            triangles[triIndex++] = bL;
-            triangles[triIndex++] = bR;
+            tris[trisIndex++] = tL;
+            tris[trisIndex++] = bR;
+            tris[trisIndex++] = tR;
+            tris[trisIndex++] = tL;
+            tris[trisIndex++] = bL;
+            tris[trisIndex++] = bR;
         }
 
         // North Wall (z = res - 1)
@@ -246,12 +248,12 @@ public class TerrainChunk : MonoBehaviour
             int bL = skirtStart + x;
             int bR = skirtStart + x + 1;
 
-            triangles[triIndex++] = tL;
-            triangles[triIndex++] = tR;
-            triangles[triIndex++] = bR;
-            triangles[triIndex++] = tL;
-            triangles[triIndex++] = bR;
-            triangles[triIndex++] = bL;
+            tris[trisIndex++] = tL;
+            tris[trisIndex++] = tR;
+            tris[trisIndex++] = bR;
+            tris[trisIndex++] = tL;
+            tris[trisIndex++] = bR;
+            tris[trisIndex++] = bL;
         }
 
         // West Wall (x = 0)
@@ -264,12 +266,12 @@ public class TerrainChunk : MonoBehaviour
             int bB = skirtStart + z;
             int bT = skirtStart + z + 1;
 
-            triangles[triIndex++] = tB;
-            triangles[triIndex++] = tT;
-            triangles[triIndex++] = bT;
-            triangles[triIndex++] = tB;
-            triangles[triIndex++] = bT;
-            triangles[triIndex++] = bB;
+            tris[trisIndex++] = tB;
+            tris[trisIndex++] = tT;
+            tris[trisIndex++] = bT;
+            tris[trisIndex++] = tB;
+            tris[trisIndex++] = bT;
+            tris[trisIndex++] = bB;
         }
 
         // East Wall (x = res - 1)
@@ -282,12 +284,12 @@ public class TerrainChunk : MonoBehaviour
             int bB = skirtStart + z;
             int bT = skirtStart + z + 1;
 
-            triangles[triIndex++] = tB;
-            triangles[triIndex++] = bB;
-            triangles[triIndex++] = bT;
-            triangles[triIndex++] = tB;
-            triangles[triIndex++] = bT;
-            triangles[triIndex++] = tT;
+            tris[trisIndex++] = tB;
+            tris[trisIndex++] = bB;
+            tris[trisIndex++] = bT;
+            tris[trisIndex++] = tB;
+            tris[trisIndex++] = bT;
+            tris[trisIndex++] = tT;
         }
     }
 
