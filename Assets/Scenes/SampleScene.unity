@@ -430,9 +430,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainChunksGenerator
   chunkSize: 128
-  tileSize: 1
-  elevationStepHeight: 0.5
-  maxElevationStep: 5
+  tileSize: 4
+  elevationStepHeight: 1
+  maxElevationStep: 16
   noiseScale: 0.0125
   cameraReference: {fileID: 330585545}
   viewDistanceChunks: 4

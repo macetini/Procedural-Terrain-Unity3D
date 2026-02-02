@@ -186,7 +186,7 @@ public class TerrainChunk : MonoBehaviour
         }
     }
 
-    private int[] GenerateTriangleIndices(int res)
+    private static int[] GenerateTriangleIndices(int res)
     {
         int gridTris = (res - 1) * (res - 1) * 6;
         int skirtTris = (res - 1) * 4 * 6;
