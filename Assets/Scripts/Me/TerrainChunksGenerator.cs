@@ -369,7 +369,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
     }
 
-    private void UpdateVisibleChunks()
+    private void UpdateVisibleChunks() // TODO - Performance Optimization
     {
         // 1. Calculate which chunks SHOULD exist based on current position
         //int dataRadius = viewDistanceChunks + 1; // Buffer for sanitization
@@ -402,7 +402,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         // 2. Clean up chunks that are way too far away (Memory Management)
         List<Vector2Int> keysToRemove = new();
         float maxDist = (viewDistanceChunks + 2) * ChunkBoundSize;
-
         foreach (var chunkEntry in chunksDict)
         {
             if (
@@ -415,7 +414,6 @@ public class TerrainChunksGenerator : MonoBehaviour
                 keysToRemove.Add(chunkEntry.Key);
             }
         }
-
         foreach (var key in keysToRemove)
         {
             Destroy(chunksDict[key].gameObject);
