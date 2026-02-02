@@ -103,10 +103,27 @@ public class TerrainChunk : MonoBehaviour
             normals = new Vector3[totalVerts];
         }
 
-        GenerateGeometry(vertices, uvs, resolution);
+        // --- NEW: THE CACHE BUFFER ---
+        // We create a buffer that is slightly larger than the resolution
+        // to account for the neighbors needed for "Blending" and "Normals".
+        // Size is [res + 2] to allow sampling from index -1 to res.
+        float[,] heightCache = new float[resolution + 2, resolution + 2];
+
+        for (int x = -1; x <= resolution; x++)
+        {
+            for (int z = -1; z <= resolution; z++)
+            {
+                // We sample the "Blended" elevation (which itself samples a 2x2)
+                // and store it. This effectively "pre-bakes" the softening logic.
+                heightCache[x + 1, z + 1] = GetBlendedElevation(x * CurrentStep, z * CurrentStep);
+            }
+        }
+
+        GenerateGeometry(vertices, uvs, resolution, heightCache);
+
         int[] tris = GenerateTriangleIndices(resolution);
 
-        CalculateSlopeNormals(vertices, normals, resolution);
+        CalculateSlopeNormals(vertices, normals, resolution, heightCache);
 
         if (filterReference.sharedMesh != null)
         {
@@ -125,76 +142,77 @@ public class TerrainChunk : MonoBehaviour
         FinalizeMesh(mesh);
     }
 
-    private void GenerateGeometry(Vector3[] vertices, Vector2[] uvs, int res)
+    private void GenerateGeometry(
+        Vector3[] vertices,
+        Vector2[] uvCoords,
+        int resolution,
+        float[,] heightCache
+    )
     {
         int i = 0;
         float invSize = 1f / chunkSize;
 
         // 1. MAIN GRID GENERATION
-        for (int x = 0; x < res; x++)
+        for (int x = 0; x < resolution; x++)
         {
             int gx = x * CurrentStep;
-            for (int z = 0; z < res; z++)
+            for (int z = 0; z < resolution; z++)
             {
                 int gz = z * CurrentStep;
 
                 // ANALYSIS: We use GetBlendedElevation instead of the raw height.
                 // This "bevels" the edges of your steps by averaging neighbor heights.
-                float h = GetBlendedElevation(gx, gz) * elevationStepHeight;
+                float h = heightCache[x + 1, z + 1] * elevationStepHeight;
 
                 vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
-                uvs[i] = new Vector2(gx * invSize, gz * invSize);
+                uvCoords[i] = new Vector2(gx * invSize, gz * invSize);
                 i++;
             }
         }
 
         // 2. SKIRT GENERATION
-        // Skirts provide the "sides" so the terrain doesn't look like a floating sheet.
-        // We subtract 'skirtDepth' to push the bottom vertices into the ground.
 
-        // South Wall (z = 0)
-        for (int x = 0; x < res; x++)
+        // 2. SKIRTS
+        // Note: We use the exact same cache indices for the top of the skirts
+        // South
+        for (int x = 0; x < resolution; x++)
         {
-            int gx = x * CurrentStep;
             vertices[i] = new Vector3(
-                gx * tileSize,
-                GetBlendedElevation(gx, 0) * elevationStepHeight - skirtDepth,
+                x * CurrentStep * tileSize,
+                heightCache[x + 1, 1] * elevationStepHeight - skirtDepth,
                 0
             );
-            uvs[i++] = new Vector2(gx * invSize, 0);
+            uvCoords[i++] = new Vector2(x * CurrentStep * invSize, 0);
         }
-        // North Wall (z = chunkSize)
-        for (int x = 0; x < res; x++)
+        // North
+        for (int x = 0; x < resolution; x++)
         {
-            int gx = x * CurrentStep;
             vertices[i] = new Vector3(
-                gx * tileSize,
-                GetBlendedElevation(gx, chunkSize) * elevationStepHeight - skirtDepth,
+                x * CurrentStep * tileSize,
+                heightCache[x + 1, resolution] * elevationStepHeight - skirtDepth,
                 chunkBoundSize
             );
-            uvs[i++] = new Vector2(gx * invSize, 1);
+            uvCoords[i++] = new Vector2(x * CurrentStep * invSize, 1);
         }
-        // West Wall (x = 0)
-        for (int z = 0; z < res; z++)
+        // West
+        for (int z = 0; z < resolution; z++)
         {
-            int gz = z * CurrentStep;
             vertices[i] = new Vector3(
                 0,
-                GetBlendedElevation(0, gz) * elevationStepHeight - skirtDepth,
-                gz * tileSize
+                heightCache[1, z + 1] * elevationStepHeight - skirtDepth,
+                z * CurrentStep * tileSize
             );
-            uvs[i++] = new Vector2(0, gz * invSize);
+            uvCoords[i++] = new Vector2(0, z * CurrentStep * invSize);
         }
-        // East Wall (x = chunkSize)
-        for (int z = 0; z < res; z++)
+        // East
+        for (int z = 0; z < resolution; z++)
         {
-            int gz = z * CurrentStep;
             vertices[i] = new Vector3(
                 chunkBoundSize,
-                GetBlendedElevation(chunkSize, gz) * elevationStepHeight - skirtDepth,
-                gz * tileSize
+                heightCache[resolution, z + 1] * elevationStepHeight - skirtDepth,
+                z * CurrentStep * tileSize
             );
-            uvs[i++] = new Vector2(1, gz * invSize);
+            uvCoords[i++] = new Vector2(1, z * CurrentStep * invSize);
         }
     }
 
@@ -224,43 +242,39 @@ public class TerrainChunk : MonoBehaviour
         return samples > 0 ? total / samples : 0;
     }
 
-    private void CalculateSlopeNormals(Vector3[] vertices, Vector3[] normals, int res)
+    private void CalculateSlopeNormals(Vector3[] verts, Vector3[] norms, int res, float[,] cache)
     {
         int gridCount = res * res;
-        // Step-aware lighting: We look at the actual geometry slopes.
+        float vScale = elevationStepHeight;
+        float hDist = 2.0f * tileSize * CurrentStep;
+
         for (int x = 0; x < res; x++)
         {
             for (int z = 0; z < res; z++)
             {
                 int idx = x * res + z;
-                // Central difference sampling for smooth normal transitions
-                float hL = GetBlendedElevation((x - 1) * CurrentStep, z * CurrentStep);
-                float hR = GetBlendedElevation((x + 1) * CurrentStep, z * CurrentStep);
-                float hB = GetBlendedElevation(x * CurrentStep, (z - 1) * CurrentStep);
-                float hF = GetBlendedElevation(x * CurrentStep, (z + 1) * CurrentStep);
 
-                Vector3 tangentX = new Vector3(
-                    2 * tileSize * CurrentStep,
-                    (hR - hL) * elevationStepHeight,
-                    0
-                );
-                Vector3 tangentZ = new Vector3(
-                    0,
-                    (hF - hB) * elevationStepHeight,
-                    2 * tileSize * CurrentStep
-                );
+                // Sample from our padded cache [x+1, z+1] is current
+                // x+2 is Right, x is Left
+                float hL = cache[x, z + 1];
+                float hR = cache[x + 2, z + 1];
+                float hB = cache[x + 1, z];
+                float hF = cache[x + 1, z + 2];
 
-                // The Cross Product ensures the normal is perpendicular to the "softened" slope
-                normals[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
+                // Standard Central Difference Tangents
+                Vector3 tangentX = new Vector3(hDist, (hR - hL) * vScale, 0);
+                Vector3 tangentZ = new Vector3(0, (hF - hB) * vScale, hDist);
+
+                norms[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
             }
         }
 
-        // Skirt Normals: Force them to face strictly horizontal to avoid sand-texture bleeding
+        // Skirt Normals (Stay the same: facing outward, Y=0)
         float centerX = chunkBoundSize * 0.5f;
-        for (int n = gridCount; n < vertices.Length; n++)
+        for (int n = gridCount; n < verts.Length; n++)
         {
-            Vector3 dir = (vertices[n] - new Vector3(centerX, vertices[n].y, centerX)).normalized;
-            normals[n] = new Vector3(dir.x, 0, dir.z);
+            Vector3 dir = (verts[n] - new Vector3(centerX, verts[n].y, centerX)).normalized;
+            norms[n] = new Vector3(dir.x, 0, dir.z);
         }
     }
 
@@ -271,7 +285,7 @@ public class TerrainChunk : MonoBehaviour
         int[] tris = new int[gridTris + skirtTris];
         int t = 0;
 
-        // 1. GRID TRIANGLES
+        // 1. Grid
         for (int x = 0; x < res - 1; x++)
         {
             for (int z = 0; z < res - 1; z++)
@@ -289,15 +303,20 @@ public class TerrainChunk : MonoBehaviour
             }
         }
 
-        // 2. SKIRT TRIANGLES (Connecting top edges to skirt floor)
+        // 2. Skirts (Correctly offset)
         int gridCount = res * res;
+        int sStart = gridCount;
+        int nStart = gridCount + res;
+        int wStart = gridCount + res * 2;
+        int eStart = gridCount + res * 3;
+
         for (int j = 0; j < res - 1; j++)
         {
             // South
             int gL = j * res;
             int gR = (j + 1) * res;
-            int sL = gridCount + j;
-            int sR = gridCount + j + 1;
+            int sL = sStart + j;
+            int sR = sStart + j + 1;
             tris[t++] = gL;
             tris[t++] = sR;
             tris[t++] = gR;
@@ -307,8 +326,8 @@ public class TerrainChunk : MonoBehaviour
             // North
             int ngL = j * res + (res - 1);
             int ngR = (j + 1) * res + (res - 1);
-            int nsL = gridCount + res + j;
-            int nsR = gridCount + res + j + 1;
+            int nsL = nStart + j;
+            int nsR = nStart + j + 1;
             tris[t++] = ngL;
             tris[t++] = ngR;
             tris[t++] = nsR;
@@ -318,8 +337,8 @@ public class TerrainChunk : MonoBehaviour
             // West
             int wgB = j;
             int wgT = j + 1;
-            int wsB = gridCount + res * 2 + j;
-            int wsT = gridCount + res * 2 + j + 1;
+            int wsB = wStart + j;
+            int wsT = wStart + j + 1;
             tris[t++] = wgB;
             tris[t++] = wsT;
             tris[t++] = wgT;
@@ -329,8 +348,8 @@ public class TerrainChunk : MonoBehaviour
             // East
             int egB = (res - 1) * res + j;
             int egT = (res - 1) * res + j + 1;
-            int esB = gridCount + res * 3 + j;
-            int esT = gridCount + res * 3 + j + 1;
+            int esB = eStart + j;
+            int esT = eStart + j + 1;
             tris[t++] = egB;
             tris[t++] = egT;
             tris[t++] = esT;

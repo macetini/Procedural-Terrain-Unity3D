@@ -432,14 +432,14 @@ MonoBehaviour:
   chunkSize: 128
   tileSize: 1
   elevationStepHeight: 0.5
-  maxElevationStep: 16
-  noiseScale: 0.0125
+  maxElevationStep: 8
+  noiseScale: 0.006
   cameraReference: {fileID: 330585545}
   viewDistanceChunks: 4
   initialBuildBurst: 12
   buildsPerFrame: 1
-  lodDist1: 128
-  lodDist2: 384
+  lodDist1: 256
+  lodDist2: 512
   chunkPrefab: {fileID: 581305705177285490, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
 --- !u!4 &555491514
 Transform:

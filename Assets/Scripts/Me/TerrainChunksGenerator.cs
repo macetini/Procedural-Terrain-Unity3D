@@ -369,7 +369,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
     }
 
-    private void UpdateVisibleChunks() // TODO - Performance Optimization
+    private void UpdateVisibleChunks()
     {
         // 1. Calculate which chunks SHOULD exist based on current position
         //int dataRadius = viewDistanceChunks + 1; // Buffer for sanitization
@@ -420,6 +420,29 @@ public class TerrainChunksGenerator : MonoBehaviour
             chunksDict.Remove(key);
             // Note: We keep the 'fullTileMeshData' so if the player turns back,
             // the mountains are exactly the same as before.
+        }
+
+        // 2. NEW: PURGE DATA LEAKS
+        // We define a "Data Radius" slightly larger than the "Visual Radius"
+        // to prevent constant re-generation if a player oscillates at the edge.
+        List<Vector2Int> meshDataKeysToRemove = new();
+        int dataPurgeRadius = viewDistanceChunks + 4;
+
+        foreach (var coord in fullTileMeshData.Keys)
+        {
+            if (
+                Mathf.Abs(coord.x - currentCameraPosition.x) > dataPurgeRadius
+                || Mathf.Abs(coord.y - currentCameraPosition.y) > dataPurgeRadius
+            )
+            {
+                meshDataKeysToRemove.Add(coord);
+            }
+        }
+
+        foreach (var key in meshDataKeysToRemove)
+        {
+            fullTileMeshData.Remove(key);
+            sanitizedChunksHash.Remove(key); // Crucial: allow re-sanitization if player returns
         }
     }
 }
