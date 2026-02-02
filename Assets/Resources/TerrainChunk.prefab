@@ -128,4 +128,4 @@ MonoBehaviour:
   terrainMaterial: {fileID: 2100000, guid: eccacde216d90f84da5dbd324acc8b9b, type: 2}
   boundPadding: 2
   skirtDepth: 5
-  DrawGizmos: 0
+  DrawGizmos: 1

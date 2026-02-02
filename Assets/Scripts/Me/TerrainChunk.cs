@@ -107,7 +107,7 @@ public class TerrainChunk : MonoBehaviour
             triangles = tris,
             uv = uvs,
             // 3. Normal & Lighting Calculations
-            normals = CalculateSlopeNormals(vertices, resolution, gridVertCount),
+            normals = CalculateSlopeNormals(vertices, resolution),
         };
 
         // 4. Finalizing and Component Assignment
@@ -124,49 +124,61 @@ public class TerrainChunk : MonoBehaviour
         return tris;
     }
 
-    private Vector3[] CalculateSlopeNormals(Vector3[] vertices, int resolution, int gridVertCount)
+    private Vector3[] CalculateSlopeNormals(Vector3[] vertices, int resolution)
     {
-        int totalVerts = vertices.Length;
-        Vector3[] normals = new Vector3[totalVerts];
+        Vector3[] normals = new Vector3[vertices.Length];
+        int gridVertCount = resolution * resolution;
 
-        // 1. Process the Main Grid for 45-degree slope shading
         for (int x = 0; x < resolution; x++)
         {
             for (int z = 0; z < resolution; z++)
             {
                 int index = x * resolution + z;
-                float h = vertices[index].y;
+                float currentH = vertices[index].y;
 
-                // Step-aware indexing
-                float hL = (x > 0) ? vertices[(x - 1) * resolution + z].y : h;
-                float hR = (x < resolution - 1) ? vertices[(x + 1) * resolution + z].y : h;
-                float hB = (z > 0) ? vertices[x * resolution + (z - 1)].y : h;
-                float hF = (z < resolution - 1) ? vertices[x * resolution + (z + 1)].y : h;
-
+                // Sample neighbors in the grid
+                // We use a small threshold to determine what counts as "Flat"
+                float threshold = 0.01f;
                 Vector3 slopeDir = Vector3.zero;
-                if (hL > h)
+
+                // Check Left, Right, Back, Forward
+                if (x > 0 && currentH - vertices[(x - 1) * resolution + z].y > threshold)
                     slopeDir += Vector3.right;
-                if (hR > h)
+                if (
+                    x < resolution - 1
+                    && currentH - vertices[(x + 1) * resolution + z].y > threshold
+                )
                     slopeDir += Vector3.left;
-                if (hB > h)
+                if (z > 0 && currentH - vertices[x * resolution + (z - 1)].y > threshold)
                     slopeDir += Vector3.forward;
-                if (hF > h)
+                if (
+                    z < resolution - 1
+                    && currentH - vertices[x * resolution + (z + 1)].y > threshold
+                )
                     slopeDir += Vector3.back;
 
-                normals[index] =
-                    (slopeDir != Vector3.zero)
-                        ? (Vector3.up + slopeDir.normalized).normalized
-                        : Vector3.up;
+                // THE LOGIC:
+                if (slopeDir == Vector3.zero)
+                {
+                    // 1. Flat Plateau: Face strictly Up
+                    normals[index] = Vector3.up;
+                }
+                else
+                {
+                    // 2. Slope: Tilt the normal toward the descent.
+                    // Using (Up + SlopeDir) at a 1:1 ratio creates a 45-degree normal.
+                    // This is exactly what the Triplanar "Green Channel" Power trick needs.
+                    normals[index] = (Vector3.up + slopeDir.normalized).normalized;
+                }
             }
         }
 
-        // 2. Process the Skirt (Facing outwards)
-        float halfBound = chunkBoundSize * 0.5f;
-        for (int n = gridVertCount; n < totalVerts; n++)
+        // 3. Skirt Normals (strictly horizontal to hide the bottom)
+        for (int n = gridVertCount; n < vertices.Length; n++)
         {
-            Vector3 dir = (
-                vertices[n] - new Vector3(halfBound, vertices[n].y, halfBound)
-            ).normalized;
+            Vector3 pos = vertices[n];
+            Vector3 center = new Vector3(chunkBoundSize * 0.5f, pos.y, chunkBoundSize * 0.5f);
+            Vector3 dir = (pos - center).normalized;
             normals[n] = new Vector3(dir.x, 0, dir.z);
         }
 
@@ -392,6 +404,7 @@ public class TerrainChunk : MonoBehaviour
             return;
         }
 
+        /*
         for (int x = 0; x < chunkSize; x++)
         {
             for (int z = 0; z < chunkSize; z++)
@@ -415,6 +428,31 @@ public class TerrainChunk : MonoBehaviour
                         );
                     Gizmos.DrawWireCube(center, new Vector3(tileSize, 0.1f, tileSize));
                 }
+            }
+        }
+        */
+
+        // --- New Normal Visualization Gizmo ---
+        Mesh mesh = filterReference.sharedMesh;
+        if (mesh != null)
+        {
+            Vector3[] verts = mesh.vertices;
+            Vector3[] norms = mesh.normals;
+
+            Gizmos.color = Color.blue;
+            // We only loop through the grid vertices (ignore the skirt for clarity)
+            int resolution = (chunkSize / CurrentStep) + 1;
+            int gridCount = resolution * resolution;
+
+            for (int i = 0; i < gridCount; i++)
+            {
+                // Transform the local vertex position to world space
+                Vector3 worldV = transform.TransformPoint(verts[i]);
+                // Transform the normal to world space
+                Vector3 worldN = transform.TransformDirection(norms[i]);
+
+                // Draw the normal line (0.5f is the length of the line)
+                Gizmos.DrawLine(worldV, worldV + worldN * 0.5f);
             }
         }
     }
