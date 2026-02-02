@@ -28,6 +28,11 @@ public class TerrainChunk : MonoBehaviour
     private MeshFilter filterReference;
     private MeshCollider colliderReference;
 
+    // Pre-allocated arrays to reduce Garbage Collection (GC) pressure
+    private Vector3[] _vertices;
+    private Vector2[] _uvs;
+    private Vector3[] _normals;
+
     void Awake()
     {
         rendererReference = GetComponent<MeshRenderer>();
@@ -44,8 +49,8 @@ public class TerrainChunk : MonoBehaviour
         tileSize = generator.tileSize;
         elevationStepHeight = generator.elevationStepHeight;
         maxElevationStep = generator.maxElevationStep;
-
         chunkBoundSize = chunkSize * tileSize;
+
         if (terrainMaterial != null)
         {
             rendererReference.material = terrainMaterial;
@@ -90,99 +95,218 @@ public class TerrainChunk : MonoBehaviour
         int gridVertCount = resolution * resolution;
         int totalVerts = gridVertCount + (resolution * 4);
 
-        Vector3[] vertices = new Vector3[totalVerts];
-        Vector2[] uvs = new Vector2[totalVerts];
-        GenerateGeometry(vertices, uvs);
+        // Re-allocate only if resolution changed
+        if (_vertices == null || _vertices.Length != totalVerts)
+        {
+            _vertices = new Vector3[totalVerts];
+            _uvs = new Vector2[totalVerts];
+            _normals = new Vector3[totalVerts];
+        }
 
+        GenerateGeometry(_vertices, _uvs, resolution);
         int[] tris = GenerateTriangleIndices(resolution);
 
-        // 2. Mesh Construction
+        CalculateSlopeNormals(_vertices, _normals, resolution);
+
         if (filterReference.sharedMesh != null)
+        {
             Destroy(filterReference.sharedMesh);
+        }
 
         Mesh mesh = new()
         {
             name = $"{MESH_NAME}_{coord.x}_{coord.y}",
-            vertices = vertices,
+            vertices = _vertices,
             triangles = tris,
-            uv = uvs,
-            // 3. Normal & Lighting Calculations
-            normals = CalculateSlopeNormals(vertices, resolution),
+            uv = _uvs,
+            normals = _normals,
         };
 
-        // 4. Finalizing and Component Assignment
         FinalizeMesh(mesh);
     }
 
-    private int[] GenerateTriangleIndices(int resolution)
+    private void GenerateGeometry(Vector3[] vertices, Vector2[] uvs, int res)
     {
-        int gridTris = (resolution - 1) * (resolution - 1) * 6;
-        int skirtTris = (resolution - 1) * 4 * 6;
-        int[] tris = new int[gridTris + skirtTris];
+        int i = 0;
+        float invSize = 1f / chunkSize;
 
-        GenerateTriangles(tris, resolution);
-        return tris;
-    }
-
-    private Vector3[] CalculateSlopeNormals(Vector3[] vertices, int resolution)
-    {
-        Vector3[] normals = new Vector3[vertices.Length];
-        int gridVertCount = resolution * resolution;
-
-        for (int x = 0; x < resolution; x++)
+        for (int x = 0; x < res; x++)
         {
-            for (int z = 0; z < resolution; z++)
+            int gx = x * CurrentStep;
+            for (int z = 0; z < res; z++)
             {
-                int index = x * resolution + z;
-                float currentH = vertices[index].y;
-
-                // Sample neighbors in the grid
-                // We use a small threshold to determine what counts as "Flat"
-                float threshold = 0.01f;
-                Vector3 slopeDir = Vector3.zero;
-
-                // Check Left, Right, Back, Forward
-                if (x > 0 && currentH - vertices[(x - 1) * resolution + z].y > threshold)
-                    slopeDir += Vector3.right;
-                if (
-                    x < resolution - 1
-                    && currentH - vertices[(x + 1) * resolution + z].y > threshold
-                )
-                    slopeDir += Vector3.left;
-                if (z > 0 && currentH - vertices[x * resolution + (z - 1)].y > threshold)
-                    slopeDir += Vector3.forward;
-                if (
-                    z < resolution - 1
-                    && currentH - vertices[x * resolution + (z + 1)].y > threshold
-                )
-                    slopeDir += Vector3.back;
-
-                // THE LOGIC:
-                if (slopeDir == Vector3.zero)
-                {
-                    // 1. Flat Plateau: Face strictly Up
-                    normals[index] = Vector3.up;
-                }
-                else
-                {
-                    // 2. Slope: Tilt the normal toward the descent.
-                    // Using (Up + SlopeDir) at a 1:1 ratio creates a 45-degree normal.
-                    // This is exactly what the Triplanar "Green Channel" Power trick needs.
-                    normals[index] = (Vector3.up + slopeDir.normalized).normalized;
-                }
+                int gz = z * CurrentStep;
+                float h = GetVertexElevation(gx, gz) * elevationStepHeight;
+                vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
+                uvs[i] = new Vector2(gx * invSize, gz * invSize);
+                i++;
             }
         }
 
-        // 3. Skirt Normals (strictly horizontal to hide the bottom)
+        // Skirts
+        for (int x = 0; x < res; x++)
+        { // South
+            int gx = x * CurrentStep;
+            vertices[i] = new Vector3(
+                gx * tileSize,
+                GetVertexElevation(gx, 0) * elevationStepHeight - skirtDepth,
+                0
+            );
+            uvs[i++] = new Vector2(gx * invSize, 0);
+        }
+        for (int x = 0; x < res; x++)
+        { // North
+            int gx = x * CurrentStep;
+            vertices[i] = new Vector3(
+                gx * tileSize,
+                GetVertexElevation(gx, chunkSize) * elevationStepHeight - skirtDepth,
+                chunkBoundSize
+            );
+            uvs[i++] = new Vector2(gx * invSize, 1);
+        }
+        for (int z = 0; z < res; z++)
+        { // West
+            int gz = z * CurrentStep;
+            vertices[i] = new Vector3(
+                0,
+                GetVertexElevation(0, gz) * elevationStepHeight - skirtDepth,
+                gz * tileSize
+            );
+            uvs[i++] = new Vector2(0, gz * invSize);
+        }
+        for (int z = 0; z < res; z++)
+        { // East
+            int gz = z * CurrentStep;
+            vertices[i] = new Vector3(
+                chunkBoundSize,
+                GetVertexElevation(chunkSize, gz) * elevationStepHeight - skirtDepth,
+                gz * tileSize
+            );
+            uvs[i++] = new Vector2(1, gz * invSize);
+        }
+    }
+
+    private int[] GenerateTriangleIndices(int res)
+    {
+        int gridTris = (res - 1) * (res - 1) * 6;
+        int skirtTris = (res - 1) * 4 * 6;
+        int[] tris = new int[gridTris + skirtTris];
+        int t = 0;
+
+        for (int x = 0; x < res - 1; x++)
+        {
+            for (int z = 0; z < res - 1; z++)
+            {
+                int bl = x * res + z;
+                int tl = bl + 1;
+                int br = (x + 1) * res + z;
+                int tr = br + 1;
+                tris[t++] = bl;
+                tris[t++] = tl;
+                tris[t++] = br;
+                tris[t++] = tl;
+                tris[t++] = tr;
+                tris[t++] = br;
+            }
+        }
+
+        // 2. SKIRTS (Connecting Grid-Edges to Skirt-Vertices)
+        // Direction order: South, North, West, East
+        int gridCount = res * res;
+        for (int j = 0; j < res - 1; j++)
+        {
+            // South
+            int gL = j * res;
+            int gR = (j + 1) * res;
+            int sL = gridCount + j;
+            int sR = gridCount + j + 1;
+            tris[t++] = gL;
+            tris[t++] = sR;
+            tris[t++] = gR;
+            tris[t++] = gL;
+            tris[t++] = sL;
+            tris[t++] = sR;
+            // North
+            int ngL = j * res + (res - 1);
+            int ngR = (j + 1) * res + (res - 1);
+            int nsL = gridCount + res + j;
+            int nsR = gridCount + res + j + 1;
+            tris[t++] = ngL;
+            tris[t++] = ngR;
+            tris[t++] = nsR;
+            tris[t++] = ngL;
+            tris[t++] = nsR;
+            tris[t++] = nsL;
+            // West
+            int wgB = j;
+            int wgT = j + 1;
+            int wsB = gridCount + res * 2 + j;
+            int wsT = gridCount + res * 2 + j + 1;
+            tris[t++] = wgB;
+            tris[t++] = wsT;
+            tris[t++] = wgT;
+            tris[t++] = wgB;
+            tris[t++] = wsB;
+            tris[t++] = wsT;
+            // East
+            int egB = (res - 1) * res + j;
+            int egT = (res - 1) * res + j + 1;
+            int esB = gridCount + res * 3 + j;
+            int esT = gridCount + res * 3 + j + 1;
+            tris[t++] = egB;
+            tris[t++] = egT;
+            tris[t++] = esT;
+            tris[t++] = egB;
+            tris[t++] = esT;
+            tris[t++] = esB;
+        }
+        return tris;
+    }
+
+    private void CalculateSlopeNormals(Vector3[] vertices, Vector3[] normals, int res)
+    {
+        int gridVertCount = res * res;
+        float[,] hBuffer = new float[res + 2, res + 2];
+        for (int x = -1; x <= res; x++)
+        {
+            for (int z = -1; z <= res; z++)
+            {
+                int gX = (coord.x * chunkSize) + (x * CurrentStep);
+                int gZ = (coord.y * chunkSize) + (z * CurrentStep);
+                hBuffer[x + 1, z + 1] = GetGlobalElevation(gX, gZ);
+            }
+        }
+
+        float hStep = elevationStepHeight;
+        float tStep = 2.0f * tileSize * CurrentStep;
+
+        // 2. Grid Normals
+        for (int x = 0; x < res; x++)
+        {
+            for (int z = 0; z < res; z++)
+            {
+                int index = x * res + z;
+                float dx = hBuffer[x + 2, z + 1] - hBuffer[x, z + 1];
+                float dz = hBuffer[x + 1, z + 2] - hBuffer[x + 1, z];
+
+                Vector3 sharpNormal = new Vector3(-dx * hStep, tStep, -dz * hStep).normalized;
+
+                if (Mathf.Abs(dx) < 0.01f && Mathf.Abs(dz) < 0.01f)
+                    normals[index] = Vector3.up;
+                else
+                    normals[index] = Vector3.Slerp(Vector3.up, sharpNormal, 0.85f);
+            }
+        }
+
+        // 3. Skirt Normals (Purely horizontal)
         for (int n = gridVertCount; n < vertices.Length; n++)
         {
             Vector3 pos = vertices[n];
-            Vector3 center = new Vector3(chunkBoundSize * 0.5f, pos.y, chunkBoundSize * 0.5f);
-            Vector3 dir = (pos - center).normalized;
+            Vector3 dir = (
+                pos - new Vector3(chunkBoundSize * 0.5f, pos.y, chunkBoundSize * 0.5f)
+            ).normalized;
             normals[n] = new Vector3(dir.x, 0, dir.z);
         }
-
-        return normals;
     }
 
     private void FinalizeMesh(Mesh mesh)
@@ -194,181 +318,33 @@ public class TerrainChunk : MonoBehaviour
         filterReference.mesh = mesh;
 
         // Handle Physics: Only high detail gets a collider to save WebGL performance
-        bool highDetail = (CurrentStep == 1);
+        bool highDetail = CurrentStep == 1;
         colliderReference.enabled = highDetail;
         if (highDetail)
         {
+            Physics.BakeMesh(mesh.GetInstanceID(), false);
             colliderReference.sharedMesh = mesh;
-        }
-    }
-
-    private void GenerateGeometry(Vector3[] vertices, Vector2[] UVs)
-    {
-        int i = 0;
-        // 1. Main Terrain Grid (Inner Loop Z, Outer Loop X)
-        for (int x = 0; x <= chunkSize; x += CurrentStep)
-        {
-            for (int z = 0; z <= chunkSize; z += CurrentStep)
-            {
-                float h = GetVertexElevation(x, z) * elevationStepHeight;
-                vertices[i] = new Vector3(x * tileSize, h, z * tileSize);
-                UVs[i] = new Vector2((float)x / chunkSize, (float)z / chunkSize);
-                i++;
-            }
-        }
-
-        // 2. Skirt (Matching the exact order used in GenerateTriangles)
-
-        // South Edge (z = 0)
-        for (int x = 0; x <= chunkSize; x += CurrentStep)
-        {
-            float h = GetVertexElevation(x, 0) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(x * tileSize, h, 0);
-            UVs[i++] = new Vector2((float)x / chunkSize, 0);
-        }
-        // North Edge (z = chunkSize)
-        for (int x = 0; x <= chunkSize; x += CurrentStep)
-        {
-            float h = GetVertexElevation(x, chunkSize) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(x * tileSize, h, chunkSize * tileSize);
-            UVs[i++] = new Vector2((float)x / chunkSize, 1);
-        }
-        // West Edge (x = 0)
-        for (int z = 0; z <= chunkSize; z += CurrentStep)
-        {
-            float h = GetVertexElevation(0, z) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(0, h, z * tileSize);
-            UVs[i++] = new Vector2(0, (float)z / chunkSize);
-        }
-        // East Edge (x = chunkSize)
-        for (int z = 0; z <= chunkSize; z += CurrentStep)
-        {
-            float h = GetVertexElevation(chunkSize, z) * elevationStepHeight - skirtDepth;
-            vertices[i] = new Vector3(chunkSize * tileSize, h, z * tileSize);
-            UVs[i++] = new Vector2(1, (float)z / chunkSize);
-        }
-    }
-
-    private static void GenerateTriangles(int[] tris, int res)
-    {
-        int trisIndex = 0;
-        // 1. MAIN TERRAIN GRID
-        for (int x = 0; x < res - 1; x++)
-        {
-            for (int z = 0; z < res - 1; z++)
-            {
-                int bl = x * res + z;
-                int tl = bl + 1;
-                int br = (x + 1) * res + z;
-                int tr = br + 1;
-
-                tris[trisIndex++] = bl;
-                tris[trisIndex++] = tl;
-                tris[trisIndex++] = br;
-                tris[trisIndex++] = tl;
-                tris[trisIndex++] = tr;
-                tris[trisIndex++] = br;
-            }
-        }
-
-        // 2. SKIRT WALLS
-        // Each loop connects the top edge (grid index) to the bottom edge (skirt index)
-
-        // South Wall (z = 0)
-        // Top indices: x * res | Bottom indices: terrainVertCount + x
-        int skirtStart = res * res;
-        for (int x = 0; x < res - 1; x++)
-        {
-            int tL = x * res;
-            int tR = (x + 1) * res;
-            int bL = skirtStart + x;
-            int bR = skirtStart + x + 1;
-
-            tris[trisIndex++] = tL;
-            tris[trisIndex++] = bR;
-            tris[trisIndex++] = tR;
-            tris[trisIndex++] = tL;
-            tris[trisIndex++] = bL;
-            tris[trisIndex++] = bR;
-        }
-
-        // North Wall (z = res - 1)
-        // Top indices: x * res + (res - 1) | Bottom indices: skirtStart + res + x
-        skirtStart += res;
-        for (int x = 0; x < res - 1; x++)
-        {
-            int tL = x * res + (res - 1);
-            int tR = (x + 1) * res + (res - 1);
-            int bL = skirtStart + x;
-            int bR = skirtStart + x + 1;
-
-            tris[trisIndex++] = tL;
-            tris[trisIndex++] = tR;
-            tris[trisIndex++] = bR;
-            tris[trisIndex++] = tL;
-            tris[trisIndex++] = bR;
-            tris[trisIndex++] = bL;
-        }
-
-        // West Wall (x = 0)
-        // Top indices: z | Bottom indices: skirtStart + res + z
-        skirtStart += res;
-        for (int z = 0; z < res - 1; z++)
-        {
-            int tB = z;
-            int tT = z + 1;
-            int bB = skirtStart + z;
-            int bT = skirtStart + z + 1;
-
-            tris[trisIndex++] = tB;
-            tris[trisIndex++] = tT;
-            tris[trisIndex++] = bT;
-            tris[trisIndex++] = tB;
-            tris[trisIndex++] = bT;
-            tris[trisIndex++] = bB;
-        }
-
-        // East Wall (x = res - 1)
-        // Top indices: (res - 1) * res + z | Bottom indices: skirtStart + res + z
-        skirtStart += res;
-        for (int z = 0; z < res - 1; z++)
-        {
-            int tB = (res - 1) * res + z;
-            int tT = (res - 1) * res + z + 1;
-            int bB = skirtStart + z;
-            int bT = skirtStart + z + 1;
-
-            tris[trisIndex++] = tB;
-            tris[trisIndex++] = bB;
-            tris[trisIndex++] = bT;
-            tris[trisIndex++] = tB;
-            tris[trisIndex++] = bT;
-            tris[trisIndex++] = tT;
         }
     }
 
     private float GetVertexElevation(int vx, int vz)
     {
-        int maxHeight = 0;
-        int globalStartX = coord.x * chunkSize;
-        int globalStartZ = coord.y * chunkSize;
+        if (
+            generator.GetTileAt(
+                coord.x * chunkSize + vx,
+                coord.y * chunkSize + vz,
+                out TileMeshStruct tile
+            )
+        )
+            return tile.Elevation;
+        return 0;
+    }
 
-        for (int tx = vx - 1; tx <= vx; tx++)
-        {
-            for (int tz = vz - 1; tz <= vz; tz++)
-            {
-                bool foundTile = generator.GetTileAt(
-                    globalStartX + tx,
-                    globalStartZ + tz,
-                    out TileMeshStruct outTile
-                );
-                if (foundTile && outTile.Elevation > maxHeight)
-                {
-                    maxHeight = outTile.Elevation;
-                }
-            }
-        }
-        return maxHeight;
+    private float GetGlobalElevation(int gx, int gz)
+    {
+        if (generator.GetTileAt(gx, gz, out TileMeshStruct tile))
+            return tile.Elevation;
+        return 0;
     }
 
     public void UpdateVisibility(Plane[] planes)
