@@ -29,9 +29,9 @@ public class TerrainChunk : MonoBehaviour
     private MeshCollider colliderReference;
 
     // Pre-allocated arrays to reduce Garbage Collection (GC) pressure
-    private Vector3[] _vertices;
-    private Vector2[] _uvs;
-    private Vector3[] _normals;
+    private Vector3[] vertices;
+    private Vector2[] uvs;
+    private Vector3[] normals;
 
     void Awake()
     {
@@ -96,17 +96,17 @@ public class TerrainChunk : MonoBehaviour
         int totalVerts = gridVertCount + (resolution * 4);
 
         // Re-allocate only if resolution changed
-        if (_vertices == null || _vertices.Length != totalVerts)
+        if (vertices == null || vertices.Length != totalVerts)
         {
-            _vertices = new Vector3[totalVerts];
-            _uvs = new Vector2[totalVerts];
-            _normals = new Vector3[totalVerts];
+            vertices = new Vector3[totalVerts];
+            uvs = new Vector2[totalVerts];
+            normals = new Vector3[totalVerts];
         }
 
-        GenerateGeometry(_vertices, _uvs, resolution);
+        GenerateGeometry(vertices, uvs, resolution);
         int[] tris = GenerateTriangleIndices(resolution);
 
-        CalculateSlopeNormals(_vertices, _normals, resolution);
+        CalculateSlopeNormals(vertices, normals, resolution);
 
         if (filterReference.sharedMesh != null)
         {
@@ -116,10 +116,10 @@ public class TerrainChunk : MonoBehaviour
         Mesh mesh = new()
         {
             name = $"{MESH_NAME}_{coord.x}_{coord.y}",
-            vertices = _vertices,
+            vertices = vertices,
             triangles = tris,
-            uv = _uvs,
-            normals = _normals,
+            uv = uvs,
+            normals = normals,
         };
 
         FinalizeMesh(mesh);
@@ -130,69 +130,148 @@ public class TerrainChunk : MonoBehaviour
         int i = 0;
         float invSize = 1f / chunkSize;
 
+        // 1. MAIN GRID GENERATION
         for (int x = 0; x < res; x++)
         {
             int gx = x * CurrentStep;
             for (int z = 0; z < res; z++)
             {
                 int gz = z * CurrentStep;
-                float h = GetVertexElevation(gx, gz) * elevationStepHeight;
+
+                // ANALYSIS: We use GetBlendedElevation instead of the raw height.
+                // This "bevels" the edges of your steps by averaging neighbor heights.
+                float h = GetBlendedElevation(gx, gz) * elevationStepHeight;
+
                 vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
                 uvs[i] = new Vector2(gx * invSize, gz * invSize);
                 i++;
             }
         }
 
-        // Skirts
+        // 2. SKIRT GENERATION
+        // Skirts provide the "sides" so the terrain doesn't look like a floating sheet.
+        // We subtract 'skirtDepth' to push the bottom vertices into the ground.
+
+        // South Wall (z = 0)
         for (int x = 0; x < res; x++)
-        { // South
+        {
             int gx = x * CurrentStep;
             vertices[i] = new Vector3(
                 gx * tileSize,
-                GetVertexElevation(gx, 0) * elevationStepHeight - skirtDepth,
+                GetBlendedElevation(gx, 0) * elevationStepHeight - skirtDepth,
                 0
             );
             uvs[i++] = new Vector2(gx * invSize, 0);
         }
+        // North Wall (z = chunkSize)
         for (int x = 0; x < res; x++)
-        { // North
+        {
             int gx = x * CurrentStep;
             vertices[i] = new Vector3(
                 gx * tileSize,
-                GetVertexElevation(gx, chunkSize) * elevationStepHeight - skirtDepth,
+                GetBlendedElevation(gx, chunkSize) * elevationStepHeight - skirtDepth,
                 chunkBoundSize
             );
             uvs[i++] = new Vector2(gx * invSize, 1);
         }
+        // West Wall (x = 0)
         for (int z = 0; z < res; z++)
-        { // West
+        {
             int gz = z * CurrentStep;
             vertices[i] = new Vector3(
                 0,
-                GetVertexElevation(0, gz) * elevationStepHeight - skirtDepth,
+                GetBlendedElevation(0, gz) * elevationStepHeight - skirtDepth,
                 gz * tileSize
             );
             uvs[i++] = new Vector2(0, gz * invSize);
         }
+        // East Wall (x = chunkSize)
         for (int z = 0; z < res; z++)
-        { // East
+        {
             int gz = z * CurrentStep;
             vertices[i] = new Vector3(
                 chunkBoundSize,
-                GetVertexElevation(chunkSize, gz) * elevationStepHeight - skirtDepth,
+                GetBlendedElevation(chunkSize, gz) * elevationStepHeight - skirtDepth,
                 gz * tileSize
             );
             uvs[i++] = new Vector2(1, gz * invSize);
         }
     }
 
-    private static int[] GenerateTriangleIndices(int res)
+    // ANALYSIS: This is the core "softening" logic.
+    // By sampling the 4 tiles around a vertex, we create a 3D bevel.
+    private float GetBlendedElevation(int lx, int lz)
+    {
+        int globalX = coord.x * chunkSize + lx;
+        int globalZ = coord.y * chunkSize + lz;
+
+        float total = 0;
+        int samples = 0;
+
+        // Sample a cross pattern (the current tile and 3 neighbors)
+        // This is mathematically equivalent to Bilinear Filtering.
+        for (int x = -1; x <= 0; x++)
+        {
+            for (int z = -1; z <= 0; z++)
+            {
+                if (generator.GetTileAt(globalX + x, globalZ + z, out TileMeshStruct tile))
+                {
+                    total += tile.Elevation;
+                    samples++;
+                }
+            }
+        }
+        return samples > 0 ? total / samples : 0;
+    }
+
+    private void CalculateSlopeNormals(Vector3[] vertices, Vector3[] normals, int res)
+    {
+        int gridCount = res * res;
+        // Step-aware lighting: We look at the actual geometry slopes.
+        for (int x = 0; x < res; x++)
+        {
+            for (int z = 0; z < res; z++)
+            {
+                int idx = x * res + z;
+                // Central difference sampling for smooth normal transitions
+                float hL = GetBlendedElevation((x - 1) * CurrentStep, z * CurrentStep);
+                float hR = GetBlendedElevation((x + 1) * CurrentStep, z * CurrentStep);
+                float hB = GetBlendedElevation(x * CurrentStep, (z - 1) * CurrentStep);
+                float hF = GetBlendedElevation(x * CurrentStep, (z + 1) * CurrentStep);
+
+                Vector3 tangentX = new Vector3(
+                    2 * tileSize * CurrentStep,
+                    (hR - hL) * elevationStepHeight,
+                    0
+                );
+                Vector3 tangentZ = new Vector3(
+                    0,
+                    (hF - hB) * elevationStepHeight,
+                    2 * tileSize * CurrentStep
+                );
+
+                // The Cross Product ensures the normal is perpendicular to the "softened" slope
+                normals[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
+            }
+        }
+
+        // Skirt Normals: Force them to face strictly horizontal to avoid sand-texture bleeding
+        float centerX = chunkBoundSize * 0.5f;
+        for (int n = gridCount; n < vertices.Length; n++)
+        {
+            Vector3 dir = (vertices[n] - new Vector3(centerX, vertices[n].y, centerX)).normalized;
+            normals[n] = new Vector3(dir.x, 0, dir.z);
+        }
+    }
+
+    private int[] GenerateTriangleIndices(int res)
     {
         int gridTris = (res - 1) * (res - 1) * 6;
         int skirtTris = (res - 1) * 4 * 6;
         int[] tris = new int[gridTris + skirtTris];
         int t = 0;
 
+        // 1. GRID TRIANGLES
         for (int x = 0; x < res - 1; x++)
         {
             for (int z = 0; z < res - 1; z++)
@@ -210,8 +289,7 @@ public class TerrainChunk : MonoBehaviour
             }
         }
 
-        // 2. SKIRTS (Connecting Grid-Edges to Skirt-Vertices)
-        // Direction order: South, North, West, East
+        // 2. SKIRT TRIANGLES (Connecting top edges to skirt floor)
         int gridCount = res * res;
         for (int j = 0; j < res - 1; j++)
         {
@@ -263,88 +341,18 @@ public class TerrainChunk : MonoBehaviour
         return tris;
     }
 
-    private void CalculateSlopeNormals(Vector3[] vertices, Vector3[] normals, int res)
-    {
-        int gridVertCount = res * res;
-        float[,] hBuffer = new float[res + 2, res + 2];
-        for (int x = -1; x <= res; x++)
-        {
-            for (int z = -1; z <= res; z++)
-            {
-                int gX = (coord.x * chunkSize) + (x * CurrentStep);
-                int gZ = (coord.y * chunkSize) + (z * CurrentStep);
-                hBuffer[x + 1, z + 1] = GetGlobalElevation(gX, gZ);
-            }
-        }
-
-        float hStep = elevationStepHeight;
-        float tStep = 2.0f * tileSize * CurrentStep;
-
-        // 2. Grid Normals
-        for (int x = 0; x < res; x++)
-        {
-            for (int z = 0; z < res; z++)
-            {
-                int index = x * res + z;
-                float dx = hBuffer[x + 2, z + 1] - hBuffer[x, z + 1];
-                float dz = hBuffer[x + 1, z + 2] - hBuffer[x + 1, z];
-
-                Vector3 sharpNormal = new Vector3(-dx * hStep, tStep, -dz * hStep).normalized;
-
-                if (Mathf.Abs(dx) < 0.01f && Mathf.Abs(dz) < 0.01f)
-                    normals[index] = Vector3.up;
-                else
-                    normals[index] = Vector3.Slerp(Vector3.up, sharpNormal, 0.85f);
-            }
-        }
-
-        // 3. Skirt Normals (Purely horizontal)
-        for (int n = gridVertCount; n < vertices.Length; n++)
-        {
-            Vector3 pos = vertices[n];
-            Vector3 dir = (
-                pos - new Vector3(chunkBoundSize * 0.5f, pos.y, chunkBoundSize * 0.5f)
-            ).normalized;
-            normals[n] = new Vector3(dir.x, 0, dir.z);
-        }
-    }
-
     private void FinalizeMesh(Mesh mesh)
     {
         mesh.RecalculateBounds();
-        // Padding prevents frustum culling from popping the mesh out at the edges
         mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 2f);
-
         filterReference.mesh = mesh;
-
-        // Handle Physics: Only high detail gets a collider to save WebGL performance
-        bool highDetail = CurrentStep == 1;
+        bool highDetail = (CurrentStep == 1);
         colliderReference.enabled = highDetail;
         if (highDetail)
         {
             Physics.BakeMesh(mesh.GetInstanceID(), false);
             colliderReference.sharedMesh = mesh;
         }
-    }
-
-    private float GetVertexElevation(int vx, int vz)
-    {
-        if (
-            generator.GetTileAt(
-                coord.x * chunkSize + vx,
-                coord.y * chunkSize + vz,
-                out TileMeshStruct tile
-            )
-        )
-            return tile.Elevation;
-        return 0;
-    }
-
-    private float GetGlobalElevation(int gx, int gz)
-    {
-        if (generator.GetTileAt(gx, gz, out TileMeshStruct tile))
-            return tile.Elevation;
-        return 0;
     }
 
     public void UpdateVisibility(Plane[] planes)
