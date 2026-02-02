@@ -175,44 +175,42 @@ public class TerrainChunk : MonoBehaviour
         // 2. SKIRTS
         // Note: We use the exact same cache indices for the top of the skirts
         // South
+        int skirtIdx = resolution * resolution;
+        // The cache is [res+2, res+2].
+        // Index 1 in the cache is local 0.
+        // Index res in the cache is local chunkSize.
+
+        // South (z=0)
         for (int x = 0; x < resolution; x++)
         {
-            vertices[i] = new Vector3(
-                x * CurrentStep * tileSize,
-                heightCache[x + 1, 1] * elevationStepHeight - skirtDepth,
-                0
-            );
-            uvCoords[i++] = new Vector2(x * CurrentStep * invSize, 0);
+            float h = heightCache[x + 1, 1] * elevationStepHeight;
+            vertices[skirtIdx++] = new Vector3(x * CurrentStep * tileSize, h - skirtDepth, 0);
         }
-        // North
+        // North (z=chunkSize)
         for (int x = 0; x < resolution; x++)
         {
-            vertices[i] = new Vector3(
+            float h = heightCache[x + 1, resolution] * elevationStepHeight;
+            vertices[skirtIdx++] = new Vector3(
                 x * CurrentStep * tileSize,
-                heightCache[x + 1, resolution] * elevationStepHeight - skirtDepth,
+                h - skirtDepth,
                 chunkBoundSize
             );
-            uvCoords[i++] = new Vector2(x * CurrentStep * invSize, 1);
         }
-        // West
+        // West (x=0)
         for (int z = 0; z < resolution; z++)
         {
-            vertices[i] = new Vector3(
-                0,
-                heightCache[1, z + 1] * elevationStepHeight - skirtDepth,
-                z * CurrentStep * tileSize
-            );
-            uvCoords[i++] = new Vector2(0, z * CurrentStep * invSize);
+            float h = heightCache[1, z + 1] * elevationStepHeight;
+            vertices[skirtIdx++] = new Vector3(0, h - skirtDepth, z * CurrentStep * tileSize);
         }
-        // East
+        // East (x=chunkSize)
         for (int z = 0; z < resolution; z++)
         {
-            vertices[i] = new Vector3(
+            float h = heightCache[resolution, z + 1] * elevationStepHeight;
+            vertices[skirtIdx++] = new Vector3(
                 chunkBoundSize,
-                heightCache[resolution, z + 1] * elevationStepHeight - skirtDepth,
+                h - skirtDepth,
                 z * CurrentStep * tileSize
             );
-            uvCoords[i++] = new Vector2(1, z * CurrentStep * invSize);
         }
     }
 
