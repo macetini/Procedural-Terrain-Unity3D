@@ -70,6 +70,9 @@ public class TerrainChunksGenerator : MonoBehaviour
             if (currentCameraPosition != lastProcessedPos)
             {
                 lastProcessedPos = currentCameraPosition;
+
+                CleanupRemoteChunks();
+
                 // Instead of one big loop, we yield every "row" of chunks
                 for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
                 {
@@ -97,6 +100,26 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
             yield return null;
+        }
+    }
+
+    private void CleanupRemoteChunks()
+    {
+        List<Vector2Int> keysToRemove = new List<Vector2Int>();
+        float maxDist = viewDistanceChunks + 2;
+
+        foreach (var coord in chunksDict.Keys)
+        {
+            if (Vector2Int.Distance(coord, currentCameraPosition) > maxDist)
+                keysToRemove.Add(coord);
+        }
+
+        foreach (var key in keysToRemove)
+        {
+            // 1. Destroy the GameObject
+            Destroy(chunksDict[key].gameObject);
+            // 2. Remove from Dictionary
+            chunksDict.Remove(key);
         }
     }
 
@@ -191,7 +214,6 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)
     {
-        //Debug.Log("[TerrainChunksGenerator] Sanitizing Raw Tile Mesh Data.");
         for (int x = -dataRadius; x <= dataRadius; x++)
         {
             for (int z = -dataRadius; z <= dataRadius; z++)
@@ -205,7 +227,6 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
         }
-        //Debug.Log("[TerrainChunksGenerator] Sanitization Complete.");
     }
 
     private void SanitizeGlobalChunk(Vector2Int tilePos)
@@ -302,7 +323,10 @@ public class TerrainChunksGenerator : MonoBehaviour
             Vector2Int coord = buildQueue[0];
             buildQueue.RemoveAt(0);
 
-            // ... [Keep Stale/Distance Check] ...
+            // Don't build if the player already moved away (snapping to a new far away chunk)
+            float distToCam = Vector2Int.Distance(coord, currentCameraPosition);
+            if (distToCam > viewDistanceChunks + 1)
+                continue;
 
             if (!chunksDict.ContainsKey(coord))
             {
@@ -359,26 +383,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         chunk.UpdateVisibility(cameraPlanes);
 
         chunksDict.Add(coord, chunk);
-    }
-
-    private void RefreshNeighborNormals(Vector2Int coord)
-    {
-        Vector2Int[] neighbors =
-        {
-            coord + Vector2Int.left,
-            coord + Vector2Int.right,
-            coord + Vector2Int.up,
-            coord + Vector2Int.down,
-        };
-
-        foreach (var nCoord in neighbors)
-        {
-            if (chunksDict.TryGetValue(nCoord, out TerrainChunk neighbor))
-            {
-                // Re-trigger the build to fix the edge normals
-                neighbor.UpdateLOD(true);
-            }
-        }
     }
 
     public bool GetTileAt(int globalX, int globalZ, out TileMeshStruct tile)
@@ -464,28 +468,6 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             // Short rest before the next full world sweep
             yield return null;
-        }
-    }
-
-    private void UpdateVisibleChunks()
-    {
-        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
-        {
-            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
-            {
-                Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
-
-                // If we don't even have the Raw Data yet, just mark the coord for building.
-                // We won't generate data here; we'll do it in the rhythm of the Coroutine.
-                if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
-                {
-                    buildQueue.Add(coord);
-                }
-                else if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
-                {
-                    chunk.UpdateLOD();
-                }
-            }
         }
     }
 
