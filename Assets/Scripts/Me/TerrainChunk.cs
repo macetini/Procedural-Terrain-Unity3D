@@ -253,11 +253,18 @@ public class TerrainChunk : MonoBehaviour
     // By sampling the 4 tiles around a vertex, we create a 3D bevel.
     private float GetBlendedElevation(int lx, int lz)
     {
+        // This samples the generator's global data.
+        // Because we JIT-generated all 8 neighbors above, this will now
+        // find real data for the edges (lx = -1, lx = 17, etc.)
+        int globalX = coord.x * chunkSize + lx;
+        int globalZ = coord.y * chunkSize + lz;
+
         float total = 0;
-        total += SampleGrid(lx, lz);
-        total += SampleGrid(lx - 1, lz);
-        total += SampleGrid(lx, lz - 1);
-        total += SampleGrid(lx - 1, lz - 1);
+        total += generator.GetElevationAt(globalX, globalZ);
+        total += generator.GetElevationAt(globalX - 1, globalZ);
+        total += generator.GetElevationAt(globalX, globalZ - 1);
+        total += generator.GetElevationAt(globalX - 1, globalZ - 1);
+
         return total * 0.25f;
     }
 
@@ -298,23 +305,21 @@ public class TerrainChunk : MonoBehaviour
 
         for (int x = 0; x < resolution; x++)
         {
+            int row = (x + 1) * stride;
             for (int z = 0; z < resolution; z++)
             {
                 int idx = x * resolution + z;
-
-                // Offset x and z by 1 because the cache is padded
-                int cx = x + 1;
                 int cz = z + 1;
 
-                float hL = heightCache1D[(cx - 1) * stride + cz]; // Left
-                float hR = heightCache1D[(cx + 1) * stride + cz]; // Right
-                float hB = heightCache1D[cx * stride + (cz - 1)]; // Back
-                float hF = heightCache1D[cx * stride + (cz + 1)]; // Forward
+                // Sample 4 directions from the padded height cache
+                float hL = heightCache1D[row - stride + cz];
+                float hR = heightCache1D[row + stride + cz];
+                float hB = heightCache1D[row + cz - 1];
+                float hF = heightCache1D[row + cz + 1];
 
-                Vector3 tangentX = new(hDist, (hR - hL) * vScale, 0);
-                Vector3 tangentZ = new(0, (hF - hB) * vScale, hDist);
-
-                normals[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
+                // Standard Sobel-filter style normal generation
+                Vector3 normal = new Vector3(hL - hR, 2.0f * (hDist / vScale), hB - hF);
+                normals[idx] = normal.normalized;
             }
         }
 

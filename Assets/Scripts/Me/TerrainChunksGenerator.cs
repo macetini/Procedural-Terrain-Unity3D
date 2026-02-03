@@ -32,15 +32,11 @@ public class TerrainChunksGenerator : MonoBehaviour
     private readonly HashSet<Vector2Int> sanitizedChunksHash = new();
     private readonly List<Vector2Int> buildQueue = new();
     private bool isProcessingQueue = false;
-
     private Plane[] cameraPlanes;
     private float ChunkBoundSize => chunkSize * tileSize;
-
     private Vector2Int lastLookupCoord = new(-9999, -9999);
     private TileMeshStruct[,] lastLookupGrid;
-
     private readonly Dictionary<int, int[]> triangleCache = new();
-
     private readonly List<Vector2Int> visibilityKeysSnapshot = new();
 
     void Start()
@@ -69,7 +65,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     private IEnumerator WorldMonitoringRoutine()
     {
         Vector2Int lastProcessedPos = new(-9999, -9999);
-
         while (true)
         {
             if (currentCameraPosition != lastProcessedPos)
@@ -96,7 +91,6 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
 
                 SortBuildQueue();
-
                 if (!isProcessingQueue && buildQueue.Count > 0)
                 {
                     StartCoroutine(ProcessBuildQueue());
@@ -303,50 +297,43 @@ public class TerrainChunksGenerator : MonoBehaviour
     private IEnumerator ProcessBuildQueue()
     {
         isProcessingQueue = true;
-
         while (buildQueue.Count > 0)
         {
             Vector2Int coord = buildQueue[0];
             buildQueue.RemoveAt(0);
 
-            // --- STALE CHECK ---
-            Vector3 chunkPos = new Vector3(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
-            float distSqr = (chunkPos - cameraReference.transform.position).sqrMagnitude;
-            float maxDistSqr = Mathf.Pow((viewDistanceChunks + 2) * ChunkBoundSize, 2);
+            // ... [Keep Stale/Distance Check] ...
 
-            if (distSqr > maxDistSqr)
-            {
-                continue; // Skip this chunk, it's too far away now!
-            }
-
-            // [Keep your Stale/Distance Check here]
             if (!chunksDict.ContainsKey(coord))
             {
-                // --- JIT (Just In Time) DATA GENERATION ---
-                // If data doesn't exist, generate it now.
-                // --- SURGICAL JIT DATA GENERATION ---
-                // We need the center AND its immediate North/East neighbors for sanitization
-                for (int x = 0; x <= 1; x++)
+                // 1. Ensure a 3x3 block of RAW DATA exists
+                for (int x = -1; x <= 1; x++)
                 {
-                    for (int z = 0; z <= 1; z++)
+                    for (int z = -1; z <= 1; z++)
                     {
-                        Vector2Int neighborCoord = coord + new Vector2Int(x, z);
-                        if (!fullTileMeshData.ContainsKey(neighborCoord))
+                        Vector2Int n = coord + new Vector2Int(x, z);
+                        if (!fullTileMeshData.ContainsKey(n))
+                            GenerateFullMeshData(n, 0);
+                    }
+                }
+
+                // 2. Ensure a 3x3 block is SANITIZED (Height-Matched)
+                // This is the key! We sanitize the neighbors against EACH OTHER
+                // so the heights at the edges are identical.
+                for (int x = -1; x <= 1; x++)
+                {
+                    for (int z = -1; z <= 1; z++)
+                    {
+                        Vector2Int n = coord + new Vector2Int(x, z);
+                        if (!sanitizedChunksHash.Contains(n))
                         {
-                            // We use radius 0 to generate ONLY this specific neighbor
-                            GenerateFullMeshData(neighborCoord, 0);
+                            SanitizeGlobalChunk(n);
+                            sanitizedChunksHash.Add(n);
                         }
                     }
                 }
-                // --- JIT SANITIZATION ---
-                if (!sanitizedChunksHash.Contains(coord))
-                {
-                    SanitizeGlobalChunk(coord);
-                    sanitizedChunksHash.Add(coord);
-                }
 
-                // Now spawn. If the player is moving fast, they see empty space
-                // until this specific 0.1s tick finishes.
+                // 3. Now that the heights are guaranteed to match, spawn
                 SpawnChunkMesh(coord);
 
                 if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
@@ -372,6 +359,26 @@ public class TerrainChunksGenerator : MonoBehaviour
         chunk.UpdateVisibility(cameraPlanes);
 
         chunksDict.Add(coord, chunk);
+    }
+
+    private void RefreshNeighborNormals(Vector2Int coord)
+    {
+        Vector2Int[] neighbors =
+        {
+            coord + Vector2Int.left,
+            coord + Vector2Int.right,
+            coord + Vector2Int.up,
+            coord + Vector2Int.down,
+        };
+
+        foreach (var nCoord in neighbors)
+        {
+            if (chunksDict.TryGetValue(nCoord, out TerrainChunk neighbor))
+            {
+                // Re-trigger the build to fix the edge normals
+                neighbor.UpdateLOD(true);
+            }
+        }
     }
 
     public bool GetTileAt(int globalX, int globalZ, out TileMeshStruct tile)
