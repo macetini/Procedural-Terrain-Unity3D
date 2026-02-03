@@ -38,7 +38,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private Plane[] cameraPlanes;
     private float ChunkBoundSize => chunkSize * tileSize;
 
-    private Vector2Int lastLookupCoord = new Vector2Int(-9999, -9999);
+    private Vector2Int lastLookupCoord = new(-9999, -9999);
     private TileMeshStruct[,] lastLookupGrid;
 
     private readonly Dictionary<int, int[]> triangleCache = new();
@@ -49,27 +49,14 @@ public class TerrainChunksGenerator : MonoBehaviour
         FirstPass();
         SecondPass();
 
-        StartCoroutine(ProcessBuildQueue());
-        StartCoroutine(VisibilityCheckRoutine());
+        StartCoroutine(WorldMonitoringRoutine()); // The manager
+        StartCoroutine(ProcessBuildQueue()); // The builder
+        StartCoroutine(VisibilityCheckRoutine()); // The culler
     }
 
     void Update()
     {
-        Vector2Int previousPos = currentCameraPosition;
         UpdateCurrentCameraPosition();
-
-        // Only recalculate the world if we've actually moved into a different chunk
-        if (currentCameraPosition != previousPos)
-        {
-            UpdateVisibleChunks();
-            SortBuildQueue();
-
-            // Ensure the build process is running
-            if (!isProcessingQueue && buildQueue.Count > 0)
-            {
-                StartCoroutine(ProcessBuildQueue());
-            }
-        }
     }
 
     private void UpdateCurrentCameraPosition()
@@ -77,6 +64,47 @@ public class TerrainChunksGenerator : MonoBehaviour
         int currentX = Mathf.FloorToInt(cameraReference.transform.position.x / ChunkBoundSize);
         int currentZ = Mathf.FloorToInt(cameraReference.transform.position.z / ChunkBoundSize);
         currentCameraPosition = new Vector2Int(currentX, currentZ);
+    }
+
+    private IEnumerator WorldMonitoringRoutine()
+    {
+        Vector2Int lastProcessedPos = new Vector2Int(-9999, -9999);
+
+        while (true)
+        {
+            if (currentCameraPosition != lastProcessedPos)
+            {
+                lastProcessedPos = currentCameraPosition;
+
+                // Instead of one big loop, we yield every "row" of chunks
+                for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
+                {
+                    for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+                    {
+                        Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
+
+                        if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
+                        {
+                            buildQueue.Add(coord);
+                        }
+                        else if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                        {
+                            chunk.UpdateLOD();
+                        }
+                    }
+                    // Yield after every 'X' column to keep framerate perfect
+                    yield return null;
+                }
+
+                SortBuildQueue();
+
+                if (!isProcessingQueue && buildQueue.Count > 0)
+                {
+                    StartCoroutine(ProcessBuildQueue());
+                }
+            }
+            yield return WaitForSeconds_0_1;
+        }
     }
 
     private void FirstPass()
@@ -383,18 +411,21 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SortBuildQueue()
     {
-        Vector3 camPos = cameraReference.transform.position;
+        if (buildQueue.Count <= 1)
+            return;
+
+        // Capture camera pos in chunk-coordinates once to avoid repeated math
+        // We use a local variable to avoid thread/sync issues during the sort
+        Vector2Int camCoord = currentCameraPosition;
 
         buildQueue.Sort(
             (a, b) =>
             {
-                // Calculate world positions for both coordinates
-                Vector3 posA = new(a.x * ChunkBoundSize, 0, a.y * ChunkBoundSize);
-                Vector3 posB = new(b.x * ChunkBoundSize, 0, b.y * ChunkBoundSize);
+                // Use "Manhattan Distance" or squared coordinate distance
+                // Manhattan: abs(x1-x2) + abs(y1-y2) is even faster than squaring
+                int distA = Mathf.Abs(a.x - camCoord.x) + Mathf.Abs(a.y - camCoord.y);
+                int distB = Mathf.Abs(b.x - camCoord.x) + Mathf.Abs(b.y - camCoord.y);
 
-                float distA = Vector3.SqrMagnitude(camPos - posA);
-                float distB = Vector3.SqrMagnitude(camPos - posB);
-                // Sort Ascending (Smallest distance first)
                 return distA.CompareTo(distB);
             }
         );

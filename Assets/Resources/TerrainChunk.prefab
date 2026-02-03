@@ -117,7 +117,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SquareGridGenerator
   terrainMaterial: {fileID: 2100000, guid: eccacde216d90f84da5dbd324acc8b9b, type: 2}
-  boundPadding: 2
+  frustumPadding: 5
   skirtDepth: 5
   DrawGizmos: 0
   fadeEffect: {fileID: -9018393556751376882}

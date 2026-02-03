@@ -7,7 +7,7 @@ public class TerrainChunk : MonoBehaviour
 
     [Header("Settings")]
     public Material terrainMaterial;
-    public float boundPadding = 2f;
+    public float frustumPadding = 5.0f;
     public float skirtDepth = 5f;
 
     [Header("Debug Settings")]
@@ -123,11 +123,13 @@ public class TerrainChunk : MonoBehaviour
         int cacheStride = resolution + 2;
         for (int x = -1; x <= resolution; x++)
         {
+            int rowOffset = (x + 1) * cacheStride; // Calculate once per row
             for (int z = -1; z <= resolution; z++)
             {
-                // Calculate 1D index
-                int cacheIndex = (x + 1) * cacheStride + z + 1;
-                heightCache1D[cacheIndex] = GetBlendedElevation(x * CurrentStep, z * CurrentStep);
+                heightCache1D[rowOffset + z + 1] = GetBlendedElevation(
+                    x * CurrentStep,
+                    z * CurrentStep
+                );
             }
         }
 
@@ -275,16 +277,19 @@ public class TerrainChunk : MonoBehaviour
 
     private void FinalizeMesh(Mesh mesh)
     {
-        //mesh.RecalculateBounds();
-        // Manual Padding to ensure skirts don't trigger "popping"
-        //mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * boundPadding);
         float maxHeight = maxElevationStep * elevationStepHeight;
-        mesh.bounds = new Bounds(
-            new Vector3(chunkBoundSize * 0.5f, maxHeight * 0.5f, chunkBoundSize * 0.5f),
-            new Vector3(chunkBoundSize, maxHeight + skirtDepth, chunkBoundSize)
+
+        // We center the bounds and apply the public frustumPadding
+        Vector3 center = new(chunkBoundSize * 0.5f, maxHeight * 0.5f, chunkBoundSize * 0.5f);
+        Vector3 size = new Vector3(
+            chunkBoundSize + frustumPadding,
+            maxHeight + skirtDepth + frustumPadding,
+            chunkBoundSize + frustumPadding
         );
 
-        if (!rendererReference.enabled)
+        mesh.bounds = new Bounds(center, size);
+
+        if (!rendererReference.enabled && !isFirstBuild)
             rendererReference.enabled = true;
 
         if (isFirstBuild)
@@ -297,13 +302,18 @@ public class TerrainChunk : MonoBehaviour
 
     public void UpdateVisibility(Plane[] planes)
     {
-        // Math-based bounds are much faster than asking the Renderer/Physics engine
         float halfSize = chunkBoundSize * 0.5f;
         float height = maxElevationStep * elevationStepHeight;
-        Vector3 center = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
-        Vector3 size = new Vector3(chunkBoundSize, height + skirtDepth, chunkBoundSize);
 
-        Bounds checkBounds = new Bounds(center, size);
+        // Use the same padding here as we do for the mesh bounds
+        Vector3 center = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
+        Vector3 size = new(
+            chunkBoundSize + frustumPadding,
+            height + skirtDepth + frustumPadding,
+            chunkBoundSize + frustumPadding
+        );
+
+        Bounds checkBounds = new(center, size);
 
         IsVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
         rendererReference.enabled = IsVisible;
