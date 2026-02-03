@@ -32,7 +32,7 @@ public class TerrainChunk : MonoBehaviour
     private Vector3[] vertices;
     private Vector2[] uvs;
     private Vector3[] normals;
-    private float[,] heightCache; // Added: Reuse the height cache array
+    private float[] heightCache1D; // Added: Reuse the height cache array
     private bool isFirstBuild = true;
 
     void Awake()
@@ -105,9 +105,10 @@ public class TerrainChunk : MonoBehaviour
 
         // --- OPTIMIZATION: HEIGHT CACHE REUSE ---
         int cacheRes = resolution + 2;
-        if (heightCache == null || heightCache.GetLength(0) != cacheRes)
+        int totalCacheSize = cacheRes * cacheRes;
+        if (heightCache1D == null || heightCache1D.Length != totalCacheSize)
         {
-            heightCache = new float[cacheRes, cacheRes];
+            heightCache1D = new float[totalCacheSize];
         }
 
         // --- OPTIMIZATION: MESH REUSE ---
@@ -119,21 +120,23 @@ public class TerrainChunk : MonoBehaviour
         Mesh mesh = filterReference.sharedMesh;
 
         // Populate Height Cache using the new Generator Fast-Lookup
+        int cacheStride = resolution + 2;
         for (int x = -1; x <= resolution; x++)
         {
             for (int z = -1; z <= resolution; z++)
             {
-                // We pass CurrentStep to sample the correct "Gap" for the current LOD
-                heightCache[x + 1, z + 1] = GetBlendedElevation(x * CurrentStep, z * CurrentStep);
+                // Calculate 1D index
+                int cacheIndex = (x + 1) * cacheStride + z + 1;
+                heightCache1D[cacheIndex] = GetBlendedElevation(x * CurrentStep, z * CurrentStep);
             }
         }
 
-        GenerateGeometry(vertices, uvs, resolution, heightCache);
+        GenerateGeometry(vertices, uvs, resolution);
 
         // Fetch shared triangle indices (Zero Alloc)
         int[] tris = generator.GetPrecalculatedTriangles(resolution);
 
-        CalculateSlopeNormals(vertices, normals, resolution, heightCache);
+        CalculateSlopeNormals(vertices, normals, resolution);
 
         // --- OPTIMIZATION: FAST GPU UPLOAD ---
         mesh.Clear(); // Clears indices but keeps vertex memory containers
@@ -145,15 +148,11 @@ public class TerrainChunk : MonoBehaviour
         FinalizeMesh(mesh);
     }
 
-    private void GenerateGeometry(
-        Vector3[] vertices,
-        Vector2[] uvCoords,
-        int resolution,
-        float[,] heightCache
-    )
+    private void GenerateGeometry(Vector3[] vertices, Vector2[] uvCoords, int resolution)
     {
         int i = 0;
         float invSize = 1f / chunkSize;
+        int cacheStride = resolution + 2;
 
         // 1. MAIN GRID GENERATION
         for (int x = 0; x < resolution; x++)
@@ -165,7 +164,7 @@ public class TerrainChunk : MonoBehaviour
 
                 // ANALYSIS: We use GetBlendedElevation instead of the raw height.
                 // This "bevels" the edges of your steps by averaging neighbor heights.
-                float h = heightCache[x + 1, z + 1] * elevationStepHeight;
+                float h = heightCache1D[(x + 1) * cacheStride + (z + 1)] * elevationStepHeight;
 
                 vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
                 uvCoords[i] = new Vector2(gx * invSize, gz * invSize);
@@ -180,32 +179,33 @@ public class TerrainChunk : MonoBehaviour
         // Index 1 in the cache is local 0.
         // Index res in the cache is local chunkSize.
         int skirtIdx = resolution * resolution;
-        // South (z=0)
+
+        // South (z=0) -> cache z index is 1
         for (int x = 0; x < resolution; x++)
         {
-            float h = heightCache[x + 1, 1] * elevationStepHeight;
+            float h = heightCache1D[(x + 1) * cacheStride + 1] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(x * CurrentStep * tileSize, h - skirtDepth, 0);
         }
-        // North (z=chunkSize)
+        // North (z=chunkSize) -> cache z index is resolution
         for (int x = 0; x < resolution; x++)
         {
-            float h = heightCache[x + 1, resolution] * elevationStepHeight;
+            float h = heightCache1D[(x + 1) * cacheStride + resolution] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(
                 x * CurrentStep * tileSize,
                 h - skirtDepth,
                 chunkBoundSize
             );
         }
-        // West (x=0)
+        // West (x=0) -> cache x index is 1
         for (int z = 0; z < resolution; z++)
         {
-            float h = heightCache[1, z + 1] * elevationStepHeight;
+            float h = heightCache1D[1 * cacheStride + z + 1] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(0, h - skirtDepth, z * CurrentStep * tileSize);
         }
-        // East (x=chunkSize)
+        // East (x=chunkSize) -> cache x index is resolution
         for (int z = 0; z < resolution; z++)
         {
-            float h = heightCache[resolution, z + 1] * elevationStepHeight;
+            float h = heightCache1D[resolution * cacheStride + z + 1] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(
                 chunkBoundSize,
                 h - skirtDepth,
@@ -235,11 +235,12 @@ public class TerrainChunk : MonoBehaviour
         return total * 0.25f;
     }
 
-    private void CalculateSlopeNormals(Vector3[] verts, Vector3[] norms, int res, float[,] cache)
+    private void CalculateSlopeNormals(Vector3[] verts, Vector3[] norms, int res)
     {
         int gridCount = res * res;
         float vScale = elevationStepHeight;
         float hDist = 2.0f * tileSize * CurrentStep;
+        int stride = res + 2;
 
         for (int x = 0; x < res; x++)
         {
@@ -247,14 +248,15 @@ public class TerrainChunk : MonoBehaviour
             {
                 int idx = x * res + z;
 
-                // Sample from our padded cache [x+1, z+1] is current
-                // x+2 is Right, x is Left
-                float hL = cache[x, z + 1];
-                float hR = cache[x + 2, z + 1];
-                float hB = cache[x + 1, z];
-                float hF = cache[x + 1, z + 2];
+                // Offset x and z by 1 because the cache is padded
+                int cx = x + 1;
+                int cz = z + 1;
 
-                // Standard Central Difference Tangents
+                float hL = heightCache1D[(cx - 1) * stride + cz]; // Left
+                float hR = heightCache1D[(cx + 1) * stride + cz]; // Right
+                float hB = heightCache1D[cx * stride + (cz - 1)]; // Back
+                float hF = heightCache1D[cx * stride + (cz + 1)]; // Forward
+
                 Vector3 tangentX = new(hDist, (hR - hL) * vScale, 0);
                 Vector3 tangentZ = new(0, (hF - hB) * vScale, hDist);
 
@@ -262,7 +264,7 @@ public class TerrainChunk : MonoBehaviour
             }
         }
 
-        // Skirt Normals (Stay the same: facing outward, Y=0)
+        // Skirt Normals logic remains same as before
         float centerX = chunkBoundSize * 0.5f;
         for (int n = gridCount; n < verts.Length; n++)
         {
@@ -273,10 +275,14 @@ public class TerrainChunk : MonoBehaviour
 
     private void FinalizeMesh(Mesh mesh)
     {
-        mesh.RecalculateBounds();
-
+        //mesh.RecalculateBounds();
         // Manual Padding to ensure skirts don't trigger "popping"
-        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * boundPadding);
+        //mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * boundPadding);
+        float maxHeight = maxElevationStep * elevationStepHeight;
+        mesh.bounds = new Bounds(
+            new Vector3(chunkBoundSize * 0.5f, maxHeight * 0.5f, chunkBoundSize * 0.5f),
+            new Vector3(chunkBoundSize, maxHeight + skirtDepth, chunkBoundSize)
+        );
 
         if (!rendererReference.enabled)
             rendererReference.enabled = true;
@@ -291,15 +297,21 @@ public class TerrainChunk : MonoBehaviour
 
     public void UpdateVisibility(Plane[] planes)
     {
-        // Simple visibility check
-        IsVisible = GeometryUtility.TestPlanesAABB(planes, rendererReference.bounds);
+        // Math-based bounds are much faster than asking the Renderer/Physics engine
+        float halfSize = chunkBoundSize * 0.5f;
+        float height = maxElevationStep * elevationStepHeight;
+        Vector3 center = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
+        Vector3 size = new Vector3(chunkBoundSize, height + skirtDepth, chunkBoundSize);
+
+        Bounds checkBounds = new Bounds(center, size);
+
+        IsVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
         rendererReference.enabled = IsVisible;
     }
 
     // ------------------------------------------------------------------------------------------------
     // -------------------------------------------- [Effects] -----------------------------------------
     // ------------------------------------------------------------------------------------------------
-
 
     public void StartFadeIn()
     {
