@@ -34,7 +34,7 @@ public class TerrainChunk : MonoBehaviour
     private Vector3[] normals;
     private float[] heightCache1D; // Added: Reuse the height cache array
     private int lastTriangleCount = -1; // Track this to avoid redundant triangle uploads
-    private bool isFirstBuild = true;
+    private bool wasVisibleLastCheck = false; // [NEW] Track state change
 
     private TileMeshStruct[,] gridC,
         gridW,
@@ -349,13 +349,6 @@ public class TerrainChunk : MonoBehaviour
 
         if (!rendererReference.enabled) // && !isFirstBuild) // Check isFirstBuild to avoid a bug
             rendererReference.enabled = true;
-
-        if (isFirstBuild)
-        {
-            if (fadeEffect != null)
-                fadeEffect.Play();
-            isFirstBuild = false;
-        }
     }
 
     public void UpdateVisibility(Plane[] planes)
@@ -376,12 +369,21 @@ public class TerrainChunk : MonoBehaviour
         bool frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
         IsVisible = frustumVisible;
 
-        // 2. Only actually enable the MeshRenderer if it's in frustum AND mesh data exists
         bool finalShowState = frustumVisible && isMeshReady;
+
+        // [OPTIMIZED] Trigger Fade Effect on "Entry"
+        if (finalShowState && !wasVisibleLastCheck)
+        {
+            if (fadeEffect != null)
+                fadeEffect.Play();
+        }
+
         if (rendererReference.enabled != finalShowState)
         {
             rendererReference.enabled = finalShowState;
         }
+
+        wasVisibleLastCheck = finalShowState; // [NEW] Save state
     }
 
     // ------------------------------------------------------------------------------------------------
