@@ -51,6 +51,14 @@ public class TerrainChunk : MonoBehaviour
         filterReference = GetComponent<MeshFilter>();
     }
 
+    void OnDestroy()
+    {
+        if (filterReference != null && filterReference.sharedMesh != null)
+        {
+            Destroy(filterReference.sharedMesh);
+        }
+    }
+
     public void InitBuild(TerrainChunksGenerator gen, Vector2Int chunkCoord)
     {
         generator = gen;
@@ -253,18 +261,11 @@ public class TerrainChunk : MonoBehaviour
     // By sampling the 4 tiles around a vertex, we create a 3D bevel.
     private float GetBlendedElevation(int lx, int lz)
     {
-        // This samples the generator's global data.
-        // Because we JIT-generated all 8 neighbors above, this will now
-        // find real data for the edges (lx = -1, lx = 17, etc.)
-        int globalX = coord.x * chunkSize + lx;
-        int globalZ = coord.y * chunkSize + lz;
-
         float total = 0;
-        total += generator.GetElevationAt(globalX, globalZ);
-        total += generator.GetElevationAt(globalX - 1, globalZ);
-        total += generator.GetElevationAt(globalX, globalZ - 1);
-        total += generator.GetElevationAt(globalX - 1, globalZ - 1);
-
+        total += SampleGrid(lx, lz);
+        total += SampleGrid(lx - 1, lz);
+        total += SampleGrid(lx, lz - 1);
+        total += SampleGrid(lx - 1, lz - 1);
         return total * 0.25f;
     }
 

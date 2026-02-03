@@ -26,7 +26,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     public TerrainChunk chunkPrefab;
 
     private Vector2Int currentCameraPosition = Vector2Int.zero;
-
     private readonly Dictionary<Vector2Int, TileMeshStruct[,]> fullTileMeshData = new();
     private readonly Dictionary<Vector2Int, TerrainChunk> chunksDict = new();
     private readonly HashSet<Vector2Int> sanitizedChunksHash = new();
@@ -105,21 +104,31 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void CleanupRemoteChunks()
     {
-        List<Vector2Int> keysToRemove = new List<Vector2Int>();
-        float maxDist = viewDistanceChunks + 2;
+        visibilityKeysSnapshot.Clear();
+        visibilityKeysSnapshot.AddRange(chunksDict.Keys);
 
-        foreach (var coord in chunksDict.Keys)
-        {
-            if (Vector2Int.Distance(coord, currentCameraPosition) > maxDist)
-                keysToRemove.Add(coord);
-        }
+        // Using a simple integer distance (Manhattan) is faster and safer for chunk grids
+        int maxChunkDist = viewDistanceChunks + 2;
 
-        foreach (var key in keysToRemove)
+        foreach (var coord in visibilityKeysSnapshot)
         {
-            // 1. Destroy the GameObject
-            Destroy(chunksDict[key].gameObject);
-            // 2. Remove from Dictionary
-            chunksDict.Remove(key);
+            int chunkDist =
+                Mathf.Abs(coord.x - currentCameraPosition.x)
+                + Mathf.Abs(coord.y - currentCameraPosition.y);
+
+            if (chunkDist > maxChunkDist)
+            {
+                if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                {
+                    Destroy(chunk.gameObject);
+                    chunksDict.Remove(coord);
+
+                    // [CRITICAL] Clear these so the JIT logic can re-sanitize
+                    // if the player returns to this area later.
+                    sanitizedChunksHash.Remove(coord);
+                    fullTileMeshData.Remove(coord);
+                }
+            }
         }
     }
 
@@ -377,11 +386,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
         // This sets up variables
         chunk.InitBuild(this, coord);
-
-        // Force a frustum check right now
-        cameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
         chunk.UpdateVisibility(cameraPlanes);
-
         chunksDict.Add(coord, chunk);
     }
 
