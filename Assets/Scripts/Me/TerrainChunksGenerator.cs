@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TerrainChunksGenerator : MonoBehaviour
 {
-    private static readonly WaitForSeconds WaitForSeconds0_2 = new(0.2f);
+    private static readonly WaitForSeconds WaitForSeconds_0_1 = new(0.1f);
 
     [Header("Generation Settings")]
     public int chunkSize = 16;
@@ -18,7 +18,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int viewDistanceChunks = 3;
 
     [Header("Build Settings")]
-    public int initialBuildBurst = 5;
     public int buildsPerFrame = 1; // Start with 1 to ensure 60fps on WebGL
 
     [Header("LOD Settings")]
@@ -45,7 +44,9 @@ public class TerrainChunksGenerator : MonoBehaviour
         UpdateCurrentCameraPosition();
         FirstPass();
         SecondPass();
-        StartCoroutine(VisibilityCheckRoutine());
+
+        StartCoroutine(ProcessBuildQueue());
+        //StartCoroutine(VisibilityCheckRoutine());
     }
 
     void Update()
@@ -56,8 +57,8 @@ public class TerrainChunksGenerator : MonoBehaviour
         // Only recalculate the world if we've actually moved into a different chunk
         if (currentCameraPosition != previousPos)
         {
-            UpdateVisibleChunks();
-            SortBuildQueue();
+            //UpdateVisibleChunks();
+            //SortBuildQueue();
 
             // Ensure the build process is running
             if (!isProcessingQueue && buildQueue.Count > 0)
@@ -273,23 +274,34 @@ public class TerrainChunksGenerator : MonoBehaviour
     private IEnumerator ProcessBuildQueue()
     {
         isProcessingQueue = true;
-        int buildsCount = initialBuildBurst;
 
         while (buildQueue.Count > 0)
         {
-            for (int i = 0; i < buildsCount && buildQueue.Count > 0; i++)
-            {
-                // Always take the first item (the closest one)
-                Vector2Int coord = buildQueue[0];
-                buildQueue.RemoveAt(0);
+            // 1. Always grab the first one
+            Vector2Int coord = buildQueue[0];
+            buildQueue.RemoveAt(0);
 
-                if (!chunksDict.ContainsKey(coord))
+            // 2. STALE CHECK: If the chunk was destroyed/purged while waiting in queue, skip it
+            // (This happens if the player moves away before the 0.2s timer finishes)
+            Vector3 worldPos = new(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
+            float maxDistSqr = Mathf.Pow((viewDistanceChunks + 2) * ChunkBoundSize, 2);
+            if ((worldPos - cameraReference.transform.position).sqrMagnitude > maxDistSqr)
+            {
+                continue;
+            }
+
+            if (!chunksDict.ContainsKey(coord))
+            {
+                SpawnChunkMesh(coord);
+                // 3. Trigger Fade (We will add this method to TerrainChunk next)
+                if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
                 {
-                    SpawnChunkMesh(coord);
+                    chunk.StartFadeIn();
                 }
             }
-            buildsCount = buildsPerFrame;
-            yield return null;
+
+            // 4. THE RHYTHM: Wait exactly 0.2s before the next 'birth'
+            yield return WaitForSeconds_0_1;
         }
         isProcessingQueue = false;
     }
@@ -365,7 +377,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     chunk.UpdateLOD(true);
                 }
             }
-            yield return WaitForSeconds0_2;
+            yield return WaitForSeconds_0_1;
         }
     }
 
@@ -378,71 +390,12 @@ public class TerrainChunksGenerator : MonoBehaviour
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
             {
                 Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
-                // If we don't have the data for this chunk yet, generate and sanitize it
-                if (!fullTileMeshData.ContainsKey(coord))
-                {
-                    // Ensure neighbors exist for sanitization (Radius of 1 around the new chunk)
-                    GenerateFullMeshData(coord, 1);
-                    SanitizeCurrentTileMeshData(coord, 0);
-                }
-                // If the chunk object doesn't exist, add it to the build queue
-                if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
-                {
-                    buildQueue.Add(coord);
-                    // We'll sort the queue after the loops to keep it efficient
-                }
-                else if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
                 {
                     // If it exists, just update its LOD based on the new camera position
                     chunk.UpdateLOD();
                 }
             }
-        }
-
-        // 2. Clean up chunks that are way too far away (Memory Management)
-        List<Vector2Int> keysToRemove = new();
-        float maxDist = (viewDistanceChunks + 2) * ChunkBoundSize;
-        foreach (var chunkEntry in chunksDict)
-        {
-            if (
-                Vector3.Distance(
-                    cameraReference.transform.position,
-                    chunkEntry.Value.transform.position
-                ) > maxDist
-            )
-            {
-                keysToRemove.Add(chunkEntry.Key);
-            }
-        }
-        foreach (var key in keysToRemove)
-        {
-            Destroy(chunksDict[key].gameObject);
-            chunksDict.Remove(key);
-            // Note: We keep the 'fullTileMeshData' so if the player turns back,
-            // the mountains are exactly the same as before.
-        }
-
-        // 2. NEW: PURGE DATA LEAKS
-        // We define a "Data Radius" slightly larger than the "Visual Radius"
-        // to prevent constant re-generation if a player oscillates at the edge.
-        List<Vector2Int> meshDataKeysToRemove = new();
-        int dataPurgeRadius = viewDistanceChunks + 4;
-
-        foreach (var coord in fullTileMeshData.Keys)
-        {
-            if (
-                Mathf.Abs(coord.x - currentCameraPosition.x) > dataPurgeRadius
-                || Mathf.Abs(coord.y - currentCameraPosition.y) > dataPurgeRadius
-            )
-            {
-                meshDataKeysToRemove.Add(coord);
-            }
-        }
-
-        foreach (var key in meshDataKeysToRemove)
-        {
-            fullTileMeshData.Remove(key);
-            sanitizedChunksHash.Remove(key); // Crucial: allow re-sanitization if player returns
         }
     }
 }

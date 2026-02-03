@@ -15,6 +15,7 @@ public class TerrainChunk : MonoBehaviour
 
     public bool IsVisible { get; private set; } = true;
     public int CurrentStep { get; private set; } = -1;
+    public TerrainFadeEffect fadeEffect;
 
     private TerrainChunksGenerator generator;
     private Vector2Int coord;
@@ -174,12 +175,9 @@ public class TerrainChunk : MonoBehaviour
 
         // 2. SKIRTS
         // Note: We use the exact same cache indices for the top of the skirts
-        // South
-        int skirtIdx = resolution * resolution;
-        // The cache is [res+2, res+2].
         // Index 1 in the cache is local 0.
         // Index res in the cache is local chunkSize.
-
+        int skirtIdx = resolution * resolution;
         // South (z=0)
         for (int x = 0; x < resolution; x++)
         {
@@ -321,6 +319,7 @@ public class TerrainChunk : MonoBehaviour
             tris[t++] = gL;
             tris[t++] = sL;
             tris[t++] = sR;
+
             // North
             int ngL = j * res + (res - 1);
             int ngR = (j + 1) * res + (res - 1);
@@ -332,6 +331,7 @@ public class TerrainChunk : MonoBehaviour
             tris[t++] = ngL;
             tris[t++] = nsR;
             tris[t++] = nsL;
+
             // West
             int wgB = j;
             int wgT = j + 1;
@@ -343,6 +343,7 @@ public class TerrainChunk : MonoBehaviour
             tris[t++] = wgB;
             tris[t++] = wsB;
             tris[t++] = wsT;
+
             // East
             int egB = (res - 1) * res + j;
             int egT = (res - 1) * res + j + 1;
@@ -363,7 +364,7 @@ public class TerrainChunk : MonoBehaviour
         mesh.RecalculateBounds();
         mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 2f);
         filterReference.mesh = mesh;
-        bool highDetail = (CurrentStep == 1);
+        bool highDetail = CurrentStep == 1;
         colliderReference.enabled = highDetail;
         if (highDetail)
         {
@@ -397,6 +398,19 @@ public class TerrainChunk : MonoBehaviour
         rendererReference.enabled = IsVisible;
         colliderReference.enabled = IsVisible;
     }
+
+    // ------------------------------------------------------------------------------------------------
+    // -------------------------------------------- [Effects] -----------------------------------------
+    // ------------------------------------------------------------------------------------------------
+
+    public void StartFadeIn()
+    {
+        fadeEffect.Play();
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // -------------------------------------------- [Gizmos] ------------------------------------------
+    // ------------------------------------------------------------------------------------------------
 
     void OnDrawGizmosSelected()
     {

@@ -436,7 +436,6 @@ MonoBehaviour:
   noiseScale: 0.006
   cameraReference: {fileID: 330585545}
   viewDistanceChunks: 4
-  initialBuildBurst: 12
   buildsPerFrame: 1
   lodDist1: 256
   lodDist2: 512
@@ -518,7 +517,7 @@ GameObject:
   - component: {fileID: 1695441043}
   - component: {fileID: 1695441042}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Pivot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
