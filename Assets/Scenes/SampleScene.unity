@@ -435,7 +435,7 @@ MonoBehaviour:
   maxElevationStep: 8
   noiseScale: 0.006
   cameraReference: {fileID: 330585545}
-  viewDistanceChunks: 4
+  viewDistanceChunks: 6
   buildsPerFrame: 1
   lodDist1: 256
   lodDist2: 512

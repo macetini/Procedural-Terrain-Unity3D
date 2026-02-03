@@ -68,14 +68,13 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private IEnumerator WorldMonitoringRoutine()
     {
-        Vector2Int lastProcessedPos = new Vector2Int(-9999, -9999);
+        Vector2Int lastProcessedPos = new(-9999, -9999);
 
         while (true)
         {
             if (currentCameraPosition != lastProcessedPos)
             {
                 lastProcessedPos = currentCameraPosition;
-
                 // Instead of one big loop, we yield every "row" of chunks
                 for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
                 {
@@ -93,7 +92,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                         }
                     }
                     // Yield after every 'X' column to keep framerate perfect
-                    yield return null;
+                    yield return null; // Row-by-row time slicing
                 }
 
                 SortBuildQueue();
@@ -355,7 +354,6 @@ public class TerrainChunksGenerator : MonoBehaviour
                     chunk.StartFadeIn();
                 }
             }
-
             yield return null;
         }
         isProcessingQueue = false;
@@ -592,7 +590,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         int lx = gx - (cx * chunkSize);
         int lz = gz - (cz * chunkSize);
 
-        Vector2Int lookupCoord = new Vector2Int(cx, cz);
+        Vector2Int lookupCoord = new(cx, cz);
 
         // 3. CACHE CHECK (The Performance Win)
         // If we are asking for a tile in the same chunk as the last call,
@@ -612,5 +610,23 @@ public class TerrainChunksGenerator : MonoBehaviour
 
         // Return 0 if data isn't generated yet (prevents crashes)
         return 0f;
+    }
+
+    public void GetGridReferences(
+        Vector2Int coord,
+        out TileMeshStruct[,] c,
+        out TileMeshStruct[,] w,
+        out TileMeshStruct[,] s,
+        out TileMeshStruct[,] sw,
+        out TileMeshStruct[,] e,
+        out TileMeshStruct[,] n
+    )
+    {
+        fullTileMeshData.TryGetValue(coord, out c);
+        fullTileMeshData.TryGetValue(coord + Vector2Int.left, out w);
+        fullTileMeshData.TryGetValue(coord + Vector2Int.down, out s);
+        fullTileMeshData.TryGetValue(coord + new Vector2Int(-1, -1), out sw);
+        fullTileMeshData.TryGetValue(coord + Vector2Int.right, out e); // Added East
+        fullTileMeshData.TryGetValue(coord + Vector2Int.up, out n); // Added North
     }
 }

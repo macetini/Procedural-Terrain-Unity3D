@@ -36,6 +36,13 @@ public class TerrainChunk : MonoBehaviour
     private int lastTriangleCount = -1; // Track this to avoid redundant triangle uploads
     private bool isFirstBuild = true;
 
+    private TileMeshStruct[,] gridC,
+        gridW,
+        gridS,
+        gridSW,
+        gridE,
+        gridN;
+
     private bool isMeshReady = false; // Prevents "Blips" before the first build
 
     void Awake()
@@ -121,10 +128,20 @@ public class TerrainChunk : MonoBehaviour
         // --- OPTIMIZATION: MESH REUSE ---
         if (filterReference.sharedMesh == null)
         {
-            filterReference.sharedMesh = new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
+            filterReference.sharedMesh = new Mesh { name = MESH_NAME }; //new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
             filterReference.sharedMesh.MarkDynamic();
         }
         Mesh mesh = filterReference.sharedMesh;
+
+        generator.GetGridReferences(
+            coord,
+            out gridC,
+            out gridW,
+            out gridS,
+            out gridSW,
+            out gridE,
+            out gridN
+        );
 
         // Populate Height Cache using the new Generator Fast-Lookup
         int cacheStride = resolution + 2;
@@ -148,15 +165,19 @@ public class TerrainChunk : MonoBehaviour
         CalculateSlopeNormals(vertices, normals, resolution);
 
         // --- OPTIMIZATION: FAST GPU UPLOAD ---
-        mesh.Clear(); // Clears indices but keeps vertex memory containers
-        mesh.vertices = vertices;
-        mesh.uv = uvs;
-        mesh.normals = normals;
+        mesh.Clear();
+        mesh.SetVertices(vertices);
+        mesh.SetUVs(0, uvs);
+        mesh.SetNormals(normals);
+
         if (lastTriangleCount != tris.Length)
         {
-            mesh.triangles = tris;
+            mesh.SetTriangles(tris, 0);
             lastTriangleCount = tris.Length;
         }
+
+        //Forces the GPU upload to happen NOW inside the coroutine
+        mesh.UploadMeshData(false);
 
         isMeshReady = true;
         FinalizeMesh(mesh);
@@ -232,35 +253,54 @@ public class TerrainChunk : MonoBehaviour
     // By sampling the 4 tiles around a vertex, we create a 3D bevel.
     private float GetBlendedElevation(int lx, int lz)
     {
-        // These are the global coordinates for the current vertex
-        int globalX = coord.x * chunkSize + lx;
-        int globalZ = coord.y * chunkSize + lz;
-
         float total = 0;
-
-        // We still sample the 4-tile cross, but now we use the
-        // Generator's "LastAccessed" cache to make it lightning fast.
-        total += generator.GetElevationAt(globalX, globalZ);
-        total += generator.GetElevationAt(globalX - 1, globalZ);
-        total += generator.GetElevationAt(globalX, globalZ - 1);
-        total += generator.GetElevationAt(globalX - 1, globalZ - 1);
-
-        // Division by 4 is much faster than checking 'samples++' every time
+        total += SampleGrid(lx, lz);
+        total += SampleGrid(lx - 1, lz);
+        total += SampleGrid(lx, lz - 1);
+        total += SampleGrid(lx - 1, lz - 1);
         return total * 0.25f;
     }
 
-    private void CalculateSlopeNormals(Vector3[] verts, Vector3[] norms, int res)
+    private float SampleGrid(int x, int z)
     {
-        int gridCount = res * res;
+        // 1. Internal to this chunk [0 to 15]
+        if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
+            return gridC[x, z].Elevation;
+
+        // 2. WEST neighbor
+        if (x < 0 && z >= 0 && z < chunkSize && gridW != null)
+            return gridW[chunkSize + x, z].Elevation;
+
+        // 3. SOUTH neighbor
+        if (z < 0 && x >= 0 && x < chunkSize && gridS != null)
+            return gridS[x, chunkSize + z].Elevation;
+
+        // 4. SOUTH-WEST corner
+        if (x < 0 && z < 0 && gridSW != null)
+            return gridSW[chunkSize + x, chunkSize + z].Elevation;
+
+        // 5. EAST neighbor (The missing piece!)
+        if (x >= chunkSize && z >= 0 && z < chunkSize && gridE != null)
+            return gridE[x - chunkSize, z].Elevation;
+
+        // 6. NORTH neighbor (The missing piece!)
+        if (z >= chunkSize && x >= 0 && x < chunkSize && gridN != null)
+            return gridN[x, z - chunkSize].Elevation;
+
+        return 0;
+    }
+
+    private void CalculateSlopeNormals(Vector3[] verts, Vector3[] normals, int resolution)
+    {
         float vScale = elevationStepHeight;
         float hDist = 2.0f * tileSize * CurrentStep;
-        int stride = res + 2;
+        int stride = resolution + 2;
 
-        for (int x = 0; x < res; x++)
+        for (int x = 0; x < resolution; x++)
         {
-            for (int z = 0; z < res; z++)
+            for (int z = 0; z < resolution; z++)
             {
-                int idx = x * res + z;
+                int idx = x * resolution + z;
 
                 // Offset x and z by 1 because the cache is padded
                 int cx = x + 1;
@@ -274,16 +314,16 @@ public class TerrainChunk : MonoBehaviour
                 Vector3 tangentX = new(hDist, (hR - hL) * vScale, 0);
                 Vector3 tangentZ = new(0, (hF - hB) * vScale, hDist);
 
-                norms[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
+                normals[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
             }
         }
 
         // Skirt Normals logic remains same as before
         float centerX = chunkBoundSize * 0.5f;
-        for (int n = gridCount; n < verts.Length; n++)
+        for (int n = resolution * resolution; n < verts.Length; n++)
         {
             Vector3 dir = (verts[n] - new Vector3(centerX, verts[n].y, centerX)).normalized;
-            norms[n] = new Vector3(dir.x, 0, dir.z);
+            normals[n] = new Vector3(dir.x, 0, dir.z);
         }
     }
 
@@ -293,7 +333,7 @@ public class TerrainChunk : MonoBehaviour
 
         // We center the bounds and apply the public frustumPadding
         Vector3 center = new(chunkBoundSize * 0.5f, maxHeight * 0.5f, chunkBoundSize * 0.5f);
-        Vector3 size = new Vector3(
+        Vector3 size = new(
             chunkBoundSize + frustumPadding,
             maxHeight + skirtDepth + frustumPadding,
             chunkBoundSize + frustumPadding
@@ -319,12 +359,12 @@ public class TerrainChunk : MonoBehaviour
 
         // Use world space center
         Vector3 worldCenter = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
-        Vector3 size = new Vector3(
+        Vector3 size = new(
             chunkBoundSize + frustumPadding,
             height + skirtDepth + frustumPadding,
             chunkBoundSize + frustumPadding
         );
-        Bounds checkBounds = new Bounds(worldCenter, size);
+        Bounds checkBounds = new(worldCenter, size);
 
         // 1. Calculate logical visibility (Frustum check)
         bool frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
