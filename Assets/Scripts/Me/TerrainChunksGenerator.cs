@@ -613,14 +613,21 @@ public class TerrainChunksGenerator : MonoBehaviour
         out TileMeshStruct[,] s,
         out TileMeshStruct[,] sw,
         out TileMeshStruct[,] e,
-        out TileMeshStruct[,] n
+        out TileMeshStruct[,] n,
+        out TileMeshStruct[,] nw,
+        out TileMeshStruct[,] ne,
+        out TileMeshStruct[,] se
     )
     {
         fullTileMeshData.TryGetValue(coord, out c);
         fullTileMeshData.TryGetValue(coord + Vector2Int.left, out w);
         fullTileMeshData.TryGetValue(coord + Vector2Int.down, out s);
         fullTileMeshData.TryGetValue(coord + new Vector2Int(-1, -1), out sw);
-        fullTileMeshData.TryGetValue(coord + Vector2Int.right, out e); // Added East
-        fullTileMeshData.TryGetValue(coord + Vector2Int.up, out n); // Added North
+        fullTileMeshData.TryGetValue(coord + Vector2Int.right, out e);
+        fullTileMeshData.TryGetValue(coord + Vector2Int.up, out n);
+        // Added these 3 missing diagonals:
+        fullTileMeshData.TryGetValue(coord + new Vector2Int(-1, 1), out nw);
+        fullTileMeshData.TryGetValue(coord + new Vector2Int(1, 1), out ne);
+        fullTileMeshData.TryGetValue(coord + new Vector2Int(1, -1), out se);
     }
 }

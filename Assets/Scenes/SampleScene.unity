@@ -429,16 +429,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f23820a541d100428e81a89e1d1dd90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainChunksGenerator
-  chunkSize: 128
-  tileSize: 1
-  elevationStepHeight: 0.5
-  maxElevationStep: 8
+  chunkSize: 256
+  tileSize: 4
+  elevationStepHeight: 4
+  maxElevationStep: 16
   noiseScale: 0.006
   cameraReference: {fileID: 330585545}
   viewDistanceChunks: 4
   buildsPerFrame: 1
-  lodDist1: 256
-  lodDist2: 384
+  lodDist1: 512
+  lodDist2: 1024
   chunkPrefab: {fileID: 581305705177285490, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
 --- !u!4 &555491514
 Transform:

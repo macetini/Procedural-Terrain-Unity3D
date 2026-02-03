@@ -41,7 +41,10 @@ public class TerrainChunk : MonoBehaviour
         gridS,
         gridSW,
         gridE,
-        gridN;
+        gridN,
+        gridNW,
+        gridNE,
+        gridSE;
 
     private bool isMeshReady = false; // Prevents "Blips" before the first build
 
@@ -148,7 +151,10 @@ public class TerrainChunk : MonoBehaviour
             out gridS,
             out gridSW,
             out gridE,
-            out gridN
+            out gridN,
+            out gridNW,
+            out gridNE,
+            out gridSE
         );
 
         // Populate Height Cache using the new Generator Fast-Lookup
@@ -271,31 +277,45 @@ public class TerrainChunk : MonoBehaviour
 
     private float SampleGrid(int x, int z)
     {
-        // 1. Internal to this chunk [0 to 15]
+        // 1. Internal
         if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
             return gridC[x, z].Elevation;
 
-        // 2. WEST neighbor
-        if (x < 0 && z >= 0 && z < chunkSize && gridW != null)
-            return gridW[chunkSize + x, z].Elevation;
+        // 2. Cardinal Neighbors
+        if (x < 0 && z >= 0 && z < chunkSize)
+            return (gridW != null) ? gridW[chunkSize + x, z].Elevation : gridC[0, z].Elevation;
+        if (x >= chunkSize && z >= 0 && z < chunkSize)
+            return (gridE != null)
+                ? gridE[x - chunkSize, z].Elevation
+                : gridC[chunkSize - 1, z].Elevation;
+        if (z < 0 && x >= 0 && x < chunkSize)
+            return (gridS != null) ? gridS[x, chunkSize + z].Elevation : gridC[x, 0].Elevation;
+        if (z >= chunkSize && x >= 0 && x < chunkSize)
+            return (gridN != null)
+                ? gridN[x, z - chunkSize].Elevation
+                : gridC[x, chunkSize - 1].Elevation;
 
-        // 3. SOUTH neighbor
-        if (z < 0 && x >= 0 && x < chunkSize && gridS != null)
-            return gridS[x, chunkSize + z].Elevation;
+        // 3. Diagonal Neighbors (The Corner Bug Fix)
+        if (x < 0 && z < 0)
+            return (gridSW != null)
+                ? gridSW[chunkSize + x, chunkSize + z].Elevation
+                : gridC[0, 0].Elevation;
+        if (x < 0 && z >= chunkSize)
+            return (gridNW != null)
+                ? gridNW[chunkSize + x, z - chunkSize].Elevation
+                : gridC[0, chunkSize - 1].Elevation;
+        if (x >= chunkSize && z >= chunkSize)
+            // Note: Northeast uses gridNE
+            return (gridNE != null)
+                ? gridNE[x - chunkSize, z - chunkSize].Elevation
+                : gridC[chunkSize - 1, chunkSize - 1].Elevation;
+        if (x >= chunkSize && z < 0)
+            // Note: Southeast uses gridSE
+            return (gridSE != null)
+                ? gridSE[x - chunkSize, chunkSize + z].Elevation
+                : gridC[chunkSize - 1, 0].Elevation;
 
-        // 4. SOUTH-WEST corner
-        if (x < 0 && z < 0 && gridSW != null)
-            return gridSW[chunkSize + x, chunkSize + z].Elevation;
-
-        // 5. EAST neighbor (The missing piece!)
-        if (x >= chunkSize && z >= 0 && z < chunkSize && gridE != null)
-            return gridE[x - chunkSize, z].Elevation;
-
-        // 6. NORTH neighbor (The missing piece!)
-        if (z >= chunkSize && x >= 0 && x < chunkSize && gridN != null)
-            return gridN[x, z - chunkSize].Elevation;
-
-        return 0;
+        return gridC[0, 0].Elevation;
     }
 
     private void CalculateSlopeNormals(Vector3[] verts, Vector3[] normals, int resolution)

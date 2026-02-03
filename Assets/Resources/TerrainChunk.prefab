@@ -103,7 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3d062f0efca8354a9b5465de86842b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainFadeEffect
-  fadeDuration: 0.6
+  fadeDuration: 0.3
 --- !u!114 &581305705177285490
 MonoBehaviour:
   m_ObjectHideFlags: 0
