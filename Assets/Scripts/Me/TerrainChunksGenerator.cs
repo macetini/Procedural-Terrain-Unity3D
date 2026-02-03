@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class TerrainChunksGenerator : MonoBehaviour
 {
-    private static readonly WaitForSeconds WaitForSeconds_0_1 = new(0.1f);
-
     [Header("Generation Settings")]
     public int chunkSize = 16;
     public float tileSize = 1.0f;
@@ -42,6 +40,8 @@ public class TerrainChunksGenerator : MonoBehaviour
     private TileMeshStruct[,] lastLookupGrid;
 
     private readonly Dictionary<int, int[]> triangleCache = new();
+
+    private readonly List<Vector2Int> visibilityKeysSnapshot = new();
 
     void Start()
     {
@@ -103,7 +103,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     StartCoroutine(ProcessBuildQueue());
                 }
             }
-            yield return WaitForSeconds_0_1;
+            yield return null;
         }
     }
 
@@ -356,7 +356,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
 
-            yield return WaitForSeconds_0_1;
+            yield return null;
         }
         isProcessingQueue = false;
     }
@@ -364,20 +364,15 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void SpawnChunkMesh(Vector2Int coord)
     {
         Vector3 position = new(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
-
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
-        // 1. Setup variables (No Build yet)
+
+        // This sets up variables
         chunk.InitBuild(this, coord);
-        // 2. Immediate Frustum Check
-        cameraPlanes ??= GeometryUtility.CalculateFrustumPlanes(cameraReference);
+
+        // Force a frustum check right now
+        cameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
         chunk.UpdateVisibility(cameraPlanes);
 
-        // 3. ONLY build the mesh if it's actually on screen
-        // If not, it stays as an empty object until VisibilityCheckRoutine finds it
-        if (chunk.IsVisible)
-        {
-            chunk.UpdateLOD(true);
-        }
         chunksDict.Add(coord, chunk);
     }
 
@@ -436,16 +431,34 @@ public class TerrainChunksGenerator : MonoBehaviour
         while (true)
         {
             cameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
-            foreach (var chunk in chunksDict.Values)
+
+            // 1. Take a snapshot of the current keys
+            visibilityKeysSnapshot.Clear();
+            visibilityKeysSnapshot.AddRange(chunksDict.Keys);
+
+            // 2. Iterate through the snapshot
+            for (int i = 0; i < visibilityKeysSnapshot.Count; i++)
             {
-                chunk.UpdateVisibility(cameraPlanes);
-                // If it just became visible and was never built (currentStep is -1)
-                if (chunk.IsVisible && chunk.CurrentStep < 0)
+                Vector2Int key = visibilityKeysSnapshot[i];
+
+                // 3. Safety Check: Make sure the chunk wasn't purged while we were yielding
+                if (chunksDict.TryGetValue(key, out TerrainChunk chunk))
                 {
-                    chunk.UpdateLOD(true);
+                    chunk.UpdateVisibility(cameraPlanes);
+
+                    if (chunk.IsVisible && chunk.CurrentStep < 0)
+                    {
+                        chunk.UpdateLOD(true);
+                    }
                 }
+
+                // 4. Time Slicing: Only process 10 chunks per frame
+                if (i % 10 == 0)
+                    yield return null;
             }
-            yield return WaitForSeconds_0_1;
+
+            // Short rest before the next full world sweep
+            yield return null;
         }
     }
 

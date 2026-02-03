@@ -33,7 +33,10 @@ public class TerrainChunk : MonoBehaviour
     private Vector2[] uvs;
     private Vector3[] normals;
     private float[] heightCache1D; // Added: Reuse the height cache array
+    private int lastTriangleCount = -1; // Track this to avoid redundant triangle uploads
     private bool isFirstBuild = true;
+
+    private bool isMeshReady = false; // Prevents "Blips" before the first build
 
     void Awake()
     {
@@ -52,9 +55,13 @@ public class TerrainChunk : MonoBehaviour
         maxElevationStep = generator.maxElevationStep;
         chunkBoundSize = chunkSize * tileSize;
 
+        rendererReference.enabled = false;
+        isMeshReady = false;
+
         if (terrainMaterial != null)
         {
-            rendererReference.material = terrainMaterial;
+            // Use sharedMaterial to allow the GPU to batch all chunks together
+            rendererReference.sharedMaterial = terrainMaterial;
         }
         UpdateLOD(true);
     }
@@ -145,8 +152,13 @@ public class TerrainChunk : MonoBehaviour
         mesh.vertices = vertices;
         mesh.uv = uvs;
         mesh.normals = normals;
-        mesh.triangles = tris;
+        if (lastTriangleCount != tris.Length)
+        {
+            mesh.triangles = tris;
+            lastTriangleCount = tris.Length;
+        }
 
+        isMeshReady = true;
         FinalizeMesh(mesh);
     }
 
@@ -289,7 +301,7 @@ public class TerrainChunk : MonoBehaviour
 
         mesh.bounds = new Bounds(center, size);
 
-        if (!rendererReference.enabled && !isFirstBuild)
+        if (!rendererReference.enabled) // && !isFirstBuild) // Check isFirstBuild to avoid a bug
             rendererReference.enabled = true;
 
         if (isFirstBuild)
@@ -305,18 +317,25 @@ public class TerrainChunk : MonoBehaviour
         float halfSize = chunkBoundSize * 0.5f;
         float height = maxElevationStep * elevationStepHeight;
 
-        // Use the same padding here as we do for the mesh bounds
-        Vector3 center = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
-        Vector3 size = new(
+        // Use world space center
+        Vector3 worldCenter = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
+        Vector3 size = new Vector3(
             chunkBoundSize + frustumPadding,
             height + skirtDepth + frustumPadding,
             chunkBoundSize + frustumPadding
         );
+        Bounds checkBounds = new Bounds(worldCenter, size);
 
-        Bounds checkBounds = new(center, size);
+        // 1. Calculate logical visibility (Frustum check)
+        bool frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
+        IsVisible = frustumVisible;
 
-        IsVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
-        rendererReference.enabled = IsVisible;
+        // 2. Only actually enable the MeshRenderer if it's in frustum AND mesh data exists
+        bool finalShowState = frustumVisible && isMeshReady;
+        if (rendererReference.enabled != finalShowState)
+        {
+            rendererReference.enabled = finalShowState;
+        }
     }
 
     // ------------------------------------------------------------------------------------------------
