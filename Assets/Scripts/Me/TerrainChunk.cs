@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class TerrainChunk : MonoBehaviour
 {
     private const string MESH_NAME = "TerrainChunk";
@@ -27,18 +27,18 @@ public class TerrainChunk : MonoBehaviour
 
     private MeshRenderer rendererReference;
     private MeshFilter filterReference;
-    private MeshCollider colliderReference;
 
     // Pre-allocated arrays to reduce Garbage Collection (GC) pressure
     private Vector3[] vertices;
     private Vector2[] uvs;
     private Vector3[] normals;
+    private float[,] heightCache; // Added: Reuse the height cache array
+    private bool isFirstBuild = true;
 
     void Awake()
     {
         rendererReference = GetComponent<MeshRenderer>();
         filterReference = GetComponent<MeshFilter>();
-        colliderReference = GetComponent<MeshCollider>();
     }
 
     public void InitBuild(TerrainChunksGenerator gen, Vector2Int chunkCoord)
@@ -91,12 +91,11 @@ public class TerrainChunk : MonoBehaviour
 
     private void BuildProceduralMesh()
     {
-        // 1. Data Allocation & Geometry Generation
         int resolution = (chunkSize / CurrentStep) + 1;
         int gridVertCount = resolution * resolution;
         int totalVerts = gridVertCount + (resolution * 4);
 
-        // Re-allocate only if resolution changed
+        // --- OPTIMIZATION: ARRAY REUSE ---
         if (vertices == null || vertices.Length != totalVerts)
         {
             vertices = new Vector3[totalVerts];
@@ -104,41 +103,44 @@ public class TerrainChunk : MonoBehaviour
             normals = new Vector3[totalVerts];
         }
 
-        // --- NEW: THE CACHE BUFFER ---
-        // We create a buffer that is slightly larger than the resolution
-        // to account for the neighbors needed for "Blending" and "Normals".
-        // Size is [res + 2] to allow sampling from index -1 to res.
-        float[,] heightCache = new float[resolution + 2, resolution + 2];
+        // --- OPTIMIZATION: HEIGHT CACHE REUSE ---
+        int cacheRes = resolution + 2;
+        if (heightCache == null || heightCache.GetLength(0) != cacheRes)
+        {
+            heightCache = new float[cacheRes, cacheRes];
+        }
 
+        // --- OPTIMIZATION: MESH REUSE ---
+        if (filterReference.sharedMesh == null)
+        {
+            filterReference.sharedMesh = new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
+            filterReference.sharedMesh.MarkDynamic();
+        }
+        Mesh mesh = filterReference.sharedMesh;
+
+        // Populate Height Cache using the new Generator Fast-Lookup
         for (int x = -1; x <= resolution; x++)
         {
             for (int z = -1; z <= resolution; z++)
             {
-                // We sample the "Blended" elevation (which itself samples a 2x2)
-                // and store it. This effectively "pre-bakes" the softening logic.
+                // We pass CurrentStep to sample the correct "Gap" for the current LOD
                 heightCache[x + 1, z + 1] = GetBlendedElevation(x * CurrentStep, z * CurrentStep);
             }
         }
 
         GenerateGeometry(vertices, uvs, resolution, heightCache);
 
-        int[] tris = GenerateTriangleIndices(resolution);
+        // Fetch shared triangle indices (Zero Alloc)
+        int[] tris = generator.GetPrecalculatedTriangles(resolution);
 
         CalculateSlopeNormals(vertices, normals, resolution, heightCache);
 
-        if (filterReference.sharedMesh != null)
-        {
-            Destroy(filterReference.sharedMesh);
-        }
-
-        Mesh mesh = new()
-        {
-            name = $"{MESH_NAME}_{coord.x}_{coord.y}",
-            vertices = vertices,
-            triangles = tris,
-            uv = uvs,
-            normals = normals,
-        };
+        // --- OPTIMIZATION: FAST GPU UPLOAD ---
+        mesh.Clear(); // Clears indices but keeps vertex memory containers
+        mesh.vertices = vertices;
+        mesh.uv = uvs;
+        mesh.normals = normals;
+        mesh.triangles = tris;
 
         FinalizeMesh(mesh);
     }
@@ -216,26 +218,21 @@ public class TerrainChunk : MonoBehaviour
     // By sampling the 4 tiles around a vertex, we create a 3D bevel.
     private float GetBlendedElevation(int lx, int lz)
     {
+        // These are the global coordinates for the current vertex
         int globalX = coord.x * chunkSize + lx;
         int globalZ = coord.y * chunkSize + lz;
 
         float total = 0;
-        int samples = 0;
 
-        // Sample a cross pattern (the current tile and 3 neighbors)
-        // This is mathematically equivalent to Bilinear Filtering.
-        for (int x = -1; x <= 0; x++)
-        {
-            for (int z = -1; z <= 0; z++)
-            {
-                if (generator.GetTileAt(globalX + x, globalZ + z, out TileMeshStruct tile))
-                {
-                    total += tile.Elevation;
-                    samples++;
-                }
-            }
-        }
-        return samples > 0 ? total / samples : 0;
+        // We still sample the 4-tile cross, but now we use the
+        // Generator's "LastAccessed" cache to make it lightning fast.
+        total += generator.GetElevationAt(globalX, globalZ);
+        total += generator.GetElevationAt(globalX - 1, globalZ);
+        total += generator.GetElevationAt(globalX, globalZ - 1);
+        total += generator.GetElevationAt(globalX - 1, globalZ - 1);
+
+        // Division by 4 is much faster than checking 'samples++' every time
+        return total * 0.25f;
     }
 
     private void CalculateSlopeNormals(Vector3[] verts, Vector3[] norms, int res, float[,] cache)
@@ -258,8 +255,8 @@ public class TerrainChunk : MonoBehaviour
                 float hF = cache[x + 1, z + 2];
 
                 // Standard Central Difference Tangents
-                Vector3 tangentX = new Vector3(hDist, (hR - hL) * vScale, 0);
-                Vector3 tangentZ = new Vector3(0, (hF - hB) * vScale, hDist);
+                Vector3 tangentX = new(hDist, (hR - hL) * vScale, 0);
+                Vector3 tangentZ = new(0, (hF - hB) * vScale, hDist);
 
                 norms[idx] = Vector3.Cross(tangentZ, tangentX).normalized;
             }
@@ -274,134 +271,35 @@ public class TerrainChunk : MonoBehaviour
         }
     }
 
-    private int[] GenerateTriangleIndices(int res)
-    {
-        int gridTris = (res - 1) * (res - 1) * 6;
-        int skirtTris = (res - 1) * 4 * 6;
-        int[] tris = new int[gridTris + skirtTris];
-        int t = 0;
-
-        // 1. Grid
-        for (int x = 0; x < res - 1; x++)
-        {
-            for (int z = 0; z < res - 1; z++)
-            {
-                int bl = x * res + z;
-                int tl = bl + 1;
-                int br = (x + 1) * res + z;
-                int tr = br + 1;
-                tris[t++] = bl;
-                tris[t++] = tl;
-                tris[t++] = br;
-                tris[t++] = tl;
-                tris[t++] = tr;
-                tris[t++] = br;
-            }
-        }
-
-        // 2. Skirts (Correctly offset)
-        int gridCount = res * res;
-        int sStart = gridCount;
-        int nStart = gridCount + res;
-        int wStart = gridCount + res * 2;
-        int eStart = gridCount + res * 3;
-
-        for (int j = 0; j < res - 1; j++)
-        {
-            // South
-            int gL = j * res;
-            int gR = (j + 1) * res;
-            int sL = sStart + j;
-            int sR = sStart + j + 1;
-            tris[t++] = gL;
-            tris[t++] = sR;
-            tris[t++] = gR;
-            tris[t++] = gL;
-            tris[t++] = sL;
-            tris[t++] = sR;
-
-            // North
-            int ngL = j * res + (res - 1);
-            int ngR = (j + 1) * res + (res - 1);
-            int nsL = nStart + j;
-            int nsR = nStart + j + 1;
-            tris[t++] = ngL;
-            tris[t++] = ngR;
-            tris[t++] = nsR;
-            tris[t++] = ngL;
-            tris[t++] = nsR;
-            tris[t++] = nsL;
-
-            // West
-            int wgB = j;
-            int wgT = j + 1;
-            int wsB = wStart + j;
-            int wsT = wStart + j + 1;
-            tris[t++] = wgB;
-            tris[t++] = wsT;
-            tris[t++] = wgT;
-            tris[t++] = wgB;
-            tris[t++] = wsB;
-            tris[t++] = wsT;
-
-            // East
-            int egB = (res - 1) * res + j;
-            int egT = (res - 1) * res + j + 1;
-            int esB = eStart + j;
-            int esT = eStart + j + 1;
-            tris[t++] = egB;
-            tris[t++] = egT;
-            tris[t++] = esT;
-            tris[t++] = egB;
-            tris[t++] = esT;
-            tris[t++] = esB;
-        }
-        return tris;
-    }
-
     private void FinalizeMesh(Mesh mesh)
     {
         mesh.RecalculateBounds();
-        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * 2f);
-        filterReference.mesh = mesh;
-        bool highDetail = CurrentStep == 1;
-        colliderReference.enabled = highDetail;
-        if (highDetail)
+
+        // Manual Padding to ensure skirts don't trigger "popping"
+        mesh.bounds = new Bounds(mesh.bounds.center, mesh.bounds.size + Vector3.one * boundPadding);
+
+        if (!rendererReference.enabled)
+            rendererReference.enabled = true;
+
+        if (isFirstBuild)
         {
-            Physics.BakeMesh(mesh.GetInstanceID(), false);
-            colliderReference.sharedMesh = mesh;
+            if (fadeEffect != null)
+                fadeEffect.Play();
+            isFirstBuild = false;
         }
     }
 
     public void UpdateVisibility(Plane[] planes)
     {
-        // Use mesh bounds if available, otherwise calculate a proxy bound based on settings
-        Bounds checkBounds;
-        if (filterReference.sharedMesh != null)
-        {
-            checkBounds = rendererReference.bounds;
-        }
-        else
-        {
-            // Proxy bound: Center of the chunk with a height based on maxElevation
-            float halfBoundSize = chunkBoundSize * 0.5f;
-            float totalMaxElevationHight = maxElevationStep * elevationStepHeight;
-            Vector3 center =
-                transform.position
-                + new Vector3(halfBoundSize, totalMaxElevationHight * 0.5f, halfBoundSize);
-            Vector3 boxSize = new(chunkBoundSize, totalMaxElevationHight, chunkBoundSize);
-            checkBounds = new Bounds(center, boxSize);
-        }
-
-        IsVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
-
+        // Simple visibility check
+        IsVisible = GeometryUtility.TestPlanesAABB(planes, rendererReference.bounds);
         rendererReference.enabled = IsVisible;
-        colliderReference.enabled = IsVisible;
     }
 
     // ------------------------------------------------------------------------------------------------
     // -------------------------------------------- [Effects] -----------------------------------------
     // ------------------------------------------------------------------------------------------------
+
 
     public void StartFadeIn()
     {

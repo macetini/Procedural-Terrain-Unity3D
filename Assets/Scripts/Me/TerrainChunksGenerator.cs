@@ -36,8 +36,12 @@ public class TerrainChunksGenerator : MonoBehaviour
     private bool isProcessingQueue = false;
 
     private Plane[] cameraPlanes;
-
     private float ChunkBoundSize => chunkSize * tileSize;
+
+    private Vector2Int lastLookupCoord = new Vector2Int(-9999, -9999);
+    private TileMeshStruct[,] lastLookupGrid;
+
+    private readonly Dictionary<int, int[]> triangleCache = new();
 
     void Start()
     {
@@ -46,7 +50,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         SecondPass();
 
         StartCoroutine(ProcessBuildQueue());
-        //StartCoroutine(VisibilityCheckRoutine());
+        StartCoroutine(VisibilityCheckRoutine());
     }
 
     void Update()
@@ -57,8 +61,8 @@ public class TerrainChunksGenerator : MonoBehaviour
         // Only recalculate the world if we've actually moved into a different chunk
         if (currentCameraPosition != previousPos)
         {
-            //UpdateVisibleChunks();
-            //SortBuildQueue();
+            UpdateVisibleChunks();
+            SortBuildQueue();
 
             // Ensure the build process is running
             if (!isProcessingQueue && buildQueue.Count > 0)
@@ -118,7 +122,8 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void GenerateFullMeshData(Vector2Int cameraOrigin, int dataRadius)
     {
-        Debug.Log("[TerrainChunksGenerator] Generating Raw Mesh Data.");
+        // If radius is 0, this only runs once for the cameraOrigin.
+        // If radius is 1, it runs 9 times.
         for (int xChunkOffset = -dataRadius; xChunkOffset <= dataRadius; xChunkOffset++)
         {
             for (int zChunkOffset = -dataRadius; zChunkOffset <= dataRadius; zChunkOffset++)
@@ -134,9 +139,6 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
             }
         }
-        Debug.Log(
-            $"[TerrainChunksGenerator] Raw Mesh Data Generation Complete. Chunks generated: {fullTileMeshData.Count}.  "
-        );
     }
 
     private TileMeshStruct[,] GenerateRawTileMeshData(Vector2Int tileOrigin)
@@ -168,21 +170,21 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)
     {
-        Debug.Log("[TerrainChunksGenerator] Sanitizing Raw Tile Mesh Data.");
+        //Debug.Log("[TerrainChunksGenerator] Sanitizing Raw Tile Mesh Data.");
         for (int x = -dataRadius; x <= dataRadius; x++)
         {
             for (int z = -dataRadius; z <= dataRadius; z++)
             {
-                Vector2Int tilePos = new(cameraOrigin.x + x, cameraOrigin.y + z);
+                Vector2Int tilePosition = new(cameraOrigin.x + x, cameraOrigin.y + z);
                 // We only need to sanitize if the mesh hasn't been built yet
-                if (!sanitizedChunksHash.Contains(tilePos))
+                if (!sanitizedChunksHash.Contains(tilePosition))
                 {
-                    SanitizeGlobalChunk(tilePos);
-                    sanitizedChunksHash.Add(tilePos);
+                    SanitizeGlobalChunk(tilePosition);
+                    sanitizedChunksHash.Add(tilePosition);
                 }
             }
         }
-        Debug.Log("[TerrainChunksGenerator] Sanitization Complete.");
+        //Debug.Log("[TerrainChunksGenerator] Sanitization Complete.");
     }
 
     private void SanitizeGlobalChunk(Vector2Int tilePos)
@@ -277,30 +279,55 @@ public class TerrainChunksGenerator : MonoBehaviour
 
         while (buildQueue.Count > 0)
         {
-            // 1. Always grab the first one
             Vector2Int coord = buildQueue[0];
             buildQueue.RemoveAt(0);
 
-            // 2. STALE CHECK: If the chunk was destroyed/purged while waiting in queue, skip it
-            // (This happens if the player moves away before the 0.2s timer finishes)
-            Vector3 worldPos = new(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
+            // --- STALE CHECK ---
+            Vector3 chunkPos = new Vector3(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
+            float distSqr = (chunkPos - cameraReference.transform.position).sqrMagnitude;
             float maxDistSqr = Mathf.Pow((viewDistanceChunks + 2) * ChunkBoundSize, 2);
-            if ((worldPos - cameraReference.transform.position).sqrMagnitude > maxDistSqr)
+
+            if (distSqr > maxDistSqr)
             {
-                continue;
+                continue; // Skip this chunk, it's too far away now!
             }
 
+            // [Keep your Stale/Distance Check here]
             if (!chunksDict.ContainsKey(coord))
             {
+                // --- JIT (Just In Time) DATA GENERATION ---
+                // If data doesn't exist, generate it now.
+                // --- SURGICAL JIT DATA GENERATION ---
+                // We need the center AND its immediate North/East neighbors for sanitization
+                for (int x = 0; x <= 1; x++)
+                {
+                    for (int z = 0; z <= 1; z++)
+                    {
+                        Vector2Int neighborCoord = coord + new Vector2Int(x, z);
+                        if (!fullTileMeshData.ContainsKey(neighborCoord))
+                        {
+                            // We use radius 0 to generate ONLY this specific neighbor
+                            GenerateFullMeshData(neighborCoord, 0);
+                        }
+                    }
+                }
+                // --- JIT SANITIZATION ---
+                if (!sanitizedChunksHash.Contains(coord))
+                {
+                    SanitizeGlobalChunk(coord);
+                    sanitizedChunksHash.Add(coord);
+                }
+
+                // Now spawn. If the player is moving fast, they see empty space
+                // until this specific 0.1s tick finishes.
                 SpawnChunkMesh(coord);
-                // 3. Trigger Fade (We will add this method to TerrainChunk next)
+
                 if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
                 {
                     chunk.StartFadeIn();
                 }
             }
 
-            // 4. THE RHYTHM: Wait exactly 0.2s before the next 'birth'
             yield return WaitForSeconds_0_1;
         }
         isProcessingQueue = false;
@@ -330,16 +357,26 @@ public class TerrainChunksGenerator : MonoBehaviour
     {
         int cx = Mathf.FloorToInt((float)globalX / chunkSize);
         int cz = Mathf.FloorToInt((float)globalZ / chunkSize);
-
         int lx = globalX - (cx * chunkSize);
         int lz = globalZ - (cz * chunkSize);
 
-        if (fullTileMeshData.TryGetValue(new Vector2Int(cx, cz), out TileMeshStruct[,] grid))
+        Vector2Int lookup = new Vector2Int(cx, cz);
+
+        // Check cache first
+        if (lookup == lastLookupCoord && lastLookupGrid != null)
         {
+            tile = lastLookupGrid[lx, lz];
+            return true;
+        }
+
+        if (fullTileMeshData.TryGetValue(lookup, out TileMeshStruct[,] grid))
+        {
+            lastLookupCoord = lookup;
+            lastLookupGrid = grid;
             tile = grid[lx, lz];
             return true;
         }
-        // If no tile exists, we return a "blank" one and say 'false'
+
         tile = default;
         return false;
     }
@@ -383,19 +420,153 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void UpdateVisibleChunks()
     {
-        // 1. Calculate which chunks SHOULD exist based on current position
-        //int dataRadius = viewDistanceChunks + 1; // Buffer for sanitization
         for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
         {
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
             {
-                Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
-                if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
+
+                // If we don't even have the Raw Data yet, just mark the coord for building.
+                // We won't generate data here; we'll do it in the rhythm of the Coroutine.
+                if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
                 {
-                    // If it exists, just update its LOD based on the new camera position
+                    buildQueue.Add(coord);
+                }
+                else if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                {
                     chunk.UpdateLOD();
                 }
             }
         }
+    }
+
+    public int[] GetPrecalculatedTriangles(int resolution)
+    {
+        if (triangleCache.TryGetValue(resolution, out int[] cachedTris))
+        {
+            return cachedTris;
+        }
+
+        // If not in cache, calculate it once
+        int[] newTris = GenerateTriangleIndices(resolution);
+        triangleCache.Add(resolution, newTris);
+        return newTris;
+    }
+
+    private int[] GenerateTriangleIndices(int resolution)
+    {
+        int gridTris = (resolution - 1) * (resolution - 1) * 6;
+        int skirtTris = (resolution - 1) * 4 * 6;
+        int[] tris = new int[gridTris + skirtTris];
+        int t = 0;
+
+        // 1. Grid
+        for (int x = 0; x < resolution - 1; x++)
+        {
+            for (int z = 0; z < resolution - 1; z++)
+            {
+                int bl = x * resolution + z;
+                int tl = bl + 1;
+                int br = (x + 1) * resolution + z;
+                int tr = br + 1;
+                tris[t++] = bl;
+                tris[t++] = tl;
+                tris[t++] = br;
+                tris[t++] = tl;
+                tris[t++] = tr;
+                tris[t++] = br;
+            }
+        }
+
+        // 2. Skirts (Correctly offset)
+        int gridCount = resolution * resolution;
+        int sStart = gridCount;
+        int nStart = gridCount + resolution;
+        int wStart = gridCount + resolution * 2;
+        int eStart = gridCount + resolution * 3;
+
+        for (int j = 0; j < resolution - 1; j++)
+        {
+            // South
+            int gL = j * resolution;
+            int gR = (j + 1) * resolution;
+            int sL = sStart + j;
+            int sR = sStart + j + 1;
+            tris[t++] = gL;
+            tris[t++] = sR;
+            tris[t++] = gR;
+            tris[t++] = gL;
+            tris[t++] = sL;
+            tris[t++] = sR;
+
+            // North
+            int ngL = j * resolution + (resolution - 1);
+            int ngR = (j + 1) * resolution + (resolution - 1);
+            int nsL = nStart + j;
+            int nsR = nStart + j + 1;
+            tris[t++] = ngL;
+            tris[t++] = ngR;
+            tris[t++] = nsR;
+            tris[t++] = ngL;
+            tris[t++] = nsR;
+            tris[t++] = nsL;
+
+            // West
+            int wgB = j;
+            int wgT = j + 1;
+            int wsB = wStart + j;
+            int wsT = wStart + j + 1;
+            tris[t++] = wgB;
+            tris[t++] = wsT;
+            tris[t++] = wgT;
+            tris[t++] = wgB;
+            tris[t++] = wsB;
+            tris[t++] = wsT;
+
+            // East
+            int egB = (resolution - 1) * resolution + j;
+            int egT = (resolution - 1) * resolution + j + 1;
+            int esB = eStart + j;
+            int esT = eStart + j + 1;
+            tris[t++] = egB;
+            tris[t++] = egT;
+            tris[t++] = esT;
+            tris[t++] = egB;
+            tris[t++] = esT;
+            tris[t++] = esB;
+        }
+        return tris;
+    }
+
+    public float GetElevationAt(int gx, int gz)
+    {
+        // 1. Determine which chunk these global coordinates belong to
+        int cx = Mathf.FloorToInt((float)gx / chunkSize);
+        int cz = Mathf.FloorToInt((float)gz / chunkSize);
+
+        // 2. Determine the local index within that chunk [0-15]
+        int lx = gx - (cx * chunkSize);
+        int lz = gz - (cz * chunkSize);
+
+        Vector2Int lookupCoord = new Vector2Int(cx, cz);
+
+        // 3. CACHE CHECK (The Performance Win)
+        // If we are asking for a tile in the same chunk as the last call,
+        // skip the Dictionary entirely and return from the local reference.
+        if (lookupCoord == lastLookupCoord && lastLookupGrid != null)
+        {
+            return lastLookupGrid[lx, lz].Elevation;
+        }
+
+        // 4. DICTIONARY LOOKUP (The Fallback)
+        if (fullTileMeshData.TryGetValue(lookupCoord, out TileMeshStruct[,] grid))
+        {
+            lastLookupCoord = lookupCoord;
+            lastLookupGrid = grid;
+            return grid[lx, lz].Elevation;
+        }
+
+        // Return 0 if data isn't generated yet (prevents crashes)
+        return 0f;
     }
 }
