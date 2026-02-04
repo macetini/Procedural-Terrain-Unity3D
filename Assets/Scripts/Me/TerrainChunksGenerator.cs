@@ -16,14 +16,15 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int viewDistanceChunks = 3;
 
     [Header("LOD Settings")]
-    public float lodDist1 = 50f; // Distance to switch to Medium detail
-    public float lodDist2 = 100f; // Distance to switch to Low detail
+    public float lodDist1 = 640f; // Distance to switch to Medium detail
+    public float lodDist2 = 768f; // Distance to switch to Low detail
 
     [Header("Prefabs")]
     public TerrainChunk chunkPrefab;
 
     private Vector2Int currentCameraPosition = Vector2Int.zero;
-    private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
+
+    //private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
 
     private readonly List<Vector2Int> buildQueue = new();
     private bool isProcessingQueue = false;
@@ -83,11 +84,13 @@ public class TerrainChunksGenerator : MonoBehaviour
                     {
                         Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
 
-                        if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
+                        //if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
+                        if (!terrainData.HasActiveChunk(coord) && !buildQueue.Contains(coord))
                         {
                             buildQueue.Add(coord);
                         }
-                        else if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
+                        //else if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
+                        else if (terrainData.TryGetActiveChunk(coord, out TerrainChunk chunk))
                         {
                             chunk.UpdateLOD();
                         }
@@ -109,7 +112,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void CleanupRemoteChunks()
     {
         visibilityKeysSnapshot.Clear();
-        visibilityKeysSnapshot.AddRange(activeChunks.Keys);
+        visibilityKeysSnapshot.AddRange(terrainData.ActiveChunkKeys); //activeChunks.Keys);
 
         // Using a simple integer distance (Manhattan) is faster and safer for chunk grids
         int maxChunkDist = viewDistanceChunks + 2;
@@ -122,10 +125,12 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             if (chunkDist > maxChunkDist)
             {
-                if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
+                //if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
+                if (terrainData.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     Destroy(chunk.gameObject);
-                    activeChunks.Remove(coord);
+                    //activeChunks.Remove(coord);
+                    terrainData.UnregisterChunk(coord);
 
                     terrainData.RemoveSanitization(coord);
                     terrainData.RemoveTileData(coord);
@@ -201,14 +206,17 @@ public class TerrainChunksGenerator : MonoBehaviour
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
             {
                 Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
-                if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
+                //if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
+                if (!terrainData.HasActiveChunk(coord) && !buildQueue.Contains(coord))
                 {
                     buildQueue.Add(coord);
                     addedNew = true;
                 }
-                else if (activeChunks.ContainsKey(coord))
+                //else if (activeChunks.ContainsKey(coord))
+                else if (terrainData.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
-                    activeChunks[coord].UpdateLOD();
+                    //activeChunks[coord].UpdateLOD();
+                    chunk.UpdateLOD();
                 }
             }
         }
@@ -236,7 +244,8 @@ public class TerrainChunksGenerator : MonoBehaviour
             if (distToCam > viewDistanceChunks + 1)
                 continue;
 
-            if (!activeChunks.ContainsKey(coord))
+            //if (!activeChunks.ContainsKey(coord))
+            if (!terrainData.HasActiveChunk(coord))
             {
                 // 1. Ensure a 3x3 block of RAW DATA exists
                 for (int x = -1; x <= 1; x++)
@@ -284,7 +293,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                 yield return null;
                 SpawnChunkMesh(coord);
 
-                if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
+                //if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
+                if (terrainData.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     chunk.StartFadeIn();
                 }
@@ -302,7 +312,8 @@ public class TerrainChunksGenerator : MonoBehaviour
         // This sets up variables
         chunk.InitBuild(this, coord);
         chunk.UpdateVisibility(cameraPlanes);
-        activeChunks.Add(coord, chunk);
+        //activeChunks.Add(coord, chunk);
+        terrainData.RegisterChunk(coord, chunk);
     }
 
     public bool GetTileAt(int globalX, int globalZ, out TileMeshStruct tile)
@@ -312,7 +323,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         int lx = globalX - (cx * chunkSize);
         int lz = globalZ - (cz * chunkSize);
 
-        Vector2Int lookup = new Vector2Int(cx, cz);
+        Vector2Int lookup = new(cx, cz);
 
         // Check cache first
         if (lookup == lastLookupCoord && lastLookupGrid != null)
@@ -364,7 +375,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             // 1. Take a snapshot of the current keys
             visibilityKeysSnapshot.Clear();
-            visibilityKeysSnapshot.AddRange(activeChunks.Keys);
+            visibilityKeysSnapshot.AddRange(terrainData.ActiveChunkKeys); //activeChunks.Keys);
 
             // 2. Iterate through the snapshot
             for (int i = 0; i < visibilityKeysSnapshot.Count; i++)
@@ -372,7 +383,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                 Vector2Int key = visibilityKeysSnapshot[i];
 
                 // 3. Safety Check: Make sure the chunk wasn't purged while we were yielding
-                if (activeChunks.TryGetValue(key, out TerrainChunk chunk))
+                //if (activeChunks.TryGetValue(key, out TerrainChunk chunk))
+                if (terrainData.TryGetActiveChunk(key, out TerrainChunk chunk))
                 {
                     chunk.UpdateVisibility(cameraPlanes);
 

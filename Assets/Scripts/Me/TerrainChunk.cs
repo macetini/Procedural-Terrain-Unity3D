@@ -284,12 +284,15 @@ public class TerrainChunk : MonoBehaviour
         // 2. Cardinal Neighbors
         if (x < 0 && z >= 0 && z < chunkSize)
             return (gridW != null) ? gridW[chunkSize + x, z].Elevation : gridC[0, z].Elevation;
+
         if (x >= chunkSize && z >= 0 && z < chunkSize)
             return (gridE != null)
                 ? gridE[x - chunkSize, z].Elevation
                 : gridC[chunkSize - 1, z].Elevation;
+
         if (z < 0 && x >= 0 && x < chunkSize)
             return (gridS != null) ? gridS[x, chunkSize + z].Elevation : gridC[x, 0].Elevation;
+
         if (z >= chunkSize && x >= 0 && x < chunkSize)
             return (gridN != null)
                 ? gridN[x, z - chunkSize].Elevation
@@ -300,15 +303,18 @@ public class TerrainChunk : MonoBehaviour
             return (gridSW != null)
                 ? gridSW[chunkSize + x, chunkSize + z].Elevation
                 : gridC[0, 0].Elevation;
+
         if (x < 0 && z >= chunkSize)
             return (gridNW != null)
                 ? gridNW[chunkSize + x, z - chunkSize].Elevation
                 : gridC[0, chunkSize - 1].Elevation;
+
         if (x >= chunkSize && z >= chunkSize)
             // Note: Northeast uses gridNE
             return (gridNE != null)
                 ? gridNE[x - chunkSize, z - chunkSize].Elevation
                 : gridC[chunkSize - 1, chunkSize - 1].Elevation;
+
         if (x >= chunkSize && z < 0)
             // Note: Southeast uses gridSE
             return (gridSE != null)
@@ -339,7 +345,7 @@ public class TerrainChunk : MonoBehaviour
                 float hF = heightCache1D[row + cz + 1];
 
                 // Standard Sobel-filter style normal generation
-                Vector3 normal = new Vector3(hL - hR, 2.0f * (hDist / vScale), hB - hF);
+                Vector3 normal = new(hL - hR, 2.0f * (hDist / vScale), hB - hF);
                 normals[idx] = normal.normalized;
             }
         }
@@ -367,7 +373,7 @@ public class TerrainChunk : MonoBehaviour
 
         mesh.bounds = new Bounds(center, size);
 
-        if (!rendererReference.enabled) // && !isFirstBuild) // Check isFirstBuild to avoid a bug
+        if (!rendererReference.enabled)
             rendererReference.enabled = true;
     }
 
