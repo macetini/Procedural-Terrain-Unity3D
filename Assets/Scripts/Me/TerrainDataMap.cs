@@ -102,28 +102,20 @@ public class TerrainDataMap
 
                     // East check
                     if (x < edge)
-                        Clamp(ref current, ref currentData[x + 1, z]);
+                        TerrainMath.ClampNeighbor(ref current, ref currentData[x + 1, z]);
                     else if (eastData != null)
-                        Clamp(ref current, ref eastData[0, z]);
+                        TerrainMath.ClampNeighbor(ref current, ref eastData[0, z]);
 
                     // North check
                     if (z < edge)
-                        Clamp(ref current, ref currentData[x, z + 1]);
+                        TerrainMath.ClampNeighbor(ref current, ref currentData[x, z + 1]);
                     else if (northData != null)
-                        Clamp(ref current, ref northData[x, 0]);
+                        TerrainMath.ClampNeighbor(ref current, ref northData[x, 0]);
                 }
             }
         }
     }
-
-    private static void Clamp(ref TileMeshStruct a, ref TileMeshStruct b)
-    {
-        if (Mathf.Abs(a.Elevation - b.Elevation) > 1)
-        {
-            b.Elevation = a.Elevation + (b.Elevation > a.Elevation ? 1 : -1);
-        }
-    }
-
+    
     // --------------------------------------------------------------------------------------------
     // -------------------------------------- ACTIVE DATA -----------------------------------------
     // --------------------------------------------------------------------------------------------
