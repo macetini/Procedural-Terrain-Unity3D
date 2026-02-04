@@ -29,7 +29,8 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     //private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
     private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
-    private readonly HashSet<Vector2Int> sanitizedTileCoords = new();
+
+    //private readonly HashSet<Vector2Int> sanitizedTileCoords = new();
     private readonly List<Vector2Int> buildQueue = new();
     private bool isProcessingQueue = false;
     private Plane[] cameraPlanes;
@@ -134,7 +135,8 @@ public class TerrainChunksGenerator : MonoBehaviour
 
                     // [CRITICAL] Clear these so the JIT logic can re-sanitize
                     // if the player returns to this area later.
-                    sanitizedTileCoords.Remove(coord);
+                    //sanitizedTileCoords.Remove(coord);
+                    terrainData.RemoveSanitization(coord);
                     //tileMap.Remove(coord);
                     terrainData.RemoveTileData(coord);
                 }
@@ -165,7 +167,8 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
 
         sw2.Start();
-        SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius);
+        //SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius);
+        terrainData.SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius); // (See note below)
         sw2.Stop();
         ms = sw2.Elapsed.TotalMilliseconds;
         if (ms > 1.0f)
@@ -205,6 +208,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
     }
 
+    /*
     private TileMeshStruct[,] GenerateRawTileMeshData(Vector2Int tileOrigin)
     {
         TileMeshStruct[,] tileData = new TileMeshStruct[chunkSize, chunkSize];
@@ -307,6 +311,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             b.Elevation = a.Elevation + (b.Elevation > a.Elevation ? 1 : -1);
         }
     }
+    */
 
     private void SecondPass()
     {
@@ -379,10 +384,18 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
+                        /*
                         if (!sanitizedTileCoords.Contains(n))
                         {
                             SanitizeGlobalChunk(n);
                             sanitizedTileCoords.Add(n);
+                            yield return null;
+                        }
+                        */
+                        if (!terrainData.IsSanitized(n))
+                        {
+                            terrainData.SanitizeGlobalChunk(n);
+                            terrainData.MarkSanitized(n);
                             yield return null;
                         }
                     }
