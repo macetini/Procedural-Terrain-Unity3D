@@ -403,7 +403,7 @@ public class TerrainChunk : MonoBehaviour
             rendererReference.enabled = finalShowState;
         }
 
-        wasVisibleLastCheck = finalShowState; // [NEW] Save state
+        wasVisibleLastCheck = finalShowState;
     }
 
     // ------------------------------------------------------------------------------------------------

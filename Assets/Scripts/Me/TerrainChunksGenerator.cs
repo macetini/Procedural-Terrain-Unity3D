@@ -11,12 +11,9 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int maxElevationStepsCount = 5;
     public float noiseScale = 0.05f;
 
-    [Header("Infinite Settings")]
+    [Header("Build Settings")]
     public Camera cameraReference;
     public int viewDistanceChunks = 3;
-
-    [Header("Build Settings")]
-    public int buildsPerFrame = 1; // Start with 1 to ensure 60fps on WebGL
 
     [Header("LOD Settings")]
     public float lodDist1 = 50f; // Distance to switch to Medium detail
@@ -26,11 +23,8 @@ public class TerrainChunksGenerator : MonoBehaviour
     public TerrainChunk chunkPrefab;
 
     private Vector2Int currentCameraPosition = Vector2Int.zero;
-
-    //private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
     private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
 
-    //private readonly HashSet<Vector2Int> sanitizedTileCoords = new();
     private readonly List<Vector2Int> buildQueue = new();
     private bool isProcessingQueue = false;
     private Plane[] cameraPlanes;
@@ -133,11 +127,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     Destroy(chunk.gameObject);
                     activeChunks.Remove(coord);
 
-                    // [CRITICAL] Clear these so the JIT logic can re-sanitize
-                    // if the player returns to this area later.
-                    //sanitizedTileCoords.Remove(coord);
                     terrainData.RemoveSanitization(coord);
-                    //tileMap.Remove(coord);
                     terrainData.RemoveTileData(coord);
                 }
             }
@@ -167,7 +157,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
 
         sw2.Start();
-        //SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius);
         terrainData.SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius); // (See note below)
         sw2.Stop();
         ms = sw2.Elapsed.TotalMilliseconds;
@@ -199,119 +188,9 @@ public class TerrainChunksGenerator : MonoBehaviour
                     cameraOrigin.y + zChunkOffset
                 );
                 terrainData.GenerateRawData(coord);
-                /*if (!tileMap.ContainsKey(coord))
-                {
-                    TileMeshStruct[,] rawData = GenerateRawTileMeshData(coord);
-                    tileMap.Add(coord, rawData);
-                }*/
             }
         }
     }
-
-    /*
-    private TileMeshStruct[,] GenerateRawTileMeshData(Vector2Int tileOrigin)
-    {
-        TileMeshStruct[,] tileData = new TileMeshStruct[chunkSize, chunkSize];
-        int offsetX = tileOrigin.x * chunkSize;
-        int offsetZ = tileOrigin.y * chunkSize;
-
-        for (int xTileOffset = 0; xTileOffset < chunkSize; xTileOffset++)
-        {
-            for (int zTileOffset = 0; zTileOffset < chunkSize; zTileOffset++)
-            {
-                int tileX = offsetX + xTileOffset;
-                int tileZ = offsetZ + zTileOffset;
-                float noise = Mathf.PerlinNoise(tileX * noiseScale, tileZ * noiseScale);
-
-                int elevation = Mathf.FloorToInt(noise * (maxElevationStepsCount + 1));
-                elevation = Mathf.Clamp(elevation, 0, maxElevationStepsCount);
-
-                tileData[xTileOffset, zTileOffset] = new TileMeshStruct(
-                    xTileOffset,
-                    zTileOffset,
-                    elevation
-                );
-            }
-        }
-        return tileData;
-    }
-
-    private void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)
-    {
-        for (int x = -dataRadius; x <= dataRadius; x++)
-        {
-            for (int z = -dataRadius; z <= dataRadius; z++)
-            {
-                Vector2Int tilePosition = new(cameraOrigin.x + x, cameraOrigin.y + z);
-                // We only need to sanitize if the mesh hasn't been built yet
-                if (!sanitizedTileCoords.Contains(tilePosition))
-                {
-                    SanitizeGlobalChunk(tilePosition);
-                    sanitizedTileCoords.Add(tilePosition);
-                }
-            }
-        }
-    }
-
-    private void SanitizeGlobalChunk(Vector2Int tilePos)
-    {
-        //if (!tileMap.TryGetValue(tilePos, out TileMeshStruct[,] currentData))
-        if (!terrainData.TryGetTileData(tilePos, out TileMeshStruct[,] currentData))
-            return;
-
-        //tileMap.TryGetValue(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
-        terrainData.TryGetTileData(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
-
-        //tileMap.TryGetValue(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
-        terrainData.TryGetTileData(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
-
-        int size = chunkSize;
-        int edge = size - 1;
-
-        for (int i = 0; i < 2; i++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                for (int z = 0; z < size; z++)
-                {
-                    ref TileMeshStruct current = ref currentData[x, z];
-
-                    // --- EAST CHECK ---
-                    if (x < edge)
-                    {
-                        // Internal neighbor
-                        ClampNeighbor(ref current, ref currentData[x + 1, z]);
-                    }
-                    else if (eastData != null)
-                    {
-                        // Chunk boundary
-                        ClampNeighbor(ref current, ref eastData[0, z]);
-                    }
-
-                    // --- NORTH CHECK ---
-                    if (z < edge)
-                    {
-                        // Internal neighbor
-                        ClampNeighbor(ref current, ref currentData[x, z + 1]);
-                    }
-                    else if (northData != null)
-                    {
-                        // Chunk boundary
-                        ClampNeighbor(ref current, ref northData[x, 0]);
-                    }
-                }
-            }
-        }
-    }
-
-    private static void ClampNeighbor(ref TileMeshStruct a, ref TileMeshStruct b)
-    {
-        if (Mathf.Abs(a.Elevation - b.Elevation) > 1)
-        {
-            b.Elevation = a.Elevation + (b.Elevation > a.Elevation ? 1 : -1);
-        }
-    }
-    */
 
     private void SecondPass()
     {
@@ -667,17 +546,5 @@ public class TerrainChunksGenerator : MonoBehaviour
         terrainData.TryGetTileData(coord + new Vector2Int(-1, 1), out nw);
         terrainData.TryGetTileData(coord + new Vector2Int(1, 1), out ne);
         terrainData.TryGetTileData(coord + new Vector2Int(1, -1), out se);
-        /*
-        tileMap.TryGetValue(coord, out c);
-        tileMap.TryGetValue(coord + Vector2Int.left, out w);
-        tileMap.TryGetValue(coord + Vector2Int.down, out s);
-        tileMap.TryGetValue(coord + new Vector2Int(-1, -1), out sw);
-        tileMap.TryGetValue(coord + Vector2Int.right, out e);
-        tileMap.TryGetValue(coord + Vector2Int.up, out n);
-        // Added these 3 missing diagonals:
-        tileMap.TryGetValue(coord + new Vector2Int(-1, 1), out nw);
-        tileMap.TryGetValue(coord + new Vector2Int(1, 1), out ne);
-        tileMap.TryGetValue(coord + new Vector2Int(1, -1), out se);
-        */
     }
 }
