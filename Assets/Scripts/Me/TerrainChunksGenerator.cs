@@ -353,6 +353,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                     }
                 }
 
+                yield return null;
+
                 // 2. Ensure a 3x3 block is SANITIZED (Height-Matched)
                 // This is the key! We sanitize the neighbors against EACH OTHER
                 // so the heights at the edges are identical.
