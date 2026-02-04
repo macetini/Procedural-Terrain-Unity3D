@@ -148,4 +148,36 @@ public class TerrainDataMap
 
     // Property to let the Generator see the keys for culling/cleanup
     public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys => activeChunks.Keys;
+
+    // --------------------------------------------------------------------------------------------
+    // -------------------------------------- SAMPLING --------------------------------------------
+    // --------------------------------------------------------------------------------------------
+
+    private Vector2Int lastLookupCoord = new(-9999, -9999);
+    private TileMeshStruct[,] lastLookupGrid;
+
+    public float GetElevationAt(int gx, int gz)
+    {
+        int cx = Mathf.FloorToInt((float)gx / chunkSize);
+        int cz = Mathf.FloorToInt((float)gz / chunkSize);
+        int lx = gx - (cx * chunkSize);
+        int lz = gz - (cz * chunkSize);
+
+        Vector2Int lookup = new(cx, cz);
+
+        // Cache check for high-frequency calls (like physics/droids)
+        if (lookup == lastLookupCoord && lastLookupGrid != null)
+        {
+            return lastLookupGrid[lx, lz].Elevation;
+        }
+
+        if (tileMap.TryGetValue(lookup, out TileMeshStruct[,] grid))
+        {
+            lastLookupCoord = lookup;
+            lastLookupGrid = grid;
+            return grid[lx, lz].Elevation;
+        }
+
+        return 0f;
+    }
 }

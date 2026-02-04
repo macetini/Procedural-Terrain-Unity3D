@@ -16,8 +16,9 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int viewDistanceChunks = 3;
 
     [Header("LOD Settings")]
-    public float lodDist1 = 640f; // Distance to switch to Medium detail
-    public float lodDist2 = 768f; // Distance to switch to Low detail
+    public float lodDist1 = 640f; // Distance to switch to MEDIUM detail
+    public float lodDist2 = 768f; // Distance to switch to LOW detail
+    public int visibilityCheckFrameCount = 10;
 
     [Header("Prefabs")]
     public TerrainChunk chunkPrefab;
@@ -27,8 +28,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     private bool isProcessingQueue = false;
     private Plane[] cameraPlanes;
     private float ChunkBoundSize => chunkSize * tileSize;
-    private Vector2Int lastLookupCoord = new(-9999, -9999);
-    private TileMeshStruct[,] lastLookupGrid;
     private readonly Dictionary<int, int[]> triangleCache = new();
     private readonly List<Vector2Int> visibilityKeysSnapshot = new();
 
@@ -81,12 +80,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                     {
                         Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
 
-                        //if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
                         if (!terrainData.HasActiveChunk(coord) && !buildQueue.Contains(coord))
                         {
                             buildQueue.Add(coord);
                         }
-                        //else if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
                         else if (terrainData.TryGetActiveChunk(coord, out TerrainChunk chunk))
                         {
                             chunk.UpdateLOD();
@@ -140,7 +137,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     {
         // Calculate the current chunk coordinates based on camera position
         // Use FloorToInt to get a consistent "Bottom-Left" anchor
-
         System.Diagnostics.Stopwatch sw0 = new();
         System.Diagnostics.Stopwatch sw1 = new();
         System.Diagnostics.Stopwatch sw2 = new();
@@ -197,7 +193,6 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void SecondPass()
     {
         bool addedNew = false;
-
         for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
         {
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
@@ -292,7 +287,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         Vector3 position = new(coord.x * ChunkBoundSize, 0, coord.y * ChunkBoundSize);
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
 
-        // This sets up variables
         chunk.InitBuild(this, coord);
         chunk.UpdateVisibility(cameraPlanes);
         terrainData.RegisterChunk(coord, chunk);
@@ -300,24 +294,14 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     public bool GetTileAt(int globalX, int globalZ, out TileMeshStruct tile)
     {
+        // We can actually move this to TerrainDataMap too, but for now:
         int cx = Mathf.FloorToInt((float)globalX / chunkSize);
         int cz = Mathf.FloorToInt((float)globalZ / chunkSize);
         int lx = globalX - (cx * chunkSize);
         int lz = globalZ - (cz * chunkSize);
 
-        Vector2Int lookup = new(cx, cz);
-
-        // Check cache first
-        if (lookup == lastLookupCoord && lastLookupGrid != null)
+        if (terrainData.TryGetTileData(new Vector2Int(cx, cz), out TileMeshStruct[,] grid))
         {
-            tile = lastLookupGrid[lx, lz];
-            return true;
-        }
-
-        if (terrainData.TryGetTileData(lookup, out TileMeshStruct[,] grid))
-        {
-            lastLookupCoord = lookup;
-            lastLookupGrid = grid;
             tile = grid[lx, lz];
             return true;
         }
@@ -374,8 +358,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                     }
                 }
 
-                // 4. Time Slicing: Only process 10 chunks per frame
-                if (i % 10 == 0) // TODO - Put this in inspector
+                // 4. Time Slicing: Only process after X frames
+                if (i % visibilityCheckFrameCount == 0)
                     yield return null;
             }
 
@@ -484,35 +468,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     public float GetElevationAt(int gx, int gz)
     {
-        // 1. Determine which chunk these global coordinates belong to
-        int cx = Mathf.FloorToInt((float)gx / chunkSize);
-        int cz = Mathf.FloorToInt((float)gz / chunkSize);
-
-        // 2. Determine the local index within that chunk [0-15]
-        int lx = gx - (cx * chunkSize);
-        int lz = gz - (cz * chunkSize);
-
-        Vector2Int lookupCoord = new(cx, cz);
-
-        // 3. CACHE CHECK (The Performance Win)
-        // If we are asking for a tile in the same chunk as the last call,
-        // skip the Dictionary entirely and return from the local reference.
-        if (lookupCoord == lastLookupCoord && lastLookupGrid != null)
-        {
-            return lastLookupGrid[lx, lz].Elevation;
-        }
-
-        // 4. DICTIONARY LOOKUP (The Fallback)
-        //if (tileMap.TryGetValue(lookupCoord, out TileMeshStruct[,] grid))
-        if (terrainData.TryGetTileData(lookupCoord, out TileMeshStruct[,] grid))
-        {
-            lastLookupCoord = lookupCoord;
-            lastLookupGrid = grid;
-            return grid[lx, lz].Elevation;
-        }
-
-        // Return 0 if data isn't generated yet (prevents crashes)
-        return 0f;
+        return terrainData.GetElevationAt(gx, gz);
     }
 
     public void GetGridReferences(
@@ -528,13 +484,15 @@ public class TerrainChunksGenerator : MonoBehaviour
         out TileMeshStruct[,] se
     )
     {
+        // Main Tiles
         terrainData.TryGetTileData(coord, out c);
         terrainData.TryGetTileData(coord + Vector2Int.left, out w);
         terrainData.TryGetTileData(coord + Vector2Int.down, out s);
         terrainData.TryGetTileData(coord + new Vector2Int(-1, -1), out sw);
         terrainData.TryGetTileData(coord + Vector2Int.right, out e);
         terrainData.TryGetTileData(coord + Vector2Int.up, out n);
-        // Added these 3 missing diagonals:
+
+        // Diagonals Tiles
         terrainData.TryGetTileData(coord + new Vector2Int(-1, 1), out nw);
         terrainData.TryGetTileData(coord + new Vector2Int(1, 1), out ne);
         terrainData.TryGetTileData(coord + new Vector2Int(1, -1), out se);
