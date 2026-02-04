@@ -70,7 +70,7 @@ public class TerrainChunk : MonoBehaviour
         chunkSize = generator.chunkSize;
         tileSize = generator.tileSize;
         elevationStepHeight = generator.elevationStepHeight;
-        maxElevationStep = generator.maxElevationStep;
+        maxElevationStep = generator.maxElevationStepsCount;
         chunkBoundSize = chunkSize * tileSize;
 
         rendererReference.enabled = false;

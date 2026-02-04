@@ -8,7 +8,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     public int chunkSize = 16;
     public float tileSize = 1.0f;
     public float elevationStepHeight = 1.0f;
-    public int maxElevationStep = 5;
+    public int maxElevationStepsCount = 5;
     public float noiseScale = 0.05f;
 
     [Header("Infinite Settings")]
@@ -26,9 +26,10 @@ public class TerrainChunksGenerator : MonoBehaviour
     public TerrainChunk chunkPrefab;
 
     private Vector2Int currentCameraPosition = Vector2Int.zero;
-    private readonly Dictionary<Vector2Int, TileMeshStruct[,]> fullTileMeshData = new();
-    private readonly Dictionary<Vector2Int, TerrainChunk> chunksDict = new();
-    private readonly HashSet<Vector2Int> sanitizedChunksHash = new();
+
+    //private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
+    private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
+    private readonly HashSet<Vector2Int> sanitizedTileCoords = new();
     private readonly List<Vector2Int> buildQueue = new();
     private bool isProcessingQueue = false;
     private Plane[] cameraPlanes;
@@ -37,6 +38,14 @@ public class TerrainChunksGenerator : MonoBehaviour
     private TileMeshStruct[,] lastLookupGrid;
     private readonly Dictionary<int, int[]> triangleCache = new();
     private readonly List<Vector2Int> visibilityKeysSnapshot = new();
+
+    // Refactor
+    private TerrainDataMap terrainData;
+
+    void Awake()
+    {
+        terrainData = new TerrainDataMap(this);
+    }
 
     void Start()
     {
@@ -79,11 +88,11 @@ public class TerrainChunksGenerator : MonoBehaviour
                     {
                         Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
 
-                        if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
+                        if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
                         {
                             buildQueue.Add(coord);
                         }
-                        else if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                        else if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
                         {
                             chunk.UpdateLOD();
                         }
@@ -105,7 +114,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void CleanupRemoteChunks()
     {
         visibilityKeysSnapshot.Clear();
-        visibilityKeysSnapshot.AddRange(chunksDict.Keys);
+        visibilityKeysSnapshot.AddRange(activeChunks.Keys);
 
         // Using a simple integer distance (Manhattan) is faster and safer for chunk grids
         int maxChunkDist = viewDistanceChunks + 2;
@@ -118,15 +127,16 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             if (chunkDist > maxChunkDist)
             {
-                if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
                 {
                     Destroy(chunk.gameObject);
-                    chunksDict.Remove(coord);
+                    activeChunks.Remove(coord);
 
                     // [CRITICAL] Clear these so the JIT logic can re-sanitize
                     // if the player returns to this area later.
-                    sanitizedChunksHash.Remove(coord);
-                    fullTileMeshData.Remove(coord);
+                    sanitizedTileCoords.Remove(coord);
+                    //tileMap.Remove(coord);
+                    terrainData.RemoveTileData(coord);
                 }
             }
         }
@@ -185,11 +195,12 @@ public class TerrainChunksGenerator : MonoBehaviour
                     cameraOrigin.x + xChunkOffset,
                     cameraOrigin.y + zChunkOffset
                 );
-                if (!fullTileMeshData.ContainsKey(coord))
+                terrainData.GenerateRawData(coord);
+                /*if (!tileMap.ContainsKey(coord))
                 {
                     TileMeshStruct[,] rawData = GenerateRawTileMeshData(coord);
-                    fullTileMeshData.Add(coord, rawData);
-                }
+                    tileMap.Add(coord, rawData);
+                }*/
             }
         }
     }
@@ -208,8 +219,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                 int tileZ = offsetZ + zTileOffset;
                 float noise = Mathf.PerlinNoise(tileX * noiseScale, tileZ * noiseScale);
 
-                int elevation = Mathf.FloorToInt(noise * (maxElevationStep + 1));
-                elevation = Mathf.Clamp(elevation, 0, maxElevationStep);
+                int elevation = Mathf.FloorToInt(noise * (maxElevationStepsCount + 1));
+                elevation = Mathf.Clamp(elevation, 0, maxElevationStepsCount);
 
                 tileData[xTileOffset, zTileOffset] = new TileMeshStruct(
                     xTileOffset,
@@ -229,10 +240,10 @@ public class TerrainChunksGenerator : MonoBehaviour
             {
                 Vector2Int tilePosition = new(cameraOrigin.x + x, cameraOrigin.y + z);
                 // We only need to sanitize if the mesh hasn't been built yet
-                if (!sanitizedChunksHash.Contains(tilePosition))
+                if (!sanitizedTileCoords.Contains(tilePosition))
                 {
                     SanitizeGlobalChunk(tilePosition);
-                    sanitizedChunksHash.Add(tilePosition);
+                    sanitizedTileCoords.Add(tilePosition);
                 }
             }
         }
@@ -240,11 +251,15 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SanitizeGlobalChunk(Vector2Int tilePos)
     {
-        if (!fullTileMeshData.TryGetValue(tilePos, out TileMeshStruct[,] currentData))
+        //if (!tileMap.TryGetValue(tilePos, out TileMeshStruct[,] currentData))
+        if (!terrainData.TryGetTileData(tilePos, out TileMeshStruct[,] currentData))
             return;
 
-        fullTileMeshData.TryGetValue(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
-        fullTileMeshData.TryGetValue(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
+        //tileMap.TryGetValue(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
+        terrainData.TryGetTileData(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
+
+        //tileMap.TryGetValue(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
+        terrainData.TryGetTileData(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
 
         int size = chunkSize;
         int edge = size - 1;
@@ -302,14 +317,14 @@ public class TerrainChunksGenerator : MonoBehaviour
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
             {
                 Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
-                if (!chunksDict.ContainsKey(coord) && !buildQueue.Contains(coord))
+                if (!activeChunks.ContainsKey(coord) && !buildQueue.Contains(coord))
                 {
                     buildQueue.Add(coord);
                     addedNew = true;
                 }
-                else if (chunksDict.ContainsKey(coord))
+                else if (activeChunks.ContainsKey(coord))
                 {
-                    chunksDict[coord].UpdateLOD();
+                    activeChunks[coord].UpdateLOD();
                 }
             }
         }
@@ -337,7 +352,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             if (distToCam > viewDistanceChunks + 1)
                 continue;
 
-            if (!chunksDict.ContainsKey(coord))
+            if (!activeChunks.ContainsKey(coord))
             {
                 // 1. Ensure a 3x3 block of RAW DATA exists
                 for (int x = -1; x <= 1; x++)
@@ -345,7 +360,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!fullTileMeshData.ContainsKey(n))
+                        //if (!tileMap.ContainsKey(n))
+                        if (!terrainData.HasTileData(n))
                         {
                             GenerateFullMeshData(n, 0);
                             yield return null;
@@ -363,10 +379,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!sanitizedChunksHash.Contains(n))
+                        if (!sanitizedTileCoords.Contains(n))
                         {
                             SanitizeGlobalChunk(n);
-                            sanitizedChunksHash.Add(n);
+                            sanitizedTileCoords.Add(n);
                             yield return null;
                         }
                     }
@@ -376,7 +392,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 yield return null;
                 SpawnChunkMesh(coord);
 
-                if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
+                if (activeChunks.TryGetValue(coord, out TerrainChunk chunk))
                 {
                     chunk.StartFadeIn();
                 }
@@ -394,7 +410,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         // This sets up variables
         chunk.InitBuild(this, coord);
         chunk.UpdateVisibility(cameraPlanes);
-        chunksDict.Add(coord, chunk);
+        activeChunks.Add(coord, chunk);
     }
 
     public bool GetTileAt(int globalX, int globalZ, out TileMeshStruct tile)
@@ -413,7 +429,8 @@ public class TerrainChunksGenerator : MonoBehaviour
             return true;
         }
 
-        if (fullTileMeshData.TryGetValue(lookup, out TileMeshStruct[,] grid))
+        //if (tileMap.TryGetValue(lookup, out TileMeshStruct[,] grid))
+        if (terrainData.TryGetTileData(lookup, out TileMeshStruct[,] grid))
         {
             lastLookupCoord = lookup;
             lastLookupGrid = grid;
@@ -455,7 +472,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             // 1. Take a snapshot of the current keys
             visibilityKeysSnapshot.Clear();
-            visibilityKeysSnapshot.AddRange(chunksDict.Keys);
+            visibilityKeysSnapshot.AddRange(activeChunks.Keys);
 
             // 2. Iterate through the snapshot
             for (int i = 0; i < visibilityKeysSnapshot.Count; i++)
@@ -463,7 +480,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 Vector2Int key = visibilityKeysSnapshot[i];
 
                 // 3. Safety Check: Make sure the chunk wasn't purged while we were yielding
-                if (chunksDict.TryGetValue(key, out TerrainChunk chunk))
+                if (activeChunks.TryGetValue(key, out TerrainChunk chunk))
                 {
                     chunk.UpdateVisibility(cameraPlanes);
 
@@ -602,7 +619,8 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
 
         // 4. DICTIONARY LOOKUP (The Fallback)
-        if (fullTileMeshData.TryGetValue(lookupCoord, out TileMeshStruct[,] grid))
+        //if (tileMap.TryGetValue(lookupCoord, out TileMeshStruct[,] grid))
+        if (terrainData.TryGetTileData(lookupCoord, out TileMeshStruct[,] grid))
         {
             lastLookupCoord = lookupCoord;
             lastLookupGrid = grid;
@@ -626,15 +644,27 @@ public class TerrainChunksGenerator : MonoBehaviour
         out TileMeshStruct[,] se
     )
     {
-        fullTileMeshData.TryGetValue(coord, out c);
-        fullTileMeshData.TryGetValue(coord + Vector2Int.left, out w);
-        fullTileMeshData.TryGetValue(coord + Vector2Int.down, out s);
-        fullTileMeshData.TryGetValue(coord + new Vector2Int(-1, -1), out sw);
-        fullTileMeshData.TryGetValue(coord + Vector2Int.right, out e);
-        fullTileMeshData.TryGetValue(coord + Vector2Int.up, out n);
+        terrainData.TryGetTileData(coord, out c);
+        terrainData.TryGetTileData(coord + Vector2Int.left, out w);
+        terrainData.TryGetTileData(coord + Vector2Int.down, out s);
+        terrainData.TryGetTileData(coord + new Vector2Int(-1, -1), out sw);
+        terrainData.TryGetTileData(coord + Vector2Int.right, out e);
+        terrainData.TryGetTileData(coord + Vector2Int.up, out n);
         // Added these 3 missing diagonals:
-        fullTileMeshData.TryGetValue(coord + new Vector2Int(-1, 1), out nw);
-        fullTileMeshData.TryGetValue(coord + new Vector2Int(1, 1), out ne);
-        fullTileMeshData.TryGetValue(coord + new Vector2Int(1, -1), out se);
+        terrainData.TryGetTileData(coord + new Vector2Int(-1, 1), out nw);
+        terrainData.TryGetTileData(coord + new Vector2Int(1, 1), out ne);
+        terrainData.TryGetTileData(coord + new Vector2Int(1, -1), out se);
+        /*
+        tileMap.TryGetValue(coord, out c);
+        tileMap.TryGetValue(coord + Vector2Int.left, out w);
+        tileMap.TryGetValue(coord + Vector2Int.down, out s);
+        tileMap.TryGetValue(coord + new Vector2Int(-1, -1), out sw);
+        tileMap.TryGetValue(coord + Vector2Int.right, out e);
+        tileMap.TryGetValue(coord + Vector2Int.up, out n);
+        // Added these 3 missing diagonals:
+        tileMap.TryGetValue(coord + new Vector2Int(-1, 1), out nw);
+        tileMap.TryGetValue(coord + new Vector2Int(1, 1), out ne);
+        tileMap.TryGetValue(coord + new Vector2Int(1, -1), out se);
+        */
     }
 }
