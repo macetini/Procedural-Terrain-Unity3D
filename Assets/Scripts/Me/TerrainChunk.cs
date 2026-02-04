@@ -7,8 +7,6 @@ public class TerrainChunk : MonoBehaviour
 
     [Header("Settings")]
     public Material terrainMaterial;
-    public float frustumPadding = 5.0f;
-    public float skirtDepth = 5f;
 
     [Header("Debug Settings")]
     public bool DrawGizmos = false;
@@ -16,6 +14,9 @@ public class TerrainChunk : MonoBehaviour
     public bool IsVisible { get; private set; } = true;
     public int CurrentStep { get; private set; } = -1;
     public TerrainFadeEffect fadeEffect;
+
+    private float frustumPadding = 5.0f;
+    private float skirtDepth = 5f;
 
     private TerrainChunksGenerator generator;
     private Vector2Int coord;
@@ -58,6 +59,9 @@ public class TerrainChunk : MonoBehaviour
     {
         generator = gen;
         coord = chunkCoord;
+
+        frustumPadding = generator.frustumPadding;
+        skirtDepth = generator.skirtDepth;
 
         chunkSize = generator.chunkSize;
         tileSize = generator.tileSize;

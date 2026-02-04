@@ -4,15 +4,19 @@ using UnityEngine;
 
 public class TerrainChunksGenerator : MonoBehaviour
 {
-    [Header("Generation Settings")]
+    [Header("Terrain Settings")]
     public int chunkSize = 16;
     public float tileSize = 1.0f;
     public float elevationStepHeight = 1.0f;
     public int maxElevationStepsCount = 5;
+    public float skirtDepth = 5f;
+
+    [Header("Noise Settings")]
     public float noiseScale = 0.05f;
 
-    [Header("Build Settings")]
+    [Header("Camera Settings")]
     public Camera cameraReference;
+    public float frustumPadding = 5.0f;
     public int viewDistanceChunks = 3;
 
     [Header("LOD Settings")]
@@ -262,9 +266,6 @@ public class TerrainChunksGenerator : MonoBehaviour
 
                 yield return null;
 
-                // 2. Ensure a 3x3 block is SANITIZED (Height-Matched)
-                // This is the key! We sanitize the neighbors against EACH OTHER
-                // so the heights at the edges are identical.
                 for (int x = -1; x <= 1; x++)
                 {
                     for (int z = -1; z <= 1; z++)
@@ -301,24 +302,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         chunk.InitBuild(this, coord);
         chunk.UpdateVisibility(cameraPlanes);
         terrainData.RegisterChunk(coord, chunk);
-    }
-
-    public bool GetTileAt(int globalX, int globalZ, out TileMeshStruct tile)
-    {
-        // We can actually move this to TerrainDataMap too, but for now:
-        int cx = Mathf.FloorToInt((float)globalX / chunkSize);
-        int cz = Mathf.FloorToInt((float)globalZ / chunkSize);
-        int lx = globalX - (cx * chunkSize);
-        int lz = globalZ - (cz * chunkSize);
-
-        if (terrainData.TryGetTileData(new Vector2Int(cx, cz), out TileMeshStruct[,] grid))
-        {
-            tile = grid[lx, lz];
-            return true;
-        }
-
-        tile = default;
-        return false;
     }
 
     private void SortBuildQueue()
