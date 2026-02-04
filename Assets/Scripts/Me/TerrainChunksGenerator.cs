@@ -35,6 +35,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private float chunkBoundSize;
 
     // Data Processing
+    public TerrainDataMap TerrainData => terrainData;
     private TerrainDataMap terrainData;
 
     // Build Queue
@@ -389,32 +390,5 @@ public class TerrainChunksGenerator : MonoBehaviour
         int[] newTris = TerrainMath.GenerateTriangleIndices(resolution);
         triangleCache.Add(resolution, newTris);
         return newTris;
-    }
-
-    public void GetGridReferences(
-        Vector2Int coord,
-        out TileMeshStruct[,] c,
-        out TileMeshStruct[,] w,
-        out TileMeshStruct[,] s,
-        out TileMeshStruct[,] sw,
-        out TileMeshStruct[,] e,
-        out TileMeshStruct[,] n,
-        out TileMeshStruct[,] nw,
-        out TileMeshStruct[,] ne,
-        out TileMeshStruct[,] se
-    )
-    {
-        // Main Tiles
-        terrainData.TryGetTileData(coord, out c);
-        terrainData.TryGetTileData(coord + Vector2Int.left, out w);
-        terrainData.TryGetTileData(coord + Vector2Int.down, out s);
-        terrainData.TryGetTileData(coord + new Vector2Int(-1, -1), out sw);
-        terrainData.TryGetTileData(coord + Vector2Int.right, out e);
-        terrainData.TryGetTileData(coord + Vector2Int.up, out n);
-
-        // Diagonals Tiles
-        terrainData.TryGetTileData(coord + new Vector2Int(-1, 1), out nw);
-        terrainData.TryGetTileData(coord + new Vector2Int(1, 1), out ne);
-        terrainData.TryGetTileData(coord + new Vector2Int(1, -1), out se);
     }
 }

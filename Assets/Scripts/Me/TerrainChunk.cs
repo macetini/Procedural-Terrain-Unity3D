@@ -36,15 +36,7 @@ public class TerrainChunk : MonoBehaviour
     private int lastTriangleCount = -1; // Track this to avoid redundant triangle uploads
     private bool wasVisibleLastCheck = false; // [NEW] Track state change
 
-    private TileMeshStruct[,] gridC,
-        gridW,
-        gridS,
-        gridSW,
-        gridE,
-        gridN,
-        gridNW,
-        gridNE,
-        gridSE;
+    private TerrainDataMap.ChunkNeighborGrids neighbors;
 
     private bool isMeshReady = false; // Prevents "Blips" before the first build
 
@@ -144,18 +136,7 @@ public class TerrainChunk : MonoBehaviour
         }
         Mesh mesh = filterReference.sharedMesh;
 
-        generator.GetGridReferences(
-            coord,
-            out gridC,
-            out gridW,
-            out gridS,
-            out gridSW,
-            out gridE,
-            out gridN,
-            out gridNW,
-            out gridNE,
-            out gridSE
-        );
+        neighbors = generator.TerrainData.GetNeighborGrids(coord);
 
         // Populate Height Cache using the new Generator Fast-Lookup
         int cacheStride = resolution + 2;
@@ -277,51 +258,56 @@ public class TerrainChunk : MonoBehaviour
 
     private float SampleGrid(int x, int z)
     {
-        // 1. Internal
-        if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
-            return gridC[x, z].Elevation;
+        int size = chunkSize;
 
-        // 2. Cardinal Neighbors
-        if (x < 0 && z >= 0 && z < chunkSize)
-            return (gridW != null) ? gridW[chunkSize + x, z].Elevation : gridC[0, z].Elevation;
+        // 1. Internal - Use neighbors.Center
+        if (x >= 0 && x < size && z >= 0 && z < size)
+            return neighbors.Center[x, z].Elevation;
 
-        if (x >= chunkSize && z >= 0 && z < chunkSize)
-            return (gridE != null)
-                ? gridE[x - chunkSize, z].Elevation
-                : gridC[chunkSize - 1, z].Elevation;
+        // 2. Cardinal Neighbors - Redirect to neighbors struct
+        // Note the use of ?.Elevation to safely handle missing neighbors
+        if (x < 0 && z >= 0 && z < size)
+            return (neighbors.W != null)
+                ? neighbors.W[size + x, z].Elevation
+                : neighbors.Center[0, z].Elevation;
 
-        if (z < 0 && x >= 0 && x < chunkSize)
-            return (gridS != null) ? gridS[x, chunkSize + z].Elevation : gridC[x, 0].Elevation;
+        if (x >= size && z >= 0 && z < size)
+            return (neighbors.E != null)
+                ? neighbors.E[x - size, z].Elevation
+                : neighbors.Center[size - 1, z].Elevation;
 
-        if (z >= chunkSize && x >= 0 && x < chunkSize)
-            return (gridN != null)
-                ? gridN[x, z - chunkSize].Elevation
-                : gridC[x, chunkSize - 1].Elevation;
+        if (z < 0 && x >= 0 && x < size)
+            return (neighbors.S != null)
+                ? neighbors.S[x, size + z].Elevation
+                : neighbors.Center[x, 0].Elevation;
 
-        // 3. Diagonal Neighbors (The Corner Bug Fix)
+        if (z >= size && x >= 0 && x < size)
+            return (neighbors.N != null)
+                ? neighbors.N[x, z - size].Elevation
+                : neighbors.Center[x, size - 1].Elevation;
+
+        // 3. Diagonal Neighbors
         if (x < 0 && z < 0)
-            return (gridSW != null)
-                ? gridSW[chunkSize + x, chunkSize + z].Elevation
-                : gridC[0, 0].Elevation;
+            return (neighbors.SW != null)
+                ? neighbors.SW[size + x, size + z].Elevation
+                : neighbors.Center[0, 0].Elevation;
 
-        if (x < 0 && z >= chunkSize)
-            return (gridNW != null)
-                ? gridNW[chunkSize + x, z - chunkSize].Elevation
-                : gridC[0, chunkSize - 1].Elevation;
+        if (x < 0 && z >= size)
+            return (neighbors.NW != null)
+                ? neighbors.NW[size + x, z - size].Elevation
+                : neighbors.Center[0, size - 1].Elevation;
 
-        if (x >= chunkSize && z >= chunkSize)
-            // Note: Northeast uses gridNE
-            return (gridNE != null)
-                ? gridNE[x - chunkSize, z - chunkSize].Elevation
-                : gridC[chunkSize - 1, chunkSize - 1].Elevation;
+        if (x >= size && z >= size)
+            return (neighbors.NE != null)
+                ? neighbors.NE[x - size, z - size].Elevation
+                : neighbors.Center[size - 1, size - 1].Elevation;
 
-        if (x >= chunkSize && z < 0)
-            // Note: Southeast uses gridSE
-            return (gridSE != null)
-                ? gridSE[x - chunkSize, chunkSize + z].Elevation
-                : gridC[chunkSize - 1, 0].Elevation;
+        if (x >= size && z < 0)
+            return (neighbors.SE != null)
+                ? neighbors.SE[x - size, size + z].Elevation
+                : neighbors.Center[size - 1, 0].Elevation;
 
-        return gridC[0, 0].Elevation;
+        return neighbors.Center[0, 0].Elevation;
     }
 
     private void CalculateSlopeNormals(Vector3[] verts, Vector3[] normals, int resolution)
