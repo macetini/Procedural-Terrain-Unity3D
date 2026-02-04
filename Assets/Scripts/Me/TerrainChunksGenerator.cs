@@ -346,7 +346,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
                         if (!fullTileMeshData.ContainsKey(n))
+                        {
                             GenerateFullMeshData(n, 0);
+                            yield return null;
+                        }
                     }
                 }
 
@@ -362,11 +365,13 @@ public class TerrainChunksGenerator : MonoBehaviour
                         {
                             SanitizeGlobalChunk(n);
                             sanitizedChunksHash.Add(n);
+                            yield return null;
                         }
                     }
                 }
 
                 // 3. Now that the heights are guaranteed to match, spawn
+                yield return null;
                 SpawnChunkMesh(coord);
 
                 if (chunksDict.TryGetValue(coord, out TerrainChunk chunk))
