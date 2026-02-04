@@ -3,10 +3,6 @@ using UnityEngine;
 
 public class TerrainDataMap
 {
-    private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
-    private readonly HashSet<Vector2Int> sanitizedSet = new();
-    private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
-
     private readonly int chunkSize;
     private readonly float noiseScale;
     private readonly int maxElevationStepsCount;
@@ -21,6 +17,8 @@ public class TerrainDataMap
     // --------------------------------------------------------------------------------------------
     // -------------------------------------- RAW DATA --------------------------------------------
     // --------------------------------------------------------------------------------------------
+
+    private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
 
     public bool HasTileData(Vector2Int coord) => tileMap.ContainsKey(coord);
 
@@ -57,6 +55,8 @@ public class TerrainDataMap
     // --------------------------------------------------------------------------------------------
     // -------------------------------------- SANITIZATION ----------------------------------------
     // --------------------------------------------------------------------------------------------
+
+    private readonly HashSet<Vector2Int> sanitizedSet = new();
 
     public bool IsSanitized(Vector2Int coord) => sanitizedSet.Contains(coord);
 
@@ -115,10 +115,12 @@ public class TerrainDataMap
             }
         }
     }
-    
+
     // --------------------------------------------------------------------------------------------
     // -------------------------------------- ACTIVE DATA -----------------------------------------
     // --------------------------------------------------------------------------------------------
+
+    private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
 
     // Registry Helpers
     public bool HasActiveChunk(Vector2Int coord) => activeChunks.ContainsKey(coord);
@@ -136,6 +138,13 @@ public class TerrainDataMap
         activeChunks.Remove(coord);
         tileMap.Remove(coord);
         sanitizedSet.Remove(coord);
+    }
+
+    public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)
+    {
+        targetList.Clear();
+        foreach (var key in activeChunks.Keys)
+            targetList.Add(key);
     }
 
     // Property to let the Generator see the keys for culling/cleanup

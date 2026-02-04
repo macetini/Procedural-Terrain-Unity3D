@@ -37,7 +37,9 @@ public class TerrainChunksGenerator : MonoBehaviour
     // Data Processing
     private TerrainDataMap terrainData;
 
+    // Build Queue
     private readonly List<Vector2Int> buildQueue = new();
+    private readonly HashSet<Vector2Int> buildQueueHash = new();
     private bool isProcessingQueue = false;
 
     void Awake()
@@ -87,7 +89,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     {
                         Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
 
-                        if (!terrainData.HasActiveChunk(coord) && !buildQueue.Contains(coord))
+                        if (!terrainData.HasActiveChunk(coord) && buildQueueHash.Add(coord))
                         {
                             buildQueue.Add(coord);
                         }
@@ -113,7 +115,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void CleanupRemoteChunks()
     {
         visibilityKeysSnapshot.Clear();
-        visibilityKeysSnapshot.AddRange(terrainData.ActiveChunkKeys);
+        terrainData.GetActiveKeysNonAlloc(visibilityKeysSnapshot);
 
         // Using a simple integer distance (Manhattan) is faster and safer for chunk grids
         int maxChunkDist = viewDistanceChunks + 2;
@@ -234,6 +236,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         {
             Vector2Int coord = buildQueue[0];
             buildQueue.RemoveAt(0);
+            buildQueueHash.Remove(coord);
 
             // Don't build if the player already moved away (snapping to a new far away chunk)
             float distToCam = Vector2Int.Distance(coord, currentCameraPosition);
