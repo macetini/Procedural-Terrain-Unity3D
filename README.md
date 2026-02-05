@@ -1,4 +1,4 @@
-# ProceduralTerrain
+# Procedural Terrain
 
 ProceduralTerrain is a procedural terrain generation project. It demonstrates techniques for generating landscapes programmatically (noise-based heightmaps, LOD, texturing, and runtime mesh generation). This README is a template — update the language, build steps, and examples with repository-specific details.
 
