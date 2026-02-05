@@ -34,12 +34,15 @@ public class TerrainChunk : MonoBehaviour
     private Vector2[] uvs;
     private Vector3[] normals;
     private float[] heightCache1D; // Added: Reuse the height cache array
+
     private int lastTriangleCount = -1; // Track this to avoid redundant triangle uploads
     private bool wasVisibleLastCheck = false; // [NEW] Track state change
 
     private TerrainDataMap.ChunkNeighborGrids neighbors;
-
     private bool isMeshReady = false; // Prevents "Blips" before the first build
+
+    // Refactor
+    private readonly TerrainChunkProcessor processor = new();
 
     void Awake()
     {
@@ -77,6 +80,10 @@ public class TerrainChunk : MonoBehaviour
             // Use sharedMaterial to allow the GPU to batch all chunks together
             rendererReference.sharedMaterial = terrainMaterial;
         }
+
+        processor.SetDimensions(chunkSize, tileSize, elevationStepHeight, skirtDepth);
+        neighbors = new TerrainDataMap.ChunkNeighborGrids();
+
         UpdateLOD(true);
     }
 
@@ -88,7 +95,8 @@ public class TerrainChunk : MonoBehaviour
         if (targetStep != CurrentStep || force)
         {
             CurrentStep = targetStep;
-            BuildProceduralMesh();
+            //BuildProceduralMesh_OLD();
+            BuildProceduralMesh_NEW();
         }
     }
 
@@ -110,7 +118,30 @@ public class TerrainChunk : MonoBehaviour
         return 1; // LOD 0 (full detail)
     }
 
-    private void BuildProceduralMesh()
+    private void BuildProceduralMesh_NEW()
+    {
+        neighbors = generator.TerrainData.GetNeighborGrids(coord);
+        processor.BuildMeshData(CurrentStep, neighbors);
+        processor.GenerateGeometry();
+        processor.CalculateNormals();
+
+        int resolution = (chunkSize / CurrentStep) + 1;
+        int[] tris = generator.GetPrecalculatedTriangles(resolution);
+
+        if (filterReference.sharedMesh == null)
+        {
+            filterReference.sharedMesh = new Mesh { name = MESH_NAME }; //new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
+            filterReference.sharedMesh.MarkDynamic();
+        }
+        Mesh mesh = filterReference.sharedMesh;
+
+        processor.ConstructMesh(mesh, tris);
+        isMeshReady = true;
+        FinalizeMesh(mesh);
+    }
+
+    /*
+    private void BuildProceduralMesh_OLD()
     {
         int resolution = (chunkSize / CurrentStep) + 1;
         int gridVertCount = resolution * resolution;
@@ -347,7 +378,7 @@ public class TerrainChunk : MonoBehaviour
             Vector3 dir = (verts[n] - new Vector3(centerX, verts[n].y, centerX)).normalized;
             normals[n] = new Vector3(dir.x, 0, dir.z);
         }
-    }
+    }*/
 
     private void FinalizeMesh(Mesh mesh)
     {
@@ -363,7 +394,7 @@ public class TerrainChunk : MonoBehaviour
 
         mesh.bounds = new Bounds(center, size);
 
-        if (!rendererReference.enabled)
+        if (!rendererReference.enabled) // TODO Optimize
             rendererReference.enabled = true;
     }
 
