@@ -3,45 +3,41 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class TerrainChunk : MonoBehaviour
 {
-    private const string MESH_NAME = "TerrainChunk";
+    private const string MESH_IDENTIFIER = "TerrainChunk_";
 
     [Header("Settings")]
     public Material terrainMaterial;
 
     [Header("Debug Settings")]
-    public bool DrawGizmos = false;
+    public bool DebugNormals = false;
+
+    [Header("Effects")]
+    public TerrainFadeEffect fadeEffect;
 
     public bool IsVisible { get; private set; } = true;
     public int CurrentStep { get; private set; } = -1;
-    public TerrainFadeEffect fadeEffect;
 
-    private float frustumPadding = 5.0f;
-    private float skirtDepth = 5f;
+    // References
+    private MeshRenderer rendererReference;
+    private MeshFilter filterReference;
 
+    // Data
     private TerrainChunksGenerator generator;
-    private Vector2Int coord;
+    private Vector2Int chunkCoord;
+
+    private float frustumPadding;
+    private float skirtDepth;
     private int chunkSize;
     private float tileSize;
     private float elevationStepHeight;
     private int maxElevationStep;
+
+    // Calculations
     private float chunkBoundSize;
-
-    private MeshRenderer rendererReference;
-    private MeshFilter filterReference;
-
-    // Pre-allocated arrays to reduce Garbage Collection (GC) pressure
-    private Vector3[] vertices;
-    private Vector2[] uvs;
-    private Vector3[] normals;
-    private float[] heightCache1D; // Added: Reuse the height cache array
-
-    private int lastTriangleCount = -1; // Track this to avoid redundant triangle uploads
-    private bool wasVisibleLastCheck = false; // [NEW] Track state change
-
-    private TerrainDataMap.ChunkNeighborGrids neighbors;
+    private bool wasVisibleLastCheck = false; // Track state change
     private bool isMeshReady = false; // Prevents "Blips" before the first build
+    private string meshName;
 
-    // Refactor
     private readonly TerrainChunkProcessor processor = new();
 
     void Awake()
@@ -58,22 +54,24 @@ public class TerrainChunk : MonoBehaviour
         }
     }
 
-    public void InitBuild(TerrainChunksGenerator gen, Vector2Int chunkCoord)
+    public void InitBuild(TerrainChunksGenerator generator, Vector2Int chunkCoord)
     {
-        generator = gen;
-        coord = chunkCoord;
+        this.generator = generator;
+        this.chunkCoord = chunkCoord;
 
-        frustumPadding = generator.frustumPadding;
-        skirtDepth = generator.skirtDepth;
+        frustumPadding = this.generator.frustumPadding;
+        skirtDepth = this.generator.skirtDepth;
 
-        chunkSize = generator.chunkSize;
-        tileSize = generator.tileSize;
-        elevationStepHeight = generator.elevationStepHeight;
-        maxElevationStep = generator.maxElevationStepsCount;
+        chunkSize = this.generator.chunkSize;
+        tileSize = this.generator.tileSize;
+        elevationStepHeight = this.generator.elevationStepHeight;
+        maxElevationStep = this.generator.maxElevationStepsCount;
         chunkBoundSize = chunkSize * tileSize;
 
         rendererReference.enabled = false;
         isMeshReady = false;
+
+        meshName = MESH_IDENTIFIER + chunkCoord.x + "_" + chunkCoord.y;
 
         if (terrainMaterial != null)
         {
@@ -81,9 +79,7 @@ public class TerrainChunk : MonoBehaviour
             rendererReference.sharedMaterial = terrainMaterial;
         }
 
-        processor.SetDimensions(chunkSize, tileSize, elevationStepHeight, skirtDepth);
-        neighbors = new TerrainDataMap.ChunkNeighborGrids();
-
+        processor.Init(generator);
         UpdateLOD(true);
     }
 
@@ -95,8 +91,7 @@ public class TerrainChunk : MonoBehaviour
         if (targetStep != CurrentStep || force)
         {
             CurrentStep = targetStep;
-            //BuildProceduralMesh_OLD();
-            BuildProceduralMesh_NEW();
+            BuildProceduralMesh();
         }
     }
 
@@ -107,6 +102,8 @@ public class TerrainChunk : MonoBehaviour
         Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
         float dist = Vector3.Distance(center, generator.cameraReference.transform.position);
+
+        // TODO - Put LOD values in Config
         if (dist > generator.lodDist2)
         {
             return 4; // LOD 2
@@ -118,267 +115,28 @@ public class TerrainChunk : MonoBehaviour
         return 1; // LOD 0 (full detail)
     }
 
-    private void BuildProceduralMesh_NEW()
+    private void BuildProceduralMesh()
     {
-        neighbors = generator.TerrainData.GetNeighborGrids(coord);
-        processor.BuildMeshData(CurrentStep, neighbors);
-        processor.GenerateGeometry();
+        processor.BuildMeshData(CurrentStep, chunkCoord);
+        processor.GenerateGeometryData();
         processor.CalculateNormals();
 
-        int resolution = (chunkSize / CurrentStep) + 1;
-        int[] tris = generator.GetPrecalculatedTriangles(resolution);
-
-        if (filterReference.sharedMesh == null)
-        {
-            filterReference.sharedMesh = new Mesh { name = MESH_NAME }; //new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
-            filterReference.sharedMesh.MarkDynamic();
-        }
-        Mesh mesh = filterReference.sharedMesh;
-
-        processor.ConstructMesh(mesh, tris);
-        isMeshReady = true;
-        FinalizeMesh(mesh);
-    }
-
-    /*
-    private void BuildProceduralMesh_OLD()
-    {
-        int resolution = (chunkSize / CurrentStep) + 1;
-        int gridVertCount = resolution * resolution;
-        int totalVerts = gridVertCount + (resolution * 4);
-
-        // --- OPTIMIZATION: ARRAY REUSE ---
-        if (vertices == null || vertices.Length != totalVerts)
-        {
-            vertices = new Vector3[totalVerts];
-            uvs = new Vector2[totalVerts];
-            normals = new Vector3[totalVerts];
-        }
-
-        // --- OPTIMIZATION: HEIGHT CACHE REUSE ---
-        int cacheRes = resolution + 2;
-        int totalCacheSize = cacheRes * cacheRes;
-        if (heightCache1D == null || heightCache1D.Length != totalCacheSize)
-        {
-            heightCache1D = new float[totalCacheSize];
-        }
-
-        // --- OPTIMIZATION: MESH REUSE ---
-        if (filterReference.sharedMesh == null)
-        {
-            filterReference.sharedMesh = new Mesh { name = MESH_NAME }; //new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
-            filterReference.sharedMesh.MarkDynamic();
-        }
-        Mesh mesh = filterReference.sharedMesh;
-
-        neighbors = generator.TerrainData.GetNeighborGrids(coord);
-
-        // Populate Height Cache using the new Generator Fast-Lookup
-        int cacheStride = resolution + 2;
-        for (int x = -1; x <= resolution; x++)
-        {
-            int rowOffset = (x + 1) * cacheStride; // Calculate once per row
-            for (int z = -1; z <= resolution; z++)
-            {
-                heightCache1D[rowOffset + z + 1] = GetBlendedElevation(
-                    x * CurrentStep,
-                    z * CurrentStep
-                );
-            }
-        }
-
-        GenerateGeometry(vertices, uvs, resolution);
-
-        // Fetch shared triangle indices (Zero Alloc)
-        int[] tris = generator.GetPrecalculatedTriangles(resolution);
-
-        CalculateSlopeNormals(vertices, normals, resolution);
-
-        // --- OPTIMIZATION: FAST GPU UPLOAD ---
-        mesh.Clear();
-        mesh.SetVertices(vertices);
-        mesh.SetUVs(0, uvs);
-        mesh.SetNormals(normals);
-
-        if (lastTriangleCount != tris.Length)
-        {
-            mesh.SetTriangles(tris, 0);
-            lastTriangleCount = tris.Length;
-        }
-
-        //Forces the GPU upload to happen NOW inside the coroutine
-        mesh.UploadMeshData(false);
+        Mesh mesh = CreateRawMesh();
+        processor.PopulateMesh(mesh);
 
         isMeshReady = true;
         FinalizeMesh(mesh);
     }
 
-    private void GenerateGeometry(Vector3[] vertices, Vector2[] uvCoords, int resolution)
+    private Mesh CreateRawMesh()
     {
-        int i = 0;
-        float invSize = 1f / chunkSize;
-        int cacheStride = resolution + 2;
-
-        // 1. MAIN GRID GENERATION
-        for (int x = 0; x < resolution; x++)
+        if (filterReference.sharedMesh == null)
         {
-            int gx = x * CurrentStep;
-            for (int z = 0; z < resolution; z++)
-            {
-                int gz = z * CurrentStep;
-
-                // ANALYSIS: We use GetBlendedElevation instead of the raw height.
-                // This "bevels" the edges of your steps by averaging neighbor heights.
-                float h = heightCache1D[(x + 1) * cacheStride + (z + 1)] * elevationStepHeight;
-
-                vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
-                uvCoords[i] = new Vector2(gx * invSize, gz * invSize);
-                i++;
-            }
+            filterReference.sharedMesh = new Mesh { name = meshName };
+            filterReference.sharedMesh.MarkDynamic();
         }
-
-        // 2. SKIRT GENERATION
-
-        // 2. SKIRTS
-        // Note: We use the exact same cache indices for the top of the skirts
-        // Index 1 in the cache is local 0.
-        // Index res in the cache is local chunkSize.
-        int skirtIdx = resolution * resolution;
-
-        // South (z=0) -> cache z index is 1
-        for (int x = 0; x < resolution; x++)
-        {
-            float h = heightCache1D[(x + 1) * cacheStride + 1] * elevationStepHeight;
-            vertices[skirtIdx++] = new Vector3(x * CurrentStep * tileSize, h - skirtDepth, 0);
-        }
-        // North (z=chunkSize) -> cache z index is resolution
-        for (int x = 0; x < resolution; x++)
-        {
-            float h = heightCache1D[(x + 1) * cacheStride + resolution] * elevationStepHeight;
-            vertices[skirtIdx++] = new Vector3(
-                x * CurrentStep * tileSize,
-                h - skirtDepth,
-                chunkBoundSize
-            );
-        }
-        // West (x=0) -> cache x index is 1
-        for (int z = 0; z < resolution; z++)
-        {
-            float h = heightCache1D[1 * cacheStride + z + 1] * elevationStepHeight;
-            vertices[skirtIdx++] = new Vector3(0, h - skirtDepth, z * CurrentStep * tileSize);
-        }
-        // East (x=chunkSize) -> cache x index is resolution
-        for (int z = 0; z < resolution; z++)
-        {
-            float h = heightCache1D[resolution * cacheStride + z + 1] * elevationStepHeight;
-            vertices[skirtIdx++] = new Vector3(
-                chunkBoundSize,
-                h - skirtDepth,
-                z * CurrentStep * tileSize
-            );
-        }
+        return filterReference.sharedMesh;
     }
-
-    // ANALYSIS: This is the core "softening" logic.
-    // By sampling the 4 tiles around a vertex, we create a 3D bevel.
-    private float GetBlendedElevation(int lx, int lz)
-    {
-        float total = 0;
-        total += SampleGrid(lx, lz);
-        total += SampleGrid(lx - 1, lz);
-        total += SampleGrid(lx, lz - 1);
-        total += SampleGrid(lx - 1, lz - 1);
-        return total * 0.25f;
-    }
-
-    private float SampleGrid(int x, int z)
-    {
-        int size = chunkSize;
-
-        // 1. Internal - Use neighbors.Center
-        if (x >= 0 && x < size && z >= 0 && z < size)
-            return neighbors.Center[x, z].Elevation;
-
-        // 2. Cardinal Neighbors - Redirect to neighbors struct
-        // Note the use of ?.Elevation to safely handle missing neighbors
-        if (x < 0 && z >= 0 && z < size)
-            return (neighbors.W != null)
-                ? neighbors.W[size + x, z].Elevation
-                : neighbors.Center[0, z].Elevation;
-
-        if (x >= size && z >= 0 && z < size)
-            return (neighbors.E != null)
-                ? neighbors.E[x - size, z].Elevation
-                : neighbors.Center[size - 1, z].Elevation;
-
-        if (z < 0 && x >= 0 && x < size)
-            return (neighbors.S != null)
-                ? neighbors.S[x, size + z].Elevation
-                : neighbors.Center[x, 0].Elevation;
-
-        if (z >= size && x >= 0 && x < size)
-            return (neighbors.N != null)
-                ? neighbors.N[x, z - size].Elevation
-                : neighbors.Center[x, size - 1].Elevation;
-
-        // 3. Diagonal Neighbors
-        if (x < 0 && z < 0)
-            return (neighbors.SW != null)
-                ? neighbors.SW[size + x, size + z].Elevation
-                : neighbors.Center[0, 0].Elevation;
-
-        if (x < 0 && z >= size)
-            return (neighbors.NW != null)
-                ? neighbors.NW[size + x, z - size].Elevation
-                : neighbors.Center[0, size - 1].Elevation;
-
-        if (x >= size && z >= size)
-            return (neighbors.NE != null)
-                ? neighbors.NE[x - size, z - size].Elevation
-                : neighbors.Center[size - 1, size - 1].Elevation;
-
-        if (x >= size && z < 0)
-            return (neighbors.SE != null)
-                ? neighbors.SE[x - size, size + z].Elevation
-                : neighbors.Center[size - 1, 0].Elevation;
-
-        return neighbors.Center[0, 0].Elevation;
-    }
-
-    private void CalculateSlopeNormals(Vector3[] verts, Vector3[] normals, int resolution)
-    {
-        float vScale = elevationStepHeight;
-        float hDist = 2.0f * tileSize * CurrentStep;
-        int stride = resolution + 2;
-
-        for (int x = 0; x < resolution; x++)
-        {
-            int row = (x + 1) * stride;
-            for (int z = 0; z < resolution; z++)
-            {
-                int idx = x * resolution + z;
-                int cz = z + 1;
-
-                // Sample 4 directions from the padded height cache
-                float hL = heightCache1D[row - stride + cz];
-                float hR = heightCache1D[row + stride + cz];
-                float hB = heightCache1D[row + cz - 1];
-                float hF = heightCache1D[row + cz + 1];
-
-                // Standard Sobel-filter style normal generation
-                Vector3 normal = new(hL - hR, 2.0f * (hDist / vScale), hB - hF);
-                normals[idx] = normal.normalized;
-            }
-        }
-
-        // Skirt Normals logic remains same as before
-        float centerX = chunkBoundSize * 0.5f;
-        for (int n = resolution * resolution; n < verts.Length; n++)
-        {
-            Vector3 dir = (verts[n] - new Vector3(centerX, verts[n].y, centerX)).normalized;
-            normals[n] = new Vector3(dir.x, 0, dir.z);
-        }
-    }*/
 
     private void FinalizeMesh(Mesh mesh)
     {
@@ -391,10 +149,9 @@ public class TerrainChunk : MonoBehaviour
             maxHeight + skirtDepth + frustumPadding,
             chunkBoundSize + frustumPadding
         );
-
         mesh.bounds = new Bounds(center, size);
 
-        if (!rendererReference.enabled) // TODO Optimize
+        if (!rendererReference.enabled)
             rendererReference.enabled = true;
     }
 
@@ -448,44 +205,15 @@ public class TerrainChunk : MonoBehaviour
 
     void OnDrawGizmosSelected()
     {
-        if (!DrawGizmos || generator == null)
+        if (!DebugNormals || generator == null)
         {
             return;
         }
 
-        /*
-        for (int x = 0; x < chunkSize; x++)
-        {
-            for (int z = 0; z < chunkSize; z++)
-            {
-                int globalX = (coord.x * chunkSize) + x;
-                int globalZ = (coord.y * chunkSize) + z;
-
-                if (generator.GetTileAt(globalX, globalZ, out TileMeshStruct outTile))
-                {
-                    Gizmos.color = Color.HSVToRGB(
-                        outTile.Elevation / (float)maxElevationStep,
-                        0.7f,
-                        1f
-                    );
-                    Vector3 center =
-                        transform.position
-                        + new Vector3(
-                            x * tileSize,
-                            outTile.Elevation * elevationStepHeight,
-                            z * tileSize
-                        );
-                    Gizmos.DrawWireCube(center, new Vector3(tileSize, 0.1f, tileSize));
-                }
-            }
-        }
-        */
-
-        // --- New Normal Visualization Gizmo ---
         Mesh mesh = filterReference.sharedMesh;
         if (mesh != null)
         {
-            Vector3[] verts = mesh.vertices;
+            Vector3[] verts = filterReference.sharedMesh.vertices;
             Vector3[] norms = mesh.normals;
 
             Gizmos.color = Color.blue;
@@ -499,7 +227,6 @@ public class TerrainChunk : MonoBehaviour
                 Vector3 worldV = transform.TransformPoint(verts[i]);
                 // Transform the normal to world space
                 Vector3 worldN = transform.TransformDirection(norms[i]);
-
                 // Draw the normal line (0.5f is the length of the line)
                 Gizmos.DrawLine(worldV, worldV + worldN * 0.5f);
             }

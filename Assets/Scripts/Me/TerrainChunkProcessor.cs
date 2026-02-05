@@ -2,13 +2,8 @@ using UnityEngine;
 
 public class TerrainChunkProcessor
 {
-    private const string MESH_NAME = "TerrainChunk";
-
-    // Mesh references
-    //private MeshRenderer rendererReference;
-    private int lastTriangleCount = -1;
-
     // Terrain data
+    private TerrainChunksGenerator generator;
     private TerrainDataMap.ChunkNeighborGrids neighbors;
 
     // Terrain settings
@@ -17,12 +12,10 @@ public class TerrainChunkProcessor
     private float elevationStepHeight;
     private float skirtDepth;
 
-    // Cache data
+    // Mesh data
     private Vector3[] vertices;
     private Vector2[] uvs;
     private Vector3[] normals;
-
-    //
     private float[] heightCache1D; // Added: Reuse the height cache array
 
     // Calculations
@@ -30,29 +23,26 @@ public class TerrainChunkProcessor
     private int resolutionStep;
     private float chunkBoundSize;
 
-    public void SetDimensions(
-        int chunkSize,
-        float tileSize,
-        float elevationStepHeight,
-        float skirtDepth
-    )
+    // Flags
+    private int lastTriangleCount = -1;
+
+    public void Init(TerrainChunksGenerator generator)
     {
-        this.chunkSize = chunkSize;
-        this.tileSize = tileSize;
+        this.generator = generator;
+
+        chunkSize = generator.chunkSize;
+        tileSize = generator.tileSize;
         chunkBoundSize = chunkSize * tileSize;
 
-        this.elevationStepHeight = elevationStepHeight;
-        this.skirtDepth = skirtDepth;
+        elevationStepHeight = generator.elevationStepHeight;
+        skirtDepth = generator.skirtDepth;
     }
 
-    public void BuildMeshData(int resolutionStep, TerrainDataMap.ChunkNeighborGrids neighbors)
+    public void BuildMeshData(int resolutionStep, Vector2Int chunkCoord)
     {
-        //
+        neighbors = generator.TerrainData.GetNeighborGrids(chunkCoord);
         this.resolutionStep = resolutionStep;
-        this.neighbors = neighbors;
-
         resolution = (chunkSize / resolutionStep) + 1;
-        //
 
         int gridVertCount = resolution * resolution;
         int totalVerts = gridVertCount + (resolution * 4);
@@ -72,27 +62,15 @@ public class TerrainChunkProcessor
         {
             heightCache1D = new float[totalCacheSize];
         }
-
-        // --- OPTIMIZATION: MESH REUSE ---
-        /*
-        if (filterReference.sharedMesh == null)
-        {
-            filterReference.sharedMesh = new Mesh { name = MESH_NAME }; //new Mesh { name = $"{MESH_NAME}_{coord.x}_{coord.y}" };
-            filterReference.sharedMesh.MarkDynamic();
-        }
-        mesh = filterReference.sharedMesh;
-        */
-
-        CacheHeights();
+        FillHeightCache();
     }
 
-    public void CacheHeights()
+    private void FillHeightCache()
     {
-        // Populate Height Cache using the new Generator Fast-Lookup
         int cacheStride = resolution + 2;
         for (int x = -1; x <= resolution; x++)
         {
-            int rowOffset = (x + 1) * cacheStride; // Calculate once per row
+            int rowOffset = (x + 1) * cacheStride;
             for (int z = -1; z <= resolution; z++)
             {
                 heightCache1D[rowOffset + z + 1] = GetBlendedElevation(
@@ -115,59 +93,57 @@ public class TerrainChunkProcessor
 
     private float SampleGrid(int x, int z)
     {
-        int size = chunkSize; // TODO Change to direct refrence
-
-        // 1. Internal - Use neighbors.Center
-        if (x >= 0 && x < size && z >= 0 && z < size)
+        // Internal - Use neighbors.Center
+        if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
             return neighbors.Center[x, z].Elevation;
 
-        // 2. Cardinal Neighbors - Redirect to neighbors struct
+        // Cardinal Neighbors - Redirect to neighbors struct
         // Note the use of ?.Elevation to safely handle missing neighbors
-        if (x < 0 && z >= 0 && z < size)
+        if (x < 0 && z >= 0 && z < chunkSize)
             return (neighbors.W != null)
-                ? neighbors.W[size + x, z].Elevation
+                ? neighbors.W[chunkSize + x, z].Elevation
                 : neighbors.Center[0, z].Elevation;
 
-        if (x >= size && z >= 0 && z < size)
+        if (x >= chunkSize && z >= 0 && z < chunkSize)
             return (neighbors.E != null)
-                ? neighbors.E[x - size, z].Elevation
-                : neighbors.Center[size - 1, z].Elevation;
+                ? neighbors.E[x - chunkSize, z].Elevation
+                : neighbors.Center[chunkSize - 1, z].Elevation;
 
-        if (z < 0 && x >= 0 && x < size)
+        if (z < 0 && x >= 0 && x < chunkSize)
             return (neighbors.S != null)
-                ? neighbors.S[x, size + z].Elevation
+                ? neighbors.S[x, chunkSize + z].Elevation
                 : neighbors.Center[x, 0].Elevation;
 
-        if (z >= size && x >= 0 && x < size)
+        if (z >= chunkSize && x >= 0 && x < chunkSize)
             return (neighbors.N != null)
-                ? neighbors.N[x, z - size].Elevation
-                : neighbors.Center[x, size - 1].Elevation;
+                ? neighbors.N[x, z - chunkSize].Elevation
+                : neighbors.Center[x, chunkSize - 1].Elevation;
 
-        // 3. Diagonal Neighbors
+        // Diagonal Neighbors
         if (x < 0 && z < 0)
             return (neighbors.SW != null)
-                ? neighbors.SW[size + x, size + z].Elevation
+                ? neighbors.SW[chunkSize + x, chunkSize + z].Elevation
                 : neighbors.Center[0, 0].Elevation;
 
-        if (x < 0 && z >= size)
+        if (x < 0 && z >= chunkSize)
             return (neighbors.NW != null)
-                ? neighbors.NW[size + x, z - size].Elevation
-                : neighbors.Center[0, size - 1].Elevation;
+                ? neighbors.NW[chunkSize + x, z - chunkSize].Elevation
+                : neighbors.Center[0, chunkSize - 1].Elevation;
 
-        if (x >= size && z >= size)
+        if (x >= chunkSize && z >= chunkSize)
             return (neighbors.NE != null)
-                ? neighbors.NE[x - size, z - size].Elevation
-                : neighbors.Center[size - 1, size - 1].Elevation;
+                ? neighbors.NE[x - chunkSize, z - chunkSize].Elevation
+                : neighbors.Center[chunkSize - 1, chunkSize - 1].Elevation;
 
-        if (x >= size && z < 0)
+        if (x >= chunkSize && z < 0)
             return (neighbors.SE != null)
-                ? neighbors.SE[x - size, size + z].Elevation
-                : neighbors.Center[size - 1, 0].Elevation;
+                ? neighbors.SE[x - chunkSize, chunkSize + z].Elevation
+                : neighbors.Center[chunkSize - 1, 0].Elevation;
 
         return neighbors.Center[0, 0].Elevation;
     }
 
-    public void GenerateGeometry()
+    public void GenerateGeometryData()
     {
         int i = 0;
         float invSize = 1f / chunkSize;
@@ -181,7 +157,7 @@ public class TerrainChunkProcessor
             {
                 int gz = z * resolutionStep;
 
-                // ANALYSIS: We use GetBlendedElevation instead of the raw height.
+                // We use GetBlendedElevation instead of the raw height.
                 // This "bevels" the edges of your steps by averaging neighbor heights.
                 float h = heightCache1D[(x + 1) * cacheStride + (z + 1)] * elevationStepHeight;
 
@@ -192,9 +168,6 @@ public class TerrainChunkProcessor
         }
 
         // 2. SKIRT GENERATION
-
-        // 2. SKIRTS
-        // Note: We use the exact same cache indices for the top of the skirts
         // Index 1 in the cache is local 0.
         // Index res in the cache is local chunkSize.
         int skirtIdx = resolution * resolution;
@@ -268,18 +241,20 @@ public class TerrainChunkProcessor
         }
     }
 
-    public void ConstructMesh(Mesh targetMesh, int[] tris)
+    public void PopulateMesh(Mesh targetMesh)
     {
         targetMesh.Clear();
         targetMesh.SetVertices(vertices);
         targetMesh.SetUVs(0, uvs);
         targetMesh.SetNormals(normals);
 
+        int[] tris = generator.GetPrecalculatedTriangles(resolution);
         if (lastTriangleCount != tris.Length)
         {
             targetMesh.SetTriangles(tris, 0);
             lastTriangleCount = tris.Length;
         }
+
         targetMesh.UploadMeshData(false);
     }
 }
