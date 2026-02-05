@@ -186,25 +186,9 @@ public class TerrainDataMap
     // -------------------------------------- NEIGHBOR DATA ---------------------------------------
     // --------------------------------------------------------------------------------------------
 
-    public struct ChunkNeighborGrids
+    public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord)
     {
-        public TileMeshStruct[,] Center,
-            W,
-            S,
-            SW,
-            E,
-            N,
-            NW,
-            NE,
-            SE;
-
-        // A helper to make sure we have the critical center data
-        public readonly bool IsValid => Center != null;
-    }
-
-    public ChunkNeighborGrids GetNeighborGrids(Vector2Int coord)
-    {
-        ChunkNeighborGrids neighbors = new();
+        ChunkNeighborStruct neighbors = new();
 
         // Cardinal
         tileMap.TryGetValue(coord, out neighbors.Center);

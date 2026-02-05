@@ -103,7 +103,6 @@ public class TerrainChunk : MonoBehaviour
 
         float dist = Vector3.Distance(center, generator.cameraReference.transform.position);
 
-        // TODO - Put LOD values in Config
         if (dist > generator.lodDist2)
         {
             return 4; // LOD 2

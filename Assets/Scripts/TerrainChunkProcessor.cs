@@ -4,7 +4,7 @@ public class TerrainChunkProcessor
 {
     // Terrain data
     private TerrainChunksGenerator generator;
-    private TerrainDataMap.ChunkNeighborGrids neighbors;
+    private ChunkNeighborStruct neighbors;
 
     // Terrain settings
     private int chunkSize;
