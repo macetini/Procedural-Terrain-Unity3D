@@ -2,9 +2,6 @@
 
 ProceduralTerrain is a procedural terrain generation project. It demonstrates techniques for generating landscapes programmatically (noise-based heightmaps, LOD, texturing, and runtime mesh generation). This README is a template — update the language, build steps, and examples with repository-specific details.
 
-Status
-- Draft README — please supply language, build tool, and intended runtime (Unity / standalone / engine) so I can finish the instructions.
-
 Features (common to procedural terrain projects)
 - Heightmap generation using Perlin/Simplex noise (or other algorithms)
 - Mesh generation and level-of-detail (LOD)
@@ -64,7 +61,7 @@ Contributing
   - Add support for streaming and saving terrain to disk
 
 License
-- Add your preferred license here.
+- Creative Commons
 
 Contact
 - Maintainer: macetini
