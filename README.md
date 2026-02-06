@@ -4,7 +4,7 @@ ProceduralTerrain is a procedural terrain generation project. It demonstrates te
 
 <img width="965" height="604" alt="terrain" src="https://github.com/user-attachments/assets/28cca229-70f1-436d-8b2e-f11495004ee1" />
 
-<br /><br />
+<br />
 
 Features (common to procedural terrain projects)
 - Heightmap generation using Perlin/Simplex noise (or other algorithms)
