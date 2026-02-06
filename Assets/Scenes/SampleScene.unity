@@ -431,10 +431,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TerrainChunksGenerator
   chunkSize: 128
   tileSize: 1
-  elevationStepHeight: 0.5
-  maxElevationStepsCount: 20
+  elevationStepHeight: 1
+  maxElevationStepsCount: 5
   skirtDepth: 5
-  noiseScale: 0.006
+  noiseSeed: 1337
+  noiseScale: 0.005
+  noiseOctaves: 1
+  noisePersistence: 1
+  noiseLacunarity: 1
   cameraReference: {fileID: 330585545}
   frustumPadding: 5
   viewDistanceChunks: 5

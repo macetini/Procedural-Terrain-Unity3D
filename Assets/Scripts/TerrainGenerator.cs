@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class TerrainChunksGenerator : MonoBehaviour
 {
@@ -12,7 +13,11 @@ public class TerrainChunksGenerator : MonoBehaviour
     public float skirtDepth = 5f;
 
     [Header("Noise Settings")]
+    public int noiseSeed = 1337;
     public float noiseScale = 0.05f;
+    public int noiseOctaves = 4;
+    public float noisePersistence = 0.5f;
+    public float noiseLacunarity = 2.0f;
 
     [Header("Camera Settings")]
     public Camera cameraReference;
@@ -50,11 +55,41 @@ public class TerrainChunksGenerator : MonoBehaviour
     void Awake()
     {
         terrainData = new TerrainDataMap(this);
-        chunkBoundSize = chunkSize * tileSize;
     }
 
     void Start()
     {
+        BuildTerrain();
+    }
+
+    void Update()
+    {
+        UpdateCurrentCameraPosition();
+
+        // WARNING: This will rebuild the whole terrain. Should only be used during development.
+        if (Keyboard.current.enterKey.wasPressedThisFrame)
+        {
+            Debug.Log("Rebuilding terrain.");
+            StopAllCoroutines();
+            buildQueue.Clear();
+            buildQueueHash.Clear();
+            triangleCache.Clear();
+            terrainData.ClearAll();
+            BuildTerrain();
+        }
+    }
+
+    private void BuildTerrain()
+    {
+        TerrainNoise.Init(
+            noiseSeed,
+            noiseScale,
+            noiseOctaves,
+            noisePersistence,
+            noiseLacunarity,
+            maxElevationStepsCount
+        );
+        chunkBoundSize = chunkSize * tileSize;
         UpdateCurrentCameraPosition();
         FirstPass();
         SecondPass();
@@ -62,11 +97,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         StartCoroutine(WorldMonitoringRoutine()); // The manager
         StartCoroutine(ProcessBuildQueue()); // The builder
         StartCoroutine(VisibilityCheckRoutine()); // The culler
-    }
-
-    void Update()
-    {
-        UpdateCurrentCameraPosition();
     }
 
     private void UpdateCurrentCameraPosition()

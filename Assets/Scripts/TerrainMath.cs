@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public static class TerrainMath
 {
     // Moves the logic out of the manager to keep it pure

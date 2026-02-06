@@ -4,15 +4,27 @@ using UnityEngine;
 public class TerrainDataMap
 {
     private readonly int chunkSize;
-    private readonly float noiseScale;
-    private readonly int maxElevationStepsCount;
 
     public TerrainDataMap(TerrainChunksGenerator generator)
     {
         chunkSize = generator.chunkSize;
-        noiseScale = generator.noiseScale;
-        maxElevationStepsCount = generator.maxElevationStepsCount;
     }
+
+    public void ClearAll() // WARNING: Not optimized.Should only be only used during the development phase.
+    {
+        foreach (var chunk in activeChunks.Values)
+        {
+            if (chunk != null)
+            {
+                chunk.CallDestroy();
+            }
+        }
+        activeChunks.Clear();
+        tileMap.Clear();
+        sanitizedSet.Clear();
+    }
+
+    // TODO - Future refactor. This class could be split into 3 specified ones.
 
     // --------------------------------------------------------------------------------------------
     // -------------------------------------- RAW DATA --------------------------------------------
@@ -33,20 +45,15 @@ public class TerrainDataMap
             return;
 
         TileMeshStruct[,] data = new TileMeshStruct[chunkSize, chunkSize];
-        int ox = coord.x * chunkSize;
-        int oz = coord.y * chunkSize;
+        int offsetX = coord.x * chunkSize;
+        int offsetZ = coord.y * chunkSize;
 
         for (int x = 0; x < chunkSize; x++)
         {
             for (int z = 0; z < chunkSize; z++)
             {
-                float n = Mathf.PerlinNoise((ox + x) * noiseScale, (oz + z) * noiseScale);
-                int e = Mathf.Clamp(
-                    Mathf.FloorToInt(n * (maxElevationStepsCount + 1)),
-                    0,
-                    maxElevationStepsCount
-                );
-                data[x, z] = new TileMeshStruct(x, z, e);
+                int elevation = TerrainNoise.GetElevation(offsetX + x, offsetZ + z);
+                data[x, z] = new TileMeshStruct(x, z, elevation);
             }
         }
         tileMap.Add(coord, data);
@@ -154,7 +161,7 @@ public class TerrainDataMap
     // -------------------------------------- SAMPLING --------------------------------------------
     // --------------------------------------------------------------------------------------------
 
-    private Vector2Int lastLookupCoord = new(-9999, -9999);
+    private Vector2Int lastLookupCoord = new(int.MaxValue, int.MinValue);
     private TileMeshStruct[,] lastLookupGrid;
 
     public float GetElevationAt(int gx, int gz)

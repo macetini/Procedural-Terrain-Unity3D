@@ -46,6 +46,11 @@ public class TerrainChunk : MonoBehaviour
         filterReference = GetComponent<MeshFilter>();
     }
 
+    public void CallDestroy() // WARNING: Not optimized.Should only be only used during the development phase.
+    {
+        Destroy(gameObject);
+    }
+
     void OnDestroy()
     {
         if (filterReference != null && filterReference.sharedMesh != null)
