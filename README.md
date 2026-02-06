@@ -64,7 +64,7 @@ License
 - Creative Commons
 
 Contact
-- Maintainer: macetini
+- Maintainer: macetini@gmail.com
 - Open issues for questions or feature requests
 
 Next steps for me if you want:
