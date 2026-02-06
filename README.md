@@ -4,9 +4,7 @@ ProceduralTerrain is a procedural terrain generation project. It demonstrates te
 
 <img width="965" height="604" alt="terrain" src="https://github.com/user-attachments/assets/28cca229-70f1-436d-8b2e-f11495004ee1" />
 
-<br />
-
-Features (common to procedural terrain projects)
+# Features
 - Heightmap generation using Perlin/Simplex noise (or other algorithms)
 - Mesh generation and level-of-detail (LOD)
 - Texture blending and biome mapping
