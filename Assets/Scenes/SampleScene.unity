@@ -179,7 +179,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 5000
   field of view: 30
   orthographic: 0
   orthographic size: 25
@@ -207,7 +207,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.17364816, y: 0, z: 0, w: 0.9848078}
-  m_LocalPosition: {x: 0, y: 40, z: 0}
+  m_LocalPosition: {x: 0, y: 500, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -430,18 +430,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainChunksGenerator
   chunkSize: 128
-  tileSize: 1
-  elevationStepHeight: 1
-  maxElevationStepsCount: 5
-  skirtDepth: 5
+  tileSize: 5
+  elevationStepHeight: 30
+  maxElevationStepsCount: 15
+  skirtDepth: 20
   noiseSeed: 1337
   noiseScale: 0.005
   noiseOctaves: 1
   noisePersistence: 1
   noiseLacunarity: 1
   cameraReference: {fileID: 330585545}
-  frustumPadding: 5
-  viewDistanceChunks: 5
+  frustumPadding: 0
+  viewDistanceChunks: 7
   lodDist1: 640
   lodDist2: 768
   visibilityCheckFrameCount: 10
