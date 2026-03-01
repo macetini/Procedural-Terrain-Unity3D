@@ -1,37 +1,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Registry
+namespace Assets.Scripts.Processor
 {
-    private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
-
-    // Registry Helpers
-    public bool HasActiveChunk(Vector2Int coord) => activeChunks.ContainsKey(coord);
-
-    public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
-        activeChunks.TryGetValue(coord, out chunk);
-
-    public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) => activeChunks[coord] = chunk;
-
-    public void UnregisterChunk(Vector2Int coord) => activeChunks.Remove(coord);
-
-    // Property to let the Generator see the keys for culling/cleanup
-    public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys => activeChunks.Keys;
-
-    public void ClearAll()
+    internal class Registry
     {
-        foreach (var chunk in activeChunks.Values)
+        private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
+
+        // Registry Helpers
+        public bool HasActiveChunk(Vector2Int coord) => activeChunks.ContainsKey(coord);
+
+        public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
+            activeChunks.TryGetValue(coord, out chunk);
+
+        public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
+            activeChunks[coord] = chunk;
+
+        public void UnregisterChunk(Vector2Int coord) => activeChunks.Remove(coord);
+
+        // Property to let the Generator see the keys for culling/cleanup
+        public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
+            activeChunks.Keys;
+
+        public void ClearAll()
         {
-            if (chunk != null)
-                chunk.CallDestroy();
+            foreach (var chunk in activeChunks.Values)
+            {
+                if (chunk != null)
+                    chunk.CallDestroy();
+            }
+            activeChunks.Clear();
         }
-        activeChunks.Clear();
-    }
 
-    public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)
-    {
-        targetList.Clear();
-        foreach (var key in activeChunks.Keys)
-            targetList.Add(key);
+        public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)
+        {
+            targetList.Clear();
+            foreach (var key in activeChunks.Keys)
+                targetList.Add(key);
+        }
     }
 }

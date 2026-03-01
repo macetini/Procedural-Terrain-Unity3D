@@ -1,70 +1,74 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainDataProcessor
+namespace Assets.Scripts.Processor
 {
-    private readonly Sampler sampler;
-    private readonly Sanitizer sanitizer;
-    private readonly Registry registry;
-
-    private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
-
-    public TerrainDataProcessor(int chunkSize)
+    public class TerrainDataProcessor
     {
-        sampler = new Sampler(tileMap, chunkSize);
-        sanitizer = new Sanitizer(tileMap, chunkSize);
-        registry = new Registry();
-    }
+        private readonly Sampler sampler;
+        private readonly Sanitizer sanitizer;
+        private readonly Registry registry;
 
-    // Sampler
-    public void RemoveTileData(Vector2Int coord) => sampler.RemoveTileData(coord);
+        private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
 
-    public void GenerateRawData(Vector2Int coord) => sampler.GenerateRawData(coord);
+        public TerrainDataProcessor(int chunkSize)
+        {
+            sampler = new Sampler(tileMap, chunkSize);
+            sanitizer = new Sanitizer(tileMap, chunkSize);
+            registry = new Registry();
+        }
 
-    public bool HasTileData(Vector2Int coord) => sampler.HasTileData(coord);
+        // Sampler
+        public void RemoveTileData(Vector2Int coord) => sampler.RemoveTileData(coord);
 
-    public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
-        sampler.GetNeighborGrids(coord);
+        public void GenerateRawData(Vector2Int coord) => sampler.GenerateRawData(coord);
 
-    //
+        public bool HasTileData(Vector2Int coord) => sampler.HasTileData(coord);
 
-    // Sanitizer
-    public void RemoveSanitization(Vector2Int coord) => sanitizer.RemoveSanitization(coord);
+        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
+            sampler.GetNeighborGrids(coord);
 
-    public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>
-        sanitizer.SanitizeCurrentTileMeshData(cameraOrigin, dataRadius);
+        //
 
-    public void MarkSanitized(Vector2Int coord) => sanitizer.MarkSanitized(coord);
+        // Sanitizer
+        public void RemoveSanitization(Vector2Int coord) => sanitizer.RemoveSanitization(coord);
 
-    public bool IsSanitized(Vector2Int coord) => sanitizer.IsSanitized(coord);
+        public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>
+            sanitizer.SanitizeCurrentTileMeshData(cameraOrigin, dataRadius);
 
-    public void SanitizeGlobalChunk(Vector2Int tilePos) => sanitizer.SanitizeGlobalChunk(tilePos);
+        public void MarkSanitized(Vector2Int coord) => sanitizer.MarkSanitized(coord);
 
-    //
+        public bool IsSanitized(Vector2Int coord) => sanitizer.IsSanitized(coord);
 
-    // Registry
-    public bool HasActiveChunk(Vector2Int coord) => registry.HasActiveChunk(coord);
+        public void SanitizeGlobalChunk(Vector2Int tilePos) =>
+            sanitizer.SanitizeGlobalChunk(tilePos);
 
-    public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
-        registry.TryGetActiveChunk(coord, out chunk);
+        //
 
-    public void GetActiveKeysNonAlloc(List<Vector2Int> targetList) =>
-        registry.GetActiveKeysNonAlloc(targetList);
+        // Registry
+        public bool HasActiveChunk(Vector2Int coord) => registry.HasActiveChunk(coord);
 
-    public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
-        registry.RegisterChunk(coord, chunk);
+        public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
+            registry.TryGetActiveChunk(coord, out chunk);
 
-    public void UnregisterChunk(Vector2Int coord) => registry.UnregisterChunk(coord);
+        public void GetActiveKeysNonAlloc(List<Vector2Int> targetList) =>
+            registry.GetActiveKeysNonAlloc(targetList);
 
-    public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
-        registry.ActiveChunkKeys;
+        public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
+            registry.RegisterChunk(coord, chunk);
 
-    //
+        public void UnregisterChunk(Vector2Int coord) => registry.UnregisterChunk(coord);
 
-    public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
-    {
-        registry.ClearAll();
-        sanitizer.ClearAll();
-        tileMap.Clear();
+        public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
+            registry.ActiveChunkKeys;
+
+        //
+
+        public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
+        {
+            registry.ClearAll();
+            sanitizer.ClearAll();
+            tileMap.Clear();
+        }
     }
 }

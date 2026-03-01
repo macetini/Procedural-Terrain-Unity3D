@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Assets.Scripts.Processor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -44,8 +45,8 @@ public class TerrainChunksGenerator : MonoBehaviour
     private float chunkBoundSize;
 
     // Data Processing
-    public TerrainDataProcessor TerrainData => terrainDataProcessor;
-    private TerrainDataProcessor terrainDataProcessor;
+    public TerrainDataProcessor TerrainDataProcessor => _terrainDataProcessor;
+    private TerrainDataProcessor _terrainDataProcessor;
 
     // Build Queue
     private readonly List<Vector2Int> buildQueue = new();
@@ -54,7 +55,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     void Awake()
     {
-        terrainDataProcessor = new TerrainDataProcessor(chunkSize);
+        _terrainDataProcessor = new TerrainDataProcessor(chunkSize);
     }
 
     void Start()
@@ -75,7 +76,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             buildQueue.Clear();
             buildQueueHash.Clear();
             triangleCache.Clear();
-            terrainDataProcessor.ClearAll();
+            _terrainDataProcessor.ClearAll();
             BuildTerrain();
         }
     }
@@ -126,13 +127,13 @@ public class TerrainChunksGenerator : MonoBehaviour
                         Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
 
                         if (
-                            !terrainDataProcessor.HasActiveChunk(coord) && buildQueueHash.Add(coord)
+                            !_terrainDataProcessor.HasActiveChunk(coord) && buildQueueHash.Add(coord)
                         )
                         {
                             buildQueue.Add(coord);
                         }
                         else if (
-                            terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
+                            _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
                         )
                         {
                             chunk.UpdateLOD();
@@ -155,7 +156,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void CleanupRemoteChunks()
     {
         visibilityKeysSnapshot.Clear();
-        terrainDataProcessor.GetActiveKeysNonAlloc(visibilityKeysSnapshot);
+        _terrainDataProcessor.GetActiveKeysNonAlloc(visibilityKeysSnapshot);
 
         // Using a simple integer distance (Manhattan) is faster and safer for chunk grids
         int maxChunkDist = viewDistanceChunks + 2;
@@ -168,16 +169,16 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             if (
                 chunkDist > maxChunkDist
-                && terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
+                && _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
             )
             {
                 // Physical chunk removal
                 Destroy(chunk.gameObject);
 
                 // Data removal
-                terrainDataProcessor.UnregisterChunk(coord);
-                terrainDataProcessor.RemoveSanitization(coord);
-                terrainDataProcessor.RemoveTileData(coord);
+                _terrainDataProcessor.UnregisterChunk(coord);
+                _terrainDataProcessor.RemoveSanitization(coord);
+                _terrainDataProcessor.RemoveTileData(coord);
             }
         }
     }
@@ -204,7 +205,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
 
         sw2.Start();
-        terrainDataProcessor.SanitizeData(currentCameraPosition, dataRadius);
+        _terrainDataProcessor.SanitizeData(currentCameraPosition, dataRadius);
         sw2.Stop();
 
         ms = sw2.Elapsed.TotalMilliseconds;
@@ -235,7 +236,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     cameraOrigin.x + xChunkOffset,
                     cameraOrigin.y + zChunkOffset
                 );
-                terrainDataProcessor.GenerateRawData(coord);
+                _terrainDataProcessor.GenerateRawData(coord);
             }
         }
     }
@@ -248,12 +249,12 @@ public class TerrainChunksGenerator : MonoBehaviour
             for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
             {
                 Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
-                if (!terrainDataProcessor.HasActiveChunk(coord) && !buildQueue.Contains(coord))
+                if (!_terrainDataProcessor.HasActiveChunk(coord) && !buildQueue.Contains(coord))
                 {
                     buildQueue.Add(coord);
                     addedNew = true;
                 }
-                else if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+                else if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     chunk.UpdateLOD();
                 }
@@ -284,7 +285,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             if (distToCam > viewDistanceChunks + 1)
                 continue;
 
-            if (!terrainDataProcessor.HasActiveChunk(coord))
+            if (!_terrainDataProcessor.HasActiveChunk(coord))
             {
                 // 1. Ensure a 3x3 block of RAW DATA exists
                 for (int x = -1; x <= 1; x++)
@@ -292,7 +293,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!terrainDataProcessor.HasTileData(n))
+                        if (!_terrainDataProcessor.HasTileData(n))
                         {
                             GenerateFullMeshData(n, 0);
                             yield return null;
@@ -307,10 +308,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!terrainDataProcessor.IsSanitized(n))
+                        if (!_terrainDataProcessor.IsSanitized(n))
                         {
-                            terrainDataProcessor.SanitizeGlobalChunk(n);
-                            terrainDataProcessor.MarkSanitized(n);
+                            _terrainDataProcessor.SanitizeGlobalChunk(n);
+                            _terrainDataProcessor.MarkSanitized(n);
                             yield return null;
                         }
                     }
@@ -320,7 +321,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 yield return null;
                 SpawnChunkMesh(coord);
 
-                if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+                if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     chunk.StartFadeIn();
                 }
@@ -337,7 +338,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
         chunk.InitBuild(this, coord);
         chunk.UpdateVisibility(cameraPlanes);
-        terrainDataProcessor.RegisterChunk(coord, chunk);
+        _terrainDataProcessor.RegisterChunk(coord, chunk);
     }
 
     private void SortBuildQueue()
@@ -370,7 +371,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
             // 1. Take a snapshot of the current keys
             visibilityKeysSnapshot.Clear();
-            visibilityKeysSnapshot.AddRange(terrainDataProcessor.ActiveChunkKeys);
+            visibilityKeysSnapshot.AddRange(_terrainDataProcessor.ActiveChunkKeys);
 
             // 2. Iterate through the snapshot
             for (int i = 0; i < visibilityKeysSnapshot.Count; i++)
@@ -378,7 +379,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 Vector2Int key = visibilityKeysSnapshot[i];
 
                 // 3. Safety Check: Make sure the chunk wasn't purged while we were yielding
-                if (terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
+                if (_terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
                 {
                     chunk.UpdateVisibility(cameraPlanes);
 
