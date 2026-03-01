@@ -54,7 +54,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     void Awake()
     {
-        terrainData = new TerrainDataMap(this);
+        terrainData = new TerrainDataMap(chunkSize);
     }
 
     void Start()
