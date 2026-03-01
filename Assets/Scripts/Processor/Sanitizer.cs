@@ -19,7 +19,6 @@ namespace Assets.Scripts.Processor
 
         public void Clear(Vector2Int coord) => sanitizedSet.Remove(coord);
 
-        // Constructor
         public Sanitizer(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
             (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
@@ -29,26 +28,26 @@ namespace Assets.Scripts.Processor
             {
                 for (int z = -dataRadius; z <= dataRadius; z++)
                 {
-                    Vector2Int tilePosition = new(cameraOrigin.x + x, cameraOrigin.y + z);
+                    Vector2Int coord = new(cameraOrigin.x + x, cameraOrigin.y + z);
                     // We only need to sanitize if the mesh hasn't been built yet
-                    if (!sanitizedSet.Contains(tilePosition))
+                    if (!sanitizedSet.Contains(coord))
                     {
-                        SanitizeGlobalChunk(tilePosition);
-                        sanitizedSet.Add(tilePosition);
+                        SanitizeGlobalChunk(coord);
+                        sanitizedSet.Add(coord);
                     }
                 }
             }
         }
 
-        public void SanitizeGlobalChunk(Vector2Int tilePos)
+        public void SanitizeGlobalChunk(Vector2Int coord)
         {
-            if (!tileMap.TryGetValue(tilePos, out TileMeshStruct[,] currentData))
+            if (!tileMap.TryGetValue(coord, out TileMeshStruct[,] currentData))
             {
                 return;
             }
 
-            tileMap.TryGetValue(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
-            tileMap.TryGetValue(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
+            tileMap.TryGetValue(coord + Vector2Int.right, out TileMeshStruct[,] eastData);
+            tileMap.TryGetValue(coord + Vector2Int.up, out TileMeshStruct[,] northData);
 
             int size = chunkSize;
             int edge = size - 1;

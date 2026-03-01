@@ -51,8 +51,7 @@ namespace Assets.Scripts.Processor
 
         public bool IsSanitized(Vector2Int coord) => sanitizer.IsSanitized(coord);
 
-        public void SanitizeGlobalChunk(Vector2Int tilePos) =>
-            sanitizer.SanitizeGlobalChunk(tilePos);
+        public void SanitizeGlobalChunk(Vector2Int coord) => sanitizer.SanitizeGlobalChunk(coord);
 
         //
 

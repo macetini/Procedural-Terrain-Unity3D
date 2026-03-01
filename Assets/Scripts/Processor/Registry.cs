@@ -27,7 +27,9 @@ namespace Assets.Scripts.Processor
             foreach (var chunk in activeChunks.Values)
             {
                 if (chunk != null)
+                {
                     chunk.CallDestroy();
+                }
             }
             activeChunks.Clear();
         }
@@ -36,7 +38,9 @@ namespace Assets.Scripts.Processor
         {
             targetList.Clear();
             foreach (var key in activeChunks.Keys)
+            {
                 targetList.Add(key);
+            }
         }
     }
 }
