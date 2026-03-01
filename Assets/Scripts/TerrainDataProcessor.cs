@@ -7,25 +7,20 @@ public class TerrainDataMap
 
     public TerrainSanitizer Sanitizer { get; private set; }
 
+    public TerrainChunkRegistry ChunkRegistry { get; private set; }
+
     public TerrainDataMap(TerrainChunksGenerator generator)
     {
         chunkSize = generator.chunkSize;
         Sanitizer = new TerrainSanitizer(tileMap, chunkSize);
+        ChunkRegistry = new TerrainChunkRegistry();
     }
 
     public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
     {
-        foreach (var chunk in activeChunks.Values)
-        {
-            if (chunk != null)
-            {
-                chunk.CallDestroy();
-            }
-        }
-
-        activeChunks.Clear();
-        tileMap.Clear();
+        ChunkRegistry.ClearAll();
         Sanitizer.ClearAll();
+        tileMap.Clear();
     }
 
     // --------------------------------------------------------------------------------------------
@@ -61,43 +56,12 @@ public class TerrainDataMap
         tileMap.Add(coord, data);
     }
 
-    // --------------------------------------------------------------------------------------------
-    // -------------------------------------- ACTIVE DATA -----------------------------------------
-    // --------------------------------------------------------------------------------------------
-
-    private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
-
-    // Registry Helpers
-    public bool HasActiveChunk(Vector2Int coord) => activeChunks.ContainsKey(coord);
-
-    public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
-        activeChunks.TryGetValue(coord, out chunk);
-
-    public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) => activeChunks[coord] = chunk;
-
-    public void UnregisterChunk(Vector2Int coord) => activeChunks.Remove(coord);
-
-    // Atomic Purge: Cleans up data and registry in one go
     public void PurgeCoordinate(Vector2Int coord)
     {
-        activeChunks.Remove(coord);
+        ChunkRegistry.UnregisterChunk(coord);
         tileMap.Remove(coord);
         Sanitizer.Clear(coord);
     }
-
-    public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)
-    {
-        targetList.Clear();
-        foreach (var key in activeChunks.Keys)
-            targetList.Add(key);
-    }
-
-    // Property to let the Generator see the keys for culling/cleanup
-    public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys => activeChunks.Keys;
-
-    // --------------------------------------------------------------------------------------------
-    // -------------------------------------- SAMPLING --------------------------------------------
-    // --------------------------------------------------------------------------------------------
 
     private Vector2Int lastLookupCoord = new(int.MaxValue, int.MinValue);
     private TileMeshStruct[,] lastLookupGrid;
