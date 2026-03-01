@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainSanitizer
+public class Sanitizer
 {
     private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
     private readonly int chunkSize;
@@ -18,7 +18,7 @@ public class TerrainSanitizer
     public void Clear(Vector2Int coord) => sanitizedSet.Remove(coord);
 
     // Constructor
-    public TerrainSanitizer(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
+    public Sanitizer(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
         (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
     public void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainChunkRegistry
+public class Registry
 {
     private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
 

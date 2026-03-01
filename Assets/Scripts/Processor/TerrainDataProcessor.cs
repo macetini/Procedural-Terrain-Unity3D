@@ -3,20 +3,20 @@ using UnityEngine;
 
 public class TerrainDataProcessor
 {
-    private readonly TerrainSampler sampler;
-    private readonly TerrainSanitizer sanitizer;
-    private readonly TerrainChunkRegistry chunkRegistry;
+    private readonly Sampler sampler;
+    private readonly Sanitizer sanitizer;
+    private readonly Registry registry;
 
     private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
 
     public TerrainDataProcessor(int chunkSize)
     {
-        sampler = new TerrainSampler(tileMap, chunkSize);
-        sanitizer = new TerrainSanitizer(tileMap, chunkSize);
-        chunkRegistry = new TerrainChunkRegistry();
+        sampler = new Sampler(tileMap, chunkSize);
+        sanitizer = new Sanitizer(tileMap, chunkSize);
+        registry = new Registry();
     }
 
-    // TerrainSampler
+    // Sampler
     public void RemoveTileData(Vector2Int coord) => sampler.RemoveTileData(coord);
 
     public void GenerateRawData(Vector2Int coord) => sampler.GenerateRawData(coord);
@@ -28,7 +28,7 @@ public class TerrainDataProcessor
 
     //
 
-    // TerrainSanitizer
+    // Sanitizer
     public void RemoveSanitization(Vector2Int coord) => sanitizer.RemoveSanitization(coord);
 
     public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>
@@ -40,30 +40,30 @@ public class TerrainDataProcessor
 
     public void SanitizeGlobalChunk(Vector2Int tilePos) => sanitizer.SanitizeGlobalChunk(tilePos);
 
-    public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
-        chunkRegistry.RegisterChunk(coord, chunk);
-
-    public void UnregisterChunk(Vector2Int coord) => chunkRegistry.UnregisterChunk(coord);
-
-    public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
-        chunkRegistry.ActiveChunkKeys;
-
     //
 
-    // TerrainChunkRegistry
-    public bool HasActiveChunk(Vector2Int coord) => chunkRegistry.HasActiveChunk(coord);
+    // Registry
+    public bool HasActiveChunk(Vector2Int coord) => registry.HasActiveChunk(coord);
 
     public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
-        chunkRegistry.TryGetActiveChunk(coord, out chunk);
+        registry.TryGetActiveChunk(coord, out chunk);
 
     public void GetActiveKeysNonAlloc(List<Vector2Int> targetList) =>
-        chunkRegistry.GetActiveKeysNonAlloc(targetList);
+        registry.GetActiveKeysNonAlloc(targetList);
+
+    public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
+        registry.RegisterChunk(coord, chunk);
+
+    public void UnregisterChunk(Vector2Int coord) => registry.UnregisterChunk(coord);
+
+    public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
+        registry.ActiveChunkKeys;
 
     //
 
     public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
     {
-        chunkRegistry.ClearAll();
+        registry.ClearAll();
         sanitizer.ClearAll();
         tileMap.Clear();
     }

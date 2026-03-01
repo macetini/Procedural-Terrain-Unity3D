@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainSampler
+public class Sampler
 {
     private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
     private readonly int chunkSize;
@@ -9,7 +9,7 @@ public class TerrainSampler
     private Vector2Int lastLookupCoord = new(int.MaxValue, int.MinValue);
     private TileMeshStruct[,] lastLookupGrid;
 
-    public TerrainSampler(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
+    public Sampler(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
         (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
     public bool HasTileData(Vector2Int coord) => tileMap.ContainsKey(coord);
