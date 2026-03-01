@@ -5,12 +5,15 @@ public class TerrainDataMap
 {
     private readonly int chunkSize;
 
+    public TerrainSanitizer Sanitizer { get; private set; }
+
     public TerrainDataMap(TerrainChunksGenerator generator)
     {
         chunkSize = generator.chunkSize;
+        Sanitizer = new TerrainSanitizer(tileMap, chunkSize);
     }
 
-    public void ClearAll() // WARNING: Not optimized.Should only be only used during the development phase.
+    public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
     {
         foreach (var chunk in activeChunks.Values)
         {
@@ -19,12 +22,11 @@ public class TerrainDataMap
                 chunk.CallDestroy();
             }
         }
+
         activeChunks.Clear();
         tileMap.Clear();
-        sanitizedSet.Clear();
+        Sanitizer.ClearAll();
     }
-
-    // TODO - Future refactor. This class could be split into 3 specified ones.
 
     // --------------------------------------------------------------------------------------------
     // -------------------------------------- RAW DATA --------------------------------------------
@@ -60,70 +62,6 @@ public class TerrainDataMap
     }
 
     // --------------------------------------------------------------------------------------------
-    // -------------------------------------- SANITIZATION ----------------------------------------
-    // --------------------------------------------------------------------------------------------
-
-    private readonly HashSet<Vector2Int> sanitizedSet = new();
-
-    public bool IsSanitized(Vector2Int coord) => sanitizedSet.Contains(coord);
-
-    public void MarkSanitized(Vector2Int coord) => sanitizedSet.Add(coord);
-
-    public void RemoveSanitization(Vector2Int coord) => sanitizedSet.Remove(coord);
-
-    public void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)
-    {
-        for (int x = -dataRadius; x <= dataRadius; x++)
-        {
-            for (int z = -dataRadius; z <= dataRadius; z++)
-            {
-                Vector2Int tilePosition = new(cameraOrigin.x + x, cameraOrigin.y + z);
-                // We only need to sanitize if the mesh hasn't been built yet
-                if (!sanitizedSet.Contains(tilePosition))
-                {
-                    SanitizeGlobalChunk(tilePosition);
-                    sanitizedSet.Add(tilePosition);
-                }
-            }
-        }
-    }
-
-    public void SanitizeGlobalChunk(Vector2Int tilePos)
-    {
-        if (!tileMap.TryGetValue(tilePos, out TileMeshStruct[,] currentData))
-            return;
-
-        tileMap.TryGetValue(tilePos + Vector2Int.right, out TileMeshStruct[,] eastData);
-        tileMap.TryGetValue(tilePos + Vector2Int.up, out TileMeshStruct[,] northData);
-
-        int size = chunkSize;
-        int edge = size - 1;
-
-        for (int i = 0; i < 2; i++)
-        {
-            for (int x = 0; x < size; x++)
-            {
-                for (int z = 0; z < size; z++)
-                {
-                    ref TileMeshStruct current = ref currentData[x, z];
-
-                    // East check
-                    if (x < edge)
-                        TerrainMath.ClampNeighbor(ref current, ref currentData[x + 1, z]);
-                    else if (eastData != null)
-                        TerrainMath.ClampNeighbor(ref current, ref eastData[0, z]);
-
-                    // North check
-                    if (z < edge)
-                        TerrainMath.ClampNeighbor(ref current, ref currentData[x, z + 1]);
-                    else if (northData != null)
-                        TerrainMath.ClampNeighbor(ref current, ref northData[x, 0]);
-                }
-            }
-        }
-    }
-
-    // --------------------------------------------------------------------------------------------
     // -------------------------------------- ACTIVE DATA -----------------------------------------
     // --------------------------------------------------------------------------------------------
 
@@ -144,7 +82,7 @@ public class TerrainDataMap
     {
         activeChunks.Remove(coord);
         tileMap.Remove(coord);
-        sanitizedSet.Remove(coord);
+        Sanitizer.Clear(coord);
     }
 
     public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)

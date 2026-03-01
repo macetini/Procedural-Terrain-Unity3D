@@ -171,7 +171,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
                 // Data removal
                 terrainData.UnregisterChunk(coord);
-                terrainData.RemoveSanitization(coord);
+                terrainData.Sanitizer.RemoveSanitization(coord);
                 terrainData.RemoveTileData(coord);
             }
         }
@@ -199,7 +199,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         }
 
         sw2.Start();
-        terrainData.SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius); // (See note below)
+        terrainData.Sanitizer.SanitizeCurrentTileMeshData(currentCameraPosition, dataRadius); // (See note below)
         sw2.Stop();
         ms = sw2.Elapsed.TotalMilliseconds;
         if (ms > 1.0f)
@@ -301,10 +301,10 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!terrainData.IsSanitized(n))
+                        if (!terrainData.Sanitizer.IsSanitized(n))
                         {
-                            terrainData.SanitizeGlobalChunk(n);
-                            terrainData.MarkSanitized(n);
+                            terrainData.Sanitizer.SanitizeGlobalChunk(n);
+                            terrainData.Sanitizer.MarkSanitized(n);
                             yield return null;
                         }
                     }
