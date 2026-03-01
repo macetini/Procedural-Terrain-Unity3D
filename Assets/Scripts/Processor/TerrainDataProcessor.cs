@@ -19,15 +19,14 @@ namespace Assets.Scripts.Processor
         }
 
         // Sampler
-        public void RemoveTileData(Vector2Int coord) => sampler.RemoveTileData(coord);
-
         public void GenerateRawData(Vector2Int coord) => sampler.GenerateRawData(coord);
+
+        public void RemoveTileData(Vector2Int coord) => sampler.RemoveTileData(coord);
 
         public bool HasTileData(Vector2Int coord) => sampler.HasTileData(coord);
 
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
-            sampler.GetNeighborGrids(coord);
-
+            ChunkNeighborStruct.GetNeighborGrids(coord, tileMap);
         //
 
         // Sanitizer
