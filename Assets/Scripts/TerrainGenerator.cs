@@ -180,7 +180,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 // Data removal
                 terrainData.ChunkRegistry.UnregisterChunk(coord);
                 terrainData.Sanitizer.RemoveSanitization(coord);
-                terrainData.RemoveTileData(coord);
+                terrainData.TerrainSampler.RemoveTileData(coord);
             }
         }
     }
@@ -237,7 +237,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     cameraOrigin.x + xChunkOffset,
                     cameraOrigin.y + zChunkOffset
                 );
-                terrainData.GenerateRawData(coord);
+                terrainData.TerrainSampler.GenerateRawData(coord);
             }
         }
     }
@@ -294,7 +294,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     for (int z = -1; z <= 1; z++)
                     {
                         Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!terrainData.HasTileData(n))
+                        if (!terrainData.TerrainSampler.HasTileData(n))
                         {
                             GenerateFullMeshData(n, 0);
                             yield return null;
