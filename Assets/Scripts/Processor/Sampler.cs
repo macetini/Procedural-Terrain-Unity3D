@@ -14,6 +14,8 @@ namespace Assets.Scripts.Processor
         public Sampler(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
             (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
+        public void ClearAll() => tileMap.Clear();
+
         public bool HasTileData(Vector2Int coord) => tileMap.ContainsKey(coord);
 
         public bool TryGetTileData(Vector2Int coord, out TileMeshStruct[,] grid) =>

@@ -18,20 +18,32 @@ namespace Assets.Scripts.Processor
             registry = new Registry();
         }
 
+        public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
+        {
+            registry.ClearAll();
+            sanitizer.ClearAll();
+            sampler.ClearAll();
+            tileMap.Clear();
+        }
+
+        public void Clear(Vector2Int coord)
+        {
+            registry.UnregisterChunk(coord);
+            sanitizer.RemoveSanitization(coord);
+            sampler.RemoveTileData(coord);
+        }
+
         // Sampler
         public void GenerateRawData(Vector2Int coord) => sampler.GenerateRawData(coord);
-
-        public void RemoveTileData(Vector2Int coord) => sampler.RemoveTileData(coord);
 
         public bool HasTileData(Vector2Int coord) => sampler.HasTileData(coord);
 
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
             ChunkNeighborStruct.GetNeighborGrids(coord, tileMap);
+
         //
 
         // Sanitizer
-        public void RemoveSanitization(Vector2Int coord) => sanitizer.RemoveSanitization(coord);
-
         public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>
             sanitizer.SanitizeCurrentTileMeshData(cameraOrigin, dataRadius);
 
@@ -45,6 +57,9 @@ namespace Assets.Scripts.Processor
         //
 
         // Registry
+        public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
+            registry.RegisterChunk(coord, chunk);
+
         public bool HasActiveChunk(Vector2Int coord) => registry.HasActiveChunk(coord);
 
         public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
@@ -53,21 +68,8 @@ namespace Assets.Scripts.Processor
         public void GetActiveKeysNonAlloc(List<Vector2Int> targetList) =>
             registry.GetActiveKeysNonAlloc(targetList);
 
-        public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
-            registry.RegisterChunk(coord, chunk);
-
-        public void UnregisterChunk(Vector2Int coord) => registry.UnregisterChunk(coord);
-
         public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
             registry.ActiveChunkKeys;
-
         //
-
-        public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
-        {
-            registry.ClearAll();
-            sanitizer.ClearAll();
-            tileMap.Clear();
-        }
     }
 }

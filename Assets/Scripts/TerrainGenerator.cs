@@ -127,7 +127,8 @@ public class TerrainChunksGenerator : MonoBehaviour
                         Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
 
                         if (
-                            !_terrainDataProcessor.HasActiveChunk(coord) && buildQueueHash.Add(coord)
+                            !_terrainDataProcessor.HasActiveChunk(coord)
+                            && buildQueueHash.Add(coord)
                         )
                         {
                             buildQueue.Add(coord);
@@ -174,11 +175,8 @@ public class TerrainChunksGenerator : MonoBehaviour
             {
                 // Physical chunk removal
                 Destroy(chunk.gameObject);
-
                 // Data removal
-                _terrainDataProcessor.UnregisterChunk(coord);
-                _terrainDataProcessor.RemoveSanitization(coord);
-                _terrainDataProcessor.RemoveTileData(coord);
+                _terrainDataProcessor.Clear(coord);
             }
         }
     }
@@ -344,7 +342,9 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void SortBuildQueue()
     {
         if (buildQueue.Count <= 1)
+        {
             return;
+        }
 
         // Capture camera pos in chunk-coordinates once to avoid repeated math
         // We use a local variable to avoid thread/sync issues during the sort
@@ -369,16 +369,16 @@ public class TerrainChunksGenerator : MonoBehaviour
         {
             cameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
 
-            // 1. Take a snapshot of the current keys
+            // Take a snapshot of the current keys
             visibilityKeysSnapshot.Clear();
             visibilityKeysSnapshot.AddRange(_terrainDataProcessor.ActiveChunkKeys);
 
-            // 2. Iterate through the snapshot
+            // Iterate through the snapshot
             for (int i = 0; i < visibilityKeysSnapshot.Count; i++)
             {
                 Vector2Int key = visibilityKeysSnapshot[i];
 
-                // 3. Safety Check: Make sure the chunk wasn't purged while we were yielding
+                // Safety Check: Make sure the chunk wasn't purged while we were yielding
                 if (_terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
                 {
                     chunk.UpdateVisibility(cameraPlanes);
@@ -389,7 +389,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                     }
                 }
 
-                // 4. Time Slicing: Only process after X frames
+                // Time Slicing: Only process after X frames
                 if (i % visibilityCheckFrameCount == 0)
                     yield return null;
             }
