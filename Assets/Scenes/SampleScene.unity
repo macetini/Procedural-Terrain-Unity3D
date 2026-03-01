@@ -411,7 +411,7 @@ GameObject:
   - component: {fileID: 555491514}
   - component: {fileID: 555491513}
   m_Layer: 6
-  m_Name: TerrainChunksGenerator
+  m_Name: TerrainGenerator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

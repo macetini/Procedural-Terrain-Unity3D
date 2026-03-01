@@ -40,7 +40,7 @@ public class TerrainChunkProcessor
 
     public void BuildMeshData(int resolutionStep, Vector2Int chunkCoord)
     {
-        neighbors = generator.TerrainData.TerrainSampler.GetNeighborGrids(chunkCoord);
+        neighbors = generator.TerrainData.GetNeighborGrids(chunkCoord);
         this.resolutionStep = resolutionStep;
         resolution = (chunkSize / resolutionStep) + 1;
 
