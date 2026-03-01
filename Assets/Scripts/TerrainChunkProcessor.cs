@@ -95,7 +95,9 @@ public class TerrainChunkProcessor
     {
         // Internal - Use neighbors.Center
         if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
+        {
             return neighbors.Center[x, z].Elevation;
+        }
 
         // Cardinal Neighbors - Redirect to neighbors struct
         // Note the use of ?.Elevation to safely handle missing neighbors

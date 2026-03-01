@@ -4,7 +4,7 @@ using UnityEngine;
 public class TerrainDataProcessor
 {
     private readonly TerrainSampler sampler;
-    public TerrainSanitizer Sanitizer { get; private set; }
+    private TerrainSanitizer sanitizer;
     public TerrainChunkRegistry ChunkRegistry { get; private set; }
 
     private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
@@ -12,7 +12,7 @@ public class TerrainDataProcessor
     public TerrainDataProcessor(int chunkSize)
     {
         sampler = new TerrainSampler(tileMap, chunkSize);
-        Sanitizer = new TerrainSanitizer(tileMap, chunkSize);
+        sanitizer = new TerrainSanitizer(tileMap, chunkSize);
         ChunkRegistry = new TerrainChunkRegistry();
     }
 
@@ -28,10 +28,23 @@ public class TerrainDataProcessor
 
     //
 
+    // TerrainSanitizer
+    public void RemoveSanitization(Vector2Int coord) => sanitizer.RemoveSanitization(coord);
+
+    public void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius) =>
+        sanitizer.SanitizeCurrentTileMeshData(cameraOrigin, dataRadius);
+
+    public bool IsSanitized(Vector2Int coord) => sanitizer.IsSanitized(coord);
+
+    public void SanitizeGlobalChunk(Vector2Int tilePos) => sanitizer.SanitizeGlobalChunk(tilePos);
+
+    public void MarkSanitized(Vector2Int coord) => sanitizer.MarkSanitized(coord);
+    //
+
     public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
     {
         ChunkRegistry.ClearAll();
-        Sanitizer.ClearAll();
+        sanitizer.ClearAll();
         tileMap.Clear();
     }
 }
