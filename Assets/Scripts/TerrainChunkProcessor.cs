@@ -93,56 +93,7 @@ public class TerrainChunkProcessor
 
     private float SampleGrid(int x, int z)
     {
-        // Internal - Use neighbors.Center
-        if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
-        {
-            return neighbors.Center[x, z].Elevation;
-        }
-
-        // Cardinal Neighbors - Redirect to neighbors struct
-        // Note the use of ?.Elevation to safely handle missing neighbors
-        if (x < 0 && z >= 0 && z < chunkSize)
-            return (neighbors.W != null)
-                ? neighbors.W[chunkSize + x, z].Elevation
-                : neighbors.Center[0, z].Elevation;
-
-        if (x >= chunkSize && z >= 0 && z < chunkSize)
-            return (neighbors.E != null)
-                ? neighbors.E[x - chunkSize, z].Elevation
-                : neighbors.Center[chunkSize - 1, z].Elevation;
-
-        if (z < 0 && x >= 0 && x < chunkSize)
-            return (neighbors.S != null)
-                ? neighbors.S[x, chunkSize + z].Elevation
-                : neighbors.Center[x, 0].Elevation;
-
-        if (z >= chunkSize && x >= 0 && x < chunkSize)
-            return (neighbors.N != null)
-                ? neighbors.N[x, z - chunkSize].Elevation
-                : neighbors.Center[x, chunkSize - 1].Elevation;
-
-        // Diagonal Neighbors
-        if (x < 0 && z < 0)
-            return (neighbors.SW != null)
-                ? neighbors.SW[chunkSize + x, chunkSize + z].Elevation
-                : neighbors.Center[0, 0].Elevation;
-
-        if (x < 0 && z >= chunkSize)
-            return (neighbors.NW != null)
-                ? neighbors.NW[chunkSize + x, z - chunkSize].Elevation
-                : neighbors.Center[0, chunkSize - 1].Elevation;
-
-        if (x >= chunkSize && z >= chunkSize)
-            return (neighbors.NE != null)
-                ? neighbors.NE[x - chunkSize, z - chunkSize].Elevation
-                : neighbors.Center[chunkSize - 1, chunkSize - 1].Elevation;
-
-        if (x >= chunkSize && z < 0)
-            return (neighbors.SE != null)
-                ? neighbors.SE[x - chunkSize, chunkSize + z].Elevation
-                : neighbors.Center[chunkSize - 1, 0].Elevation;
-
-        return neighbors.Center[0, 0].Elevation;
+        return neighbors.GetElevation(x, z, chunkSize);
     }
 
     public void GenerateGeometryData()
@@ -151,7 +102,7 @@ public class TerrainChunkProcessor
         float invSize = 1f / chunkSize;
         int cacheStride = resolution + 2;
 
-        // 1. MAIN GRID GENERATION
+        // MAIN GRID GENERATION
         for (int x = 0; x < resolution; x++)
         {
             int gx = x * resolutionStep;
@@ -169,7 +120,7 @@ public class TerrainChunkProcessor
             }
         }
 
-        // 2. SKIRT GENERATION
+        // SKIRT GENERATION
         // Index 1 in the cache is local 0.
         // Index res in the cache is local chunkSize.
         int skirtIdx = resolution * resolution;
