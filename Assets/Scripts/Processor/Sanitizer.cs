@@ -11,13 +11,11 @@ namespace Assets.Scripts.Processor
 
         public bool IsSanitized(Vector2Int coord) => sanitizedSet.Contains(coord);
 
-        public void MarkSanitized(Vector2Int coord) => sanitizedSet.Add(coord);
+        public void Validate(Vector2Int coord) => sanitizedSet.Add(coord);
 
-        public void RemoveSanitization(Vector2Int coord) => sanitizedSet.Remove(coord);
+        public void Invalidate(Vector2Int coord) => sanitizedSet.Remove(coord);
 
         public void ClearAll() => sanitizedSet.Clear();
-
-        public void Clear(Vector2Int coord) => sanitizedSet.Remove(coord);
 
         public Sanitizer(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
             (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
@@ -49,14 +47,13 @@ namespace Assets.Scripts.Processor
             tileMap.TryGetValue(coord + Vector2Int.right, out TileMeshStruct[,] eastData);
             tileMap.TryGetValue(coord + Vector2Int.up, out TileMeshStruct[,] northData);
 
-            int size = chunkSize;
-            int edge = size - 1;
+            int edge = chunkSize - 1;
 
             for (int i = 0; i < 2; i++)
             {
-                for (int x = 0; x < size; x++)
+                for (int x = 0; x < chunkSize; x++)
                 {
-                    for (int z = 0; z < size; z++)
+                    for (int z = 0; z < chunkSize; z++)
                     {
                         ref TileMeshStruct current = ref currentData[x, z];
 

@@ -8,20 +8,14 @@ namespace Assets.Scripts.Processor
         private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
         private readonly int chunkSize;
 
-        private Vector2Int lastLookupCoord = new(int.MaxValue, int.MinValue);
-        private TileMeshStruct[,] lastLookupGrid;
-
         public Sampler(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
             (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
         public void ClearAll() => tileMap.Clear();
 
-        public bool HasTileData(Vector2Int coord) => tileMap.ContainsKey(coord);
+        public bool HasTile(Vector2Int coord) => tileMap.ContainsKey(coord);
 
-        public bool TryGetTileData(Vector2Int coord, out TileMeshStruct[,] grid) =>
-            tileMap.TryGetValue(coord, out grid);
-
-        public void RemoveTileData(Vector2Int coord) => tileMap.Remove(coord);
+        public void RemoveTile(Vector2Int coord) => tileMap.Remove(coord);
 
         public void GenerateRawData(Vector2Int coord)
         {
@@ -43,31 +37,6 @@ namespace Assets.Scripts.Processor
                 }
             }
             tileMap.Add(coord, data);
-        }
-
-        public float GetElevationAt(int gx, int gz)
-        {
-            int cx = Mathf.FloorToInt((float)gx / chunkSize);
-            int cz = Mathf.FloorToInt((float)gz / chunkSize);
-            int lx = gx - (cx * chunkSize);
-            int lz = gz - (cz * chunkSize);
-
-            Vector2Int lookup = new(cx, cz);
-
-            // Cache check for high-frequency calls (like physics/droids)
-            if (lookup == lastLookupCoord && lastLookupGrid != null)
-            {
-                return lastLookupGrid[lx, lz].Elevation;
-            }
-
-            if (tileMap.TryGetValue(lookup, out TileMeshStruct[,] grid))
-            {
-                lastLookupCoord = lookup;
-                lastLookupGrid = grid;
-                return grid[lx, lz].Elevation;
-            }
-
-            return 0f;
         }
     }
 }

@@ -29,14 +29,14 @@ namespace Assets.Scripts.Processor
         public void Clear(Vector2Int coord)
         {
             registry.UnregisterChunk(coord);
-            sanitizer.RemoveSanitization(coord);
-            sampler.RemoveTileData(coord);
+            sanitizer.Invalidate(coord);
+            sampler.RemoveTile(coord);
         }
 
         // Sampler
         public void GenerateRawData(Vector2Int coord) => sampler.GenerateRawData(coord);
 
-        public bool HasTileData(Vector2Int coord) => sampler.HasTileData(coord);
+        public bool HasTileData(Vector2Int coord) => sampler.HasTile(coord);
 
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
             ChunkNeighborStruct.GetNeighborGrids(coord, tileMap);
@@ -47,7 +47,7 @@ namespace Assets.Scripts.Processor
         public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>
             sanitizer.SanitizeCurrentTileMeshData(cameraOrigin, dataRadius);
 
-        public void MarkSanitized(Vector2Int coord) => sanitizer.MarkSanitized(coord);
+        public void MarkSanitized(Vector2Int coord) => sanitizer.Validate(coord);
 
         public bool IsSanitized(Vector2Int coord) => sanitizer.IsSanitized(coord);
 
