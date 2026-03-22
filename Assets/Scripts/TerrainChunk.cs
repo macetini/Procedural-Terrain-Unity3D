@@ -179,11 +179,9 @@ public class TerrainChunk : MonoBehaviour
 
         bool finalShowState = frustumVisible && isMeshReady;
 
-        // [OPTIMIZED] Trigger Fade Effect on "Entry"
-        if (finalShowState && !wasVisibleLastCheck)
+        if (fadeEffect != null && finalShowState && !wasVisibleLastCheck)
         {
-            if (fadeEffect != null)
-                fadeEffect.Play();
+            fadeEffect.Play();
         }
 
         if (rendererReference.enabled != finalShowState)

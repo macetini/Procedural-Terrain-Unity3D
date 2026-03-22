@@ -40,10 +40,26 @@ public class TerrainChunkProcessor
 
     public void BuildMeshData(int resolutionStep, Vector2Int chunkCoord)
     {
+        InitializeNeighbors(chunkCoord);
+        InitializeResolution(resolutionStep);
+        InitializeMeshData();
+        InitializeHeightCache();
+        FillHeightCache();
+    }
+
+    private void InitializeNeighbors(Vector2Int chunkCoord)
+    {
         neighbors = generator.TerrainDataProcessor.GetNeighborGrids(chunkCoord);
+    }
+
+    private void InitializeResolution(int resolutionStep)
+    {
         this.resolutionStep = resolutionStep;
         resolution = (chunkSize / resolutionStep) + 1;
+    }
 
+    private void InitializeMeshData()
+    {
         int gridVertCount = resolution * resolution;
         int totalVerts = gridVertCount + (resolution * 4);
 
@@ -53,14 +69,16 @@ public class TerrainChunkProcessor
             uvs = new Vector2[totalVerts];
             normals = new Vector3[totalVerts];
         }
+    }
 
+    private void InitializeHeightCache()
+    {
         int cacheRes = resolution + 2;
         int totalCacheSize = cacheRes * cacheRes;
         if (heightCache1D == null || heightCache1D.Length != totalCacheSize)
         {
             heightCache1D = new float[totalCacheSize];
         }
-        FillHeightCache();
     }
 
     private void FillHeightCache()
@@ -184,6 +202,12 @@ public class TerrainChunkProcessor
 
     public void CalculateNormals()
     {
+        CalculateNormalsBody();
+        CalculateNormalsSkirt();
+    }
+
+    private void CalculateNormalsBody()
+    {
         float vScale = elevationStepHeight;
         float hDist = 2.0f * tileSize * resolutionStep;
         int stride = resolution + 2;
@@ -207,8 +231,10 @@ public class TerrainChunkProcessor
                 normals[idx] = normal.normalized;
             }
         }
+    }
 
-        // Skirt Normals logic remains same as before
+    private void CalculateNormalsSkirt()
+    {
         float centerX = chunkBoundSize * 0.5f;
         for (int n = resolution * resolution; n < vertices.Length; n++)
         {
