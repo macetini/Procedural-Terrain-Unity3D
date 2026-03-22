@@ -1,3 +1,4 @@
+using Assets.Scripts.Effects;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
