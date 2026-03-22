@@ -45,6 +45,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private float chunkBoundSize;
 
     // Data Processing
+    private bool worldMonitoringActive = true;
     public TerrainDataProcessor TerrainDataProcessor => _terrainDataProcessor;
     private TerrainDataProcessor _terrainDataProcessor;
 
@@ -56,6 +57,11 @@ public class TerrainChunksGenerator : MonoBehaviour
     void Awake()
     {
         _terrainDataProcessor = new TerrainDataProcessor(chunkSize);
+    }
+
+    void OnDestroy()
+    {
+        worldMonitoringActive = false;
     }
 
     void Start()
@@ -283,50 +289,52 @@ public class TerrainChunksGenerator : MonoBehaviour
             if (distToCam > viewDistanceChunks + 1)
                 continue;
 
-            if (!_terrainDataProcessor.HasActiveChunk(coord))
+            yield return GenerateRawDataForChunk(coord);
+            yield return EnsureSanitized(coord);
+            SpawnChunkMesh(coord);
+
+            if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
             {
-                // 1. Ensure a 3x3 block of RAW DATA exists
-                for (int x = -1; x <= 1; x++)
-                {
-                    for (int z = -1; z <= 1; z++)
-                    {
-                        Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!_terrainDataProcessor.HasTileData(n))
-                        {
-                            GenerateFullMeshData(n, 0);
-                            yield return null;
-                        }
-                    }
-                }
-
-                yield return null;
-
-                for (int x = -1; x <= 1; x++)
-                {
-                    for (int z = -1; z <= 1; z++)
-                    {
-                        Vector2Int n = coord + new Vector2Int(x, z);
-                        if (!_terrainDataProcessor.IsSanitized(n))
-                        {
-                            _terrainDataProcessor.SanitizeGlobalChunk(n);
-                            _terrainDataProcessor.MarkSanitized(n);
-                            yield return null;
-                        }
-                    }
-                }
-
-                // 3. Now that the heights are guaranteed to match, spawn
-                yield return null;
-                SpawnChunkMesh(coord);
-
-                if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
-                {
-                    chunk.StartFadeIn();
-                }
+                chunk.StartFadeIn();
             }
             yield return null;
         }
         isProcessingQueue = false;
+    }
+
+    private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                Vector2Int n = coord + new Vector2Int(x, z);
+                if (!_terrainDataProcessor.HasTileData(n))
+                {
+                    GenerateFullMeshData(n, 0);
+                    yield return null;
+                }
+            }
+        }
+        yield return null;
+    }
+
+    private IEnumerator EnsureSanitized(Vector2Int coord)
+    {
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                Vector2Int n = coord + new Vector2Int(x, z);
+                if (!_terrainDataProcessor.IsSanitized(n))
+                {
+                    _terrainDataProcessor.SanitizeGlobalChunk(n);
+                    _terrainDataProcessor.MarkSanitized(n);
+                    yield return null;
+                }
+            }
+        }
+        yield return null;
     }
 
     private void SpawnChunkMesh(Vector2Int coord)
@@ -365,7 +373,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private IEnumerator VisibilityCheckRoutine()
     {
-        while (true)
+        while (worldMonitoringActive && this != null && isActiveAndEnabled)
         {
             cameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
 
