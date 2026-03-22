@@ -47,7 +47,6 @@ public class TerrainChunkProcessor
         int gridVertCount = resolution * resolution;
         int totalVerts = gridVertCount + (resolution * 4);
 
-        // --- OPTIMIZATION: ARRAY REUSE ---
         if (vertices == null || vertices.Length != totalVerts)
         {
             vertices = new Vector3[totalVerts];
@@ -55,7 +54,6 @@ public class TerrainChunkProcessor
             normals = new Vector3[totalVerts];
         }
 
-        // --- OPTIMIZATION: HEIGHT CACHE REUSE ---
         int cacheRes = resolution + 2;
         int totalCacheSize = cacheRes * cacheRes;
         if (heightCache1D == null || heightCache1D.Length != totalCacheSize)
@@ -98,11 +96,16 @@ public class TerrainChunkProcessor
 
     public void GenerateGeometryData()
     {
+        GenerateMainGridVertices();
+        GenerateSkirtVertices();
+    }
+
+    private void GenerateMainGridVertices()
+    {
         int i = 0;
         float invSize = 1f / chunkSize;
         int cacheStride = resolution + 2;
 
-        // MAIN GRID GENERATION
         for (int x = 0; x < resolution; x++)
         {
             int gx = x * resolutionStep;
@@ -110,8 +113,6 @@ public class TerrainChunkProcessor
             {
                 int gz = z * resolutionStep;
 
-                // We use GetBlendedElevation instead of the raw height.
-                // This "bevels" the edges of your steps by averaging neighbor heights.
                 float h = heightCache1D[(x + 1) * cacheStride + (z + 1)] * elevationStepHeight;
 
                 vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
@@ -119,38 +120,60 @@ public class TerrainChunkProcessor
                 i++;
             }
         }
+    }
 
-        // SKIRT GENERATION
-        // Index 1 in the cache is local 0.
-        // Index res in the cache is local chunkSize.
+    private void GenerateSkirtVertices()
+    {
         int skirtIdx = resolution * resolution;
 
-        // South (z=0) -> cache z index is 1
+        GenerateSkirtVerticesSouth(skirtIdx);
+        skirtIdx += resolution;
+
+        GenerateSkirtVerticesNorth(skirtIdx);
+        skirtIdx += resolution;
+
+        GenerateSkirtVerticesWest(skirtIdx);
+        skirtIdx += resolution;
+
+        GenerateSkirtVerticesEast(skirtIdx);
+    }
+
+    private void GenerateSkirtVerticesSouth(int skirtIdx)
+    {
         for (int x = 0; x < resolution; x++)
         {
-            float h = heightCache1D[(x + 1) * cacheStride + 1] * elevationStepHeight;
+            float h = heightCache1D[(x + 1) * (resolution + 2) + 1] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(x * resolutionStep * tileSize, h - skirtDepth, 0);
         }
-        // North (z=chunkSize) -> cache z index is resolution
+    }
+
+    private void GenerateSkirtVerticesNorth(int skirtIdx)
+    {
         for (int x = 0; x < resolution; x++)
         {
-            float h = heightCache1D[(x + 1) * cacheStride + resolution] * elevationStepHeight;
+            float h = heightCache1D[(x + 1) * (resolution + 2) + resolution] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(
                 x * resolutionStep * tileSize,
                 h - skirtDepth,
                 chunkBoundSize
             );
         }
-        // West (x=0) -> cache x index is 1
+    }
+
+    private void GenerateSkirtVerticesWest(int skirtIdx)
+    {
         for (int z = 0; z < resolution; z++)
         {
-            float h = heightCache1D[1 * cacheStride + z + 1] * elevationStepHeight;
+            float h = heightCache1D[1 * (resolution + 2) + z + 1] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(0, h - skirtDepth, z * resolutionStep * tileSize);
         }
-        // East (x=chunkSize) -> cache x index is resolution
+    }
+
+    private void GenerateSkirtVerticesEast(int skirtIdx)
+    {
         for (int z = 0; z < resolution; z++)
         {
-            float h = heightCache1D[resolution * cacheStride + z + 1] * elevationStepHeight;
+            float h = heightCache1D[resolution * (resolution + 2) + z + 1] * elevationStepHeight;
             vertices[skirtIdx++] = new Vector3(
                 chunkBoundSize,
                 h - skirtDepth,
