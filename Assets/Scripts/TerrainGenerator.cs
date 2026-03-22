@@ -117,7 +117,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private IEnumerator WorldMonitoringRoutine()
     {
         Vector2Int lastProcessedPos = new(-9999, -9999);
-        while (true)
+        while (worldMonitoringActive && this != null && isActiveAndEnabled)
         {
             if (currentCameraPosition != lastProcessedPos)
             {
@@ -125,38 +125,37 @@ public class TerrainChunksGenerator : MonoBehaviour
 
                 CleanupRemoteChunks();
 
-                // Instead of one big loop, we yield every "row" of chunks
-                for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
-                {
-                    for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
-                    {
-                        Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
-
-                        if (
-                            !_terrainDataProcessor.HasActiveChunk(coord)
-                            && buildQueueHash.Add(coord)
-                        )
-                        {
-                            buildQueue.Add(coord);
-                        }
-                        else if (
-                            _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
-                        )
-                        {
-                            chunk.UpdateLOD();
-                        }
-                    }
-                    // Yield after every 'X' column to keep framerate perfect
-                    yield return null; // Row-by-row time slicing
-                }
-
-                SortBuildQueue();
-                if (!isProcessingQueue && buildQueue.Count > 0)
-                {
-                    StartCoroutine(ProcessBuildQueue());
-                }
+                yield return ProcessLocalChunks();
             }
             yield return null;
+        }
+    }
+
+    private IEnumerator ProcessLocalChunks()
+    {
+        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
+        {
+            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+            {
+                Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
+
+                if (!_terrainDataProcessor.HasActiveChunk(coord) && buildQueueHash.Add(coord))
+                {
+                    buildQueue.Add(coord);
+                }
+                else if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+                {
+                    chunk.UpdateLOD();
+                }
+            }
+            // Yield after every 'X' column to keep framerate perfect
+            yield return null; // Row-by-row time slicing
+        }
+
+        SortBuildQueue();
+        if (!isProcessingQueue && buildQueue.Count > 0)
+        {
+            StartCoroutine(ProcessBuildQueue());
         }
     }
 
