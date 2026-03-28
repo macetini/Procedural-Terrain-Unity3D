@@ -6,6 +6,31 @@ public class TerrainChunk : MonoBehaviour
 {
     private const string MESH_IDENTIFIER = "TerrainChunk_";
 
+    private sealed class ChunkConfig
+    {
+        public float FrustumPadding;
+        public float SkirtDepth;
+        public int ChunkSize;
+        public float TileSize;
+        public float ElevationStepHeight;
+        public int MaxElevationStep;
+        public float ChunkBoundSize;
+
+        public static ChunkConfig FromGenerator(TerrainChunksGenerator generator)
+        {
+            return new ChunkConfig
+            {
+                FrustumPadding = generator.frustumPadding,
+                SkirtDepth = generator.skirtDepth,
+                ChunkSize = generator.chunkSize,
+                TileSize = generator.tileSize,
+                ElevationStepHeight = generator.elevationStepHeight,
+                MaxElevationStep = generator.maxElevationStepsCount,
+                ChunkBoundSize = generator.chunkSize * generator.tileSize,
+            };
+        }
+    }
+
     [Header("Settings")]
     public Material terrainMaterial;
 
@@ -27,16 +52,9 @@ public class TerrainChunk : MonoBehaviour
     // Data
     private TerrainChunksGenerator generator;
     private Vector2Int chunkCoord;
-
-    private float frustumPadding;
-    private float skirtDepth;
-    private int chunkSize;
-    private float tileSize;
-    private float elevationStepHeight;
-    private int maxElevationStep;
+    private ChunkConfig config;
 
     // Calculations
-    private float chunkBoundSize;
     private bool wasVisibleLastCheck = false; // Track state change
     private bool isMeshReady = false; // Prevents "Blips" before the first build
     private string meshName;
@@ -66,15 +84,7 @@ public class TerrainChunk : MonoBehaviour
     {
         this.generator = generator;
         this.chunkCoord = chunkCoord;
-
-        frustumPadding = this.generator.frustumPadding;
-        skirtDepth = this.generator.skirtDepth;
-
-        chunkSize = this.generator.chunkSize;
-        tileSize = this.generator.tileSize;
-        elevationStepHeight = this.generator.elevationStepHeight;
-        maxElevationStep = this.generator.maxElevationStepsCount;
-        chunkBoundSize = chunkSize * tileSize;
+        config = ChunkConfig.FromGenerator(generator);
 
         rendererReference.enabled = false;
         isMeshReady = false;
@@ -106,7 +116,7 @@ public class TerrainChunk : MonoBehaviour
     private int GetTargetStep()
     {
         // Calculate center for more accurate LOD switching
-        float halfSize = chunkBoundSize * 0.5f;
+        float halfSize = config.ChunkBoundSize * 0.5f;
         Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
         float dist = Vector3.Distance(center, generator.cameraReference.transform.position);
@@ -147,14 +157,18 @@ public class TerrainChunk : MonoBehaviour
 
     private void FinalizeMesh(Mesh mesh)
     {
-        float maxHeight = maxElevationStep * elevationStepHeight;
+        float maxHeight = config.MaxElevationStep * config.ElevationStepHeight;
 
         // We center the bounds and apply the public frustumPadding
-        Vector3 center = new(chunkBoundSize * 0.5f, maxHeight * 0.5f, chunkBoundSize * 0.5f);
+        Vector3 center = new(
+            config.ChunkBoundSize * 0.5f,
+            maxHeight * 0.5f,
+            config.ChunkBoundSize * 0.5f
+        );
         Vector3 size = new(
-            chunkBoundSize + frustumPadding,
-            maxHeight + skirtDepth + frustumPadding,
-            chunkBoundSize + frustumPadding
+            config.ChunkBoundSize + config.FrustumPadding,
+            maxHeight + config.SkirtDepth + config.FrustumPadding,
+            config.ChunkBoundSize + config.FrustumPadding
         );
         mesh.bounds = new Bounds(center, size);
 
@@ -164,15 +178,15 @@ public class TerrainChunk : MonoBehaviour
 
     public void UpdateVisibility(Plane[] planes)
     {
-        float halfSize = chunkBoundSize * 0.5f;
-        float height = maxElevationStep * elevationStepHeight;
+        float halfSize = config.ChunkBoundSize * 0.5f;
+        float height = config.MaxElevationStep * config.ElevationStepHeight;
 
         // Use world space center
         Vector3 worldCenter = transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
         Vector3 size = new(
-            chunkBoundSize + frustumPadding,
-            height + skirtDepth + frustumPadding,
-            chunkBoundSize + frustumPadding
+            config.ChunkBoundSize + config.FrustumPadding,
+            height + config.SkirtDepth + config.FrustumPadding,
+            config.ChunkBoundSize + config.FrustumPadding
         );
         Bounds checkBounds = new(worldCenter, size);
 
@@ -223,7 +237,7 @@ public class TerrainChunk : MonoBehaviour
 
             Gizmos.color = Color.blue;
             // We only loop through the grid vertices (ignore the skirt for clarity)
-            int resolution = (chunkSize / CurrentStep) + 1;
+            int resolution = (config.ChunkSize / CurrentStep) + 1;
             int gridCount = resolution * resolution;
 
             for (int i = 0; i < gridCount; i++)

@@ -6,6 +6,69 @@ using UnityEngine.InputSystem;
 
 public class TerrainChunksGenerator : MonoBehaviour
 {
+    private sealed class RuntimeState
+    {
+        public Vector2Int CurrentCameraPosition = Vector2Int.zero;
+        public Plane[] CameraPlanes;
+        public float ChunkBoundSize;
+        public bool WorldMonitoringActive = true;
+    }
+
+    private sealed class CleanupState
+    {
+        public readonly List<Vector2Int> VisibilityKeysSnapshot = new();
+        public readonly List<TerrainChunk> SceneChunksSnapshot = new();
+        public readonly HashSet<Vector2Int> SeenCoords = new();
+        public readonly List<Vector2Int> LastRemovedChunks = new();
+
+        public int LastRemovedCount;
+        public int LastScannedCount;
+        public int LastSceneChunkCount;
+        public int LastOrphanedCount;
+        public int LastDuplicateCount;
+
+        public void ResetForRebuild()
+        {
+            LastRemovedChunks.Clear();
+            LastRemovedCount = 0;
+            LastScannedCount = 0;
+            LastSceneChunkCount = 0;
+            LastOrphanedCount = 0;
+            LastDuplicateCount = 0;
+        }
+
+        public void BeginCleanupPass()
+        {
+            VisibilityKeysSnapshot.Clear();
+            LastRemovedCount = 0;
+            LastScannedCount = 0;
+            LastRemovedChunks.Clear();
+        }
+
+        public void BeginSceneSweep()
+        {
+            SceneChunksSnapshot.Clear();
+            SeenCoords.Clear();
+            LastSceneChunkCount = 0;
+            LastOrphanedCount = 0;
+            LastDuplicateCount = 0;
+        }
+    }
+
+    private sealed class BuildQueueState
+    {
+        public readonly List<Vector2Int> Queue = new();
+        public readonly HashSet<Vector2Int> QueueHash = new();
+        public bool IsProcessing;
+
+        public void Clear()
+        {
+            Queue.Clear();
+            QueueHash.Clear();
+            IsProcessing = false;
+        }
+    }
+
     [Header("Terrain Settings")]
     public int chunkSize = 16;
     public float tileSize = 1.0f;
@@ -33,40 +96,20 @@ public class TerrainChunksGenerator : MonoBehaviour
     [Header("Debug")]
     public bool debugCleanupLogs = false;
     public bool debugCleanupLogOnlyOnRemoval = true;
-    public bool debugCleanupGizmos = true;
-    public float debugGizmoChunkY = 0.25f;
 
     [Header("Prefabs")]
     public TerrainChunk chunkPrefab;
 
-    // Camera related
-    private Vector2Int currentCameraPosition = Vector2Int.zero;
-    private Plane[] cameraPlanes;
+    private readonly RuntimeState runtime = new();
+    private readonly CleanupState cleanup = new();
+    private readonly BuildQueueState buildState = new();
 
     // Geometry Cache
     private readonly Dictionary<int, int[]> triangleCache = new();
 
-    // Culling
-    private readonly List<Vector2Int> visibilityKeysSnapshot = new();
-    private readonly List<TerrainChunk> sceneChunksSnapshot = new();
-    private readonly HashSet<Vector2Int> cleanupSeenCoords = new();
-    private float chunkBoundSize;
-    private readonly List<Vector2Int> lastRemovedChunks = new();
-    private int lastCleanupRemovedCount;
-    private int lastCleanupScannedCount;
-    private int lastCleanupSceneChunkCount;
-    private int lastCleanupOrphanedCount;
-    private int lastCleanupDuplicateCount;
-
     // Data Processing
-    private bool worldMonitoringActive = true;
     public TerrainDataProcessor TerrainDataProcessor => _terrainDataProcessor;
     private TerrainDataProcessor _terrainDataProcessor;
-
-    // Build Queue
-    private readonly List<Vector2Int> buildQueue = new();
-    private readonly HashSet<Vector2Int> buildQueueHash = new();
-    private bool isProcessingQueue = false;
 
     void Awake()
     {
@@ -75,7 +118,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     void OnDestroy()
     {
-        worldMonitoringActive = false;
+        runtime.WorldMonitoringActive = false;
     }
 
     void Start()
@@ -90,21 +133,25 @@ public class TerrainChunksGenerator : MonoBehaviour
         // WARNING: This will rebuild the whole terrain. Should only be used during development.
         if (Keyboard.current.enterKey.wasPressedThisFrame)
         {
-            Debug.Log("Rebuilding terrain.");
-
-            StopAllCoroutines();
-            buildQueue.Clear();
-            buildQueueHash.Clear();
-            triangleCache.Clear();
-            lastRemovedChunks.Clear();
-            lastCleanupRemovedCount = 0;
-            lastCleanupScannedCount = 0;
-            lastCleanupSceneChunkCount = 0;
-            lastCleanupOrphanedCount = 0;
-            lastCleanupDuplicateCount = 0;
-            _terrainDataProcessor.ClearAll();
-            BuildTerrain();
+            HandleDebugRebuild();
         }
+    }
+
+    private void HandleDebugRebuild()
+    {
+        Debug.Log("Rebuilding terrain.");
+
+        StopAllCoroutines();
+        ResetGeneratorState();
+        _terrainDataProcessor.ClearAll();
+        BuildTerrain();
+    }
+
+    private void ResetGeneratorState()
+    {
+        buildState.Clear();
+        triangleCache.Clear();
+        cleanup.ResetForRebuild();
     }
 
     private void BuildTerrain()
@@ -117,7 +164,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             noiseLacunarity,
             maxElevationStepsCount
         );
-        chunkBoundSize = chunkSize * tileSize;
+        runtime.ChunkBoundSize = chunkSize * tileSize;
         UpdateCurrentCameraPosition();
         FirstPass();
         SecondPass();
@@ -128,19 +175,23 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void UpdateCurrentCameraPosition()
     {
-        int currentX = Mathf.FloorToInt(cameraReference.transform.position.x / chunkBoundSize);
-        int currentZ = Mathf.FloorToInt(cameraReference.transform.position.z / chunkBoundSize);
-        currentCameraPosition = new Vector2Int(currentX, currentZ);
+        int currentX = Mathf.FloorToInt(
+            cameraReference.transform.position.x / runtime.ChunkBoundSize
+        );
+        int currentZ = Mathf.FloorToInt(
+            cameraReference.transform.position.z / runtime.ChunkBoundSize
+        );
+        runtime.CurrentCameraPosition = new Vector2Int(currentX, currentZ);
     }
 
     private IEnumerator WorldMonitoringRoutine()
     {
         Vector2Int lastProcessedPos = new(-9999, -9999);
-        while (worldMonitoringActive && this != null && isActiveAndEnabled)
+        while (runtime.WorldMonitoringActive && this != null && isActiveAndEnabled)
         {
-            if (currentCameraPosition != lastProcessedPos)
+            if (runtime.CurrentCameraPosition != lastProcessedPos)
             {
-                lastProcessedPos = currentCameraPosition;
+                lastProcessedPos = runtime.CurrentCameraPosition;
 
                 CleanupRemoteChunks();
 
@@ -154,107 +205,101 @@ public class TerrainChunksGenerator : MonoBehaviour
     {
         for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
         {
-            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
-            {
-                Vector2Int coord = currentCameraPosition + new Vector2Int(x, z);
+            EnqueueVisibleChunksAtColumnOffset(x);
 
-                if (TryEnqueueChunkBuild(coord)) { }
-                else if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
-                {
-                    chunk.UpdateLOD();
-                }
-            }
             // Yield after every 'X' column to keep framerate perfect
             yield return null; // Row-by-row time slicing
         }
 
-        SortBuildQueue();
-        if (!isProcessingQueue && buildQueue.Count > 0)
-        {
-            StartCoroutine(ProcessBuildQueue());
-        }
+        StartBuildQueueIfNeeded();
     }
 
     private void CleanupRemoteChunks()
     {
         CleanupSceneChunkOrphans();
-
-        visibilityKeysSnapshot.Clear();
-        _terrainDataProcessor.GetActiveKeysNonAlloc(visibilityKeysSnapshot);
-        lastCleanupScannedCount = visibilityKeysSnapshot.Count;
-        lastCleanupRemovedCount = 0;
-        lastRemovedChunks.Clear();
-
-        int retentionRadius = GetRetentionRadius();
-
-        foreach (var coord in visibilityKeysSnapshot)
-        {
-            int dx = Mathf.Abs(coord.x - currentCameraPosition.x);
-            int dz = Mathf.Abs(coord.y - currentCameraPosition.y);
-
-            // Remove every chunk outside the active visible square around camera.
-            if (
-                (dx > retentionRadius || dz > retentionRadius)
-                && _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
-            )
-            {
-                RemoveChunk(coord, chunk);
-            }
-        }
-
-        bool shouldLogCleanup =
-            debugCleanupLogs && (!debugCleanupLogOnlyOnRemoval || lastCleanupRemovedCount > 0);
-
-        if (shouldLogCleanup)
-        {
-            int retainedCount = lastCleanupScannedCount - lastCleanupRemovedCount;
-            Debug.Log(
-                $"[CleanupRemoteChunks] CameraChunk={currentCameraPosition}, RegistryScanned={lastCleanupScannedCount}, SceneChunks={lastCleanupSceneChunkCount}, Removed={lastCleanupRemovedCount}, Retained={retainedCount}, Orphans={lastCleanupOrphanedCount}, Duplicates={lastCleanupDuplicateCount}, RetentionRadius={retentionRadius}"
-            );
-        }
+        RemoveOutOfBoundsRegisteredChunks();
+        LogCleanupSummary();
     }
 
     private void CleanupSceneChunkOrphans()
     {
-        sceneChunksSnapshot.Clear();
-        cleanupSeenCoords.Clear();
-        lastCleanupSceneChunkCount = 0;
-        lastCleanupOrphanedCount = 0;
-        lastCleanupDuplicateCount = 0;
+        cleanup.BeginSceneSweep();
 
-        GetComponentsInChildren(true, sceneChunksSnapshot);
-        lastCleanupSceneChunkCount = sceneChunksSnapshot.Count;
+        GetComponentsInChildren(true, cleanup.SceneChunksSnapshot);
+        cleanup.LastSceneChunkCount = cleanup.SceneChunksSnapshot.Count;
 
-        for (int i = 0; i < sceneChunksSnapshot.Count; i++)
+        for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
         {
-            TerrainChunk sceneChunk = sceneChunksSnapshot[i];
+            TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
             if (sceneChunk == null)
             {
                 continue;
             }
 
-            Vector2Int coord = sceneChunk.ChunkCoord;
-            bool isDuplicateCoord = !cleanupSeenCoords.Add(coord);
-            bool isOutOfBounds = !IsWithinRetentionBounds(coord);
-            bool isForeignChunk = sceneChunk.Generator != null && sceneChunk.Generator != this;
-
-            if (isDuplicateCoord)
+            if (ShouldRemoveSceneChunk(sceneChunk, out Vector2Int coord))
             {
-                lastCleanupDuplicateCount++;
-            }
-
-            if (isDuplicateCoord || isOutOfBounds || isForeignChunk)
-            {
-                lastCleanupOrphanedCount++;
+                cleanup.LastOrphanedCount++;
                 RemoveChunk(coord, sceneChunk);
             }
         }
     }
 
+    private void RemoveOutOfBoundsRegisteredChunks()
+    {
+        cleanup.BeginCleanupPass();
+        _terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
+        cleanup.LastScannedCount = cleanup.VisibilityKeysSnapshot.Count;
+
+        foreach (var coord in cleanup.VisibilityKeysSnapshot)
+        {
+            if (IsWithinRetentionBounds(coord))
+            {
+                continue;
+            }
+
+            if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+            {
+                RemoveChunk(coord, chunk);
+            }
+        }
+    }
+
+    private bool ShouldRemoveSceneChunk(TerrainChunk sceneChunk, out Vector2Int coord)
+    {
+        coord = sceneChunk.ChunkCoord;
+
+        bool isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
+        bool isOutOfBounds = !IsWithinRetentionBounds(coord);
+        bool isForeignChunk = sceneChunk.Generator != null && sceneChunk.Generator != this;
+
+        if (isDuplicateCoord)
+        {
+            cleanup.LastDuplicateCount++;
+        }
+
+        return isDuplicateCoord || isOutOfBounds || isForeignChunk;
+    }
+
+    private void LogCleanupSummary()
+    {
+        bool shouldLogCleanup =
+            debugCleanupLogs && (!debugCleanupLogOnlyOnRemoval || cleanup.LastRemovedCount > 0);
+
+        if (!shouldLogCleanup)
+        {
+            return;
+        }
+
+        int retainedCount = cleanup.LastScannedCount - cleanup.LastRemovedCount;
+        Debug.Log(
+            $"[CleanupRemoteChunks] CameraChunk={runtime.CurrentCameraPosition}, RegistryScanned={cleanup.LastScannedCount}, SceneChunks={cleanup.LastSceneChunkCount}, Removed={cleanup.LastRemovedCount}, Retained={retainedCount}, Orphans={cleanup.LastOrphanedCount}, Duplicates={cleanup.LastDuplicateCount}, RetentionRadius={GetRetentionRadius()}"
+        );
+    }
+
     private void RemoveChunk(Vector2Int coord, TerrainChunk chunk)
     {
-        lastCleanupRemovedCount++;
-        lastRemovedChunks.Add(coord);
+        cleanup.LastRemovedCount++;
+        cleanup.LastRemovedChunks.Add(coord);
 
         if (
             _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk activeChunk)
@@ -267,50 +312,6 @@ public class TerrainChunksGenerator : MonoBehaviour
         if (chunk != null)
         {
             Destroy(chunk.gameObject);
-        }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (!debugCleanupGizmos || chunkSize <= 0 || tileSize <= 0f)
-        {
-            return;
-        }
-
-        float boundSize = chunkBoundSize > 0f ? chunkBoundSize : chunkSize * tileSize;
-        Vector2Int camChunk = currentCameraPosition;
-
-        if (!Application.isPlaying && cameraReference != null)
-        {
-            int currentX = Mathf.FloorToInt(cameraReference.transform.position.x / boundSize);
-            int currentZ = Mathf.FloorToInt(cameraReference.transform.position.z / boundSize);
-            camChunk = new Vector2Int(currentX, currentZ);
-        }
-
-        int visibleRadius = Mathf.Max(0, viewDistanceChunks);
-        int retentionRadius = GetRetentionRadius();
-
-        DrawChunkBoundsGizmo(camChunk, visibleRadius, boundSize, debugGizmoChunkY, Color.green);
-        if (retentionRadius != visibleRadius)
-        {
-            DrawChunkBoundsGizmo(
-                camChunk,
-                retentionRadius,
-                boundSize,
-                debugGizmoChunkY,
-                Color.yellow
-            );
-        }
-
-        Gizmos.color = Color.red;
-        for (int i = 0; i < lastRemovedChunks.Count; i++)
-        {
-            Vector3 removedCenter = ChunkToWorldCenter(
-                lastRemovedChunks[i],
-                boundSize,
-                debugGizmoChunkY
-            );
-            Gizmos.DrawWireCube(removedCenter, new Vector3(boundSize, 0.05f, boundSize));
         }
     }
 
@@ -337,43 +338,45 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void FirstPass()
     {
-        // Calculate the current chunk coordinates based on camera position
-        // Use FloorToInt to get a consistent "Bottom-Left" anchor
-        System.Diagnostics.Stopwatch sw0 = new();
-        System.Diagnostics.Stopwatch sw1 = new();
-        System.Diagnostics.Stopwatch sw2 = new();
-        double ms;
-
-        sw0.Start();
-        sw1.Start();
-
         int dataRadius = viewDistanceChunks + 1;
-        GenerateFullMeshData(currentCameraPosition, dataRadius);
-        sw1.Stop();
-        ms = sw1.Elapsed.TotalMilliseconds;
-        if (ms > 1.0f)
-        {
-            Debug.Log($"<color=orange>'GenerateFullMeshData()' Execution Time: {ms:F2} ms</color>");
-        }
 
-        sw2.Start();
-        _terrainDataProcessor.SanitizeData(currentCameraPosition, dataRadius);
-        sw2.Stop();
-
-        ms = sw2.Elapsed.TotalMilliseconds;
-        if (ms > 1.0f)
+        double totalMs = MeasureExecution(() =>
         {
-            Debug.Log(
-                $"<color=orange>'SanitizeCurrentTileMeshData()' Execution Time: {ms:F2} ms</color>"
+            LogMeasuredStep(
+                "GenerateFullMeshData()",
+                () => GenerateFullMeshData(runtime.CurrentCameraPosition, dataRadius)
             );
+            LogMeasuredStep(
+                "SanitizeCurrentTileMeshData()",
+                () => _terrainDataProcessor.SanitizeData(runtime.CurrentCameraPosition, dataRadius)
+            );
+        });
+
+        LogExecutionTime("Total", totalMs);
+    }
+
+    private static double MeasureExecution(System.Action action)
+    {
+        System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        action();
+        stopwatch.Stop();
+        return stopwatch.Elapsed.TotalMilliseconds;
+    }
+
+    private static void LogMeasuredStep(string label, System.Action action)
+    {
+        double elapsedMs = MeasureExecution(action);
+        LogExecutionTime(label, elapsedMs);
+    }
+
+    private static void LogExecutionTime(string label, double elapsedMs)
+    {
+        if (elapsedMs <= 1.0f)
+        {
+            return;
         }
 
-        sw0.Stop();
-        ms = sw0.Elapsed.TotalMilliseconds;
-        if (ms > 1.0f)
-        {
-            Debug.Log($"<color=orange>Total Execution Time: {ms:F2} ms</color>");
-        }
+        Debug.Log($"<color=orange>'{label}' Execution Time: {elapsedMs:F2} ms</color>");
     }
 
     private void GenerateFullMeshData(Vector2Int cameraOrigin, int dataRadius)
@@ -395,69 +398,92 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SecondPass()
     {
-        bool addedNew = false;
+        EnqueueVisibleChunksAroundCamera();
+        StartBuildQueueIfNeeded();
+    }
+
+    private IEnumerator ProcessBuildQueue()
+    {
+        buildState.IsProcessing = true;
+        while (buildState.Queue.Count > 0)
+        {
+            Vector2Int coord = buildState.Queue[0];
+            buildState.Queue.RemoveAt(0);
+            buildState.QueueHash.Remove(coord);
+
+            yield return ProcessQueuedChunk(coord);
+            yield return null;
+        }
+        buildState.IsProcessing = false;
+    }
+
+    private void EnqueueVisibleChunksAroundCamera()
+    {
         for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
         {
-            for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+            EnqueueVisibleChunksAtColumnOffset(x);
+        }
+    }
+
+    private void EnqueueVisibleChunksAtColumnOffset(int xOffset)
+    {
+        for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+        {
+            Vector2Int coord = new(
+                runtime.CurrentCameraPosition.x + xOffset,
+                runtime.CurrentCameraPosition.y + z
+            );
+
+            if (
+                !TryEnqueueChunkBuild(coord)
+                && _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
+            )
             {
-                Vector2Int coord = new(currentCameraPosition.x + x, currentCameraPosition.y + z);
-                if (TryEnqueueChunkBuild(coord))
-                {
-                    addedNew = true;
-                }
-                else if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
-                {
-                    chunk.UpdateLOD();
-                }
+                chunk.UpdateLOD();
             }
         }
-        // Sort the list so closest chunks are at the front
-        if (addedNew)
+    }
+
+    private void StartBuildQueueIfNeeded()
+    {
+        if (buildState.Queue.Count <= 0)
         {
-            SortBuildQueue();
+            return;
         }
-        if (!isProcessingQueue && buildQueue.Count > 0)
+
+        SortBuildQueue();
+        if (!buildState.IsProcessing)
         {
             StartCoroutine(ProcessBuildQueue());
         }
     }
 
-    private IEnumerator ProcessBuildQueue()
+    private IEnumerator ProcessQueuedChunk(Vector2Int coord)
     {
-        isProcessingQueue = true;
-        while (buildQueue.Count > 0)
+        if (!ShouldBuildQueuedChunk(coord))
         {
-            Vector2Int coord = buildQueue[0];
-            buildQueue.RemoveAt(0);
-            buildQueueHash.Remove(coord);
-
-            // Another coroutine may have built this chunk already while we were yielding.
-            if (_terrainDataProcessor.HasActiveChunk(coord))
-            {
-                continue;
-            }
-
-            // Don't build if the player already moved away from the retained square.
-            if (!IsWithinRetentionBounds(coord))
-                continue;
-
-            yield return GenerateRawDataForChunk(coord);
-            yield return EnsureSanitized(coord);
-
-            if (_terrainDataProcessor.HasActiveChunk(coord) || !IsWithinRetentionBounds(coord))
-            {
-                continue;
-            }
-
-            SpawnChunkMesh(coord);
-
-            if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
-            {
-                chunk.StartFadeIn();
-            }
-            yield return null;
+            yield break;
         }
-        isProcessingQueue = false;
+
+        yield return GenerateRawDataForChunk(coord);
+        yield return EnsureSanitized(coord);
+
+        if (!ShouldBuildQueuedChunk(coord))
+        {
+            yield break;
+        }
+
+        SpawnChunkMesh(coord);
+
+        if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+        {
+            chunk.StartFadeIn();
+        }
+    }
+
+    private bool ShouldBuildQueuedChunk(Vector2Int coord)
+    {
+        return !_terrainDataProcessor.HasActiveChunk(coord) && IsWithinRetentionBounds(coord);
     }
 
     private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
@@ -502,30 +528,34 @@ public class TerrainChunksGenerator : MonoBehaviour
             return;
         }
 
-        Vector3 position = new(coord.x * chunkBoundSize, 0, coord.y * chunkBoundSize);
+        Vector3 position = new(
+            coord.x * runtime.ChunkBoundSize,
+            0,
+            coord.y * runtime.ChunkBoundSize
+        );
         TerrainChunk chunk = Instantiate(chunkPrefab, position, Quaternion.identity, transform);
 
         chunk.InitBuild(this, coord);
-        chunk.UpdateVisibility(cameraPlanes);
+        chunk.UpdateVisibility(runtime.CameraPlanes);
         _terrainDataProcessor.RegisterChunk(coord, chunk);
     }
 
     private bool TryEnqueueChunkBuild(Vector2Int coord)
     {
-        if (_terrainDataProcessor.HasActiveChunk(coord) || !buildQueueHash.Add(coord))
+        if (_terrainDataProcessor.HasActiveChunk(coord) || !buildState.QueueHash.Add(coord))
         {
             return false;
         }
 
-        buildQueue.Add(coord);
+        buildState.Queue.Add(coord);
         return true;
     }
 
     private bool IsWithinRetentionBounds(Vector2Int coord)
     {
         int retentionRadius = GetRetentionRadius();
-        int dx = Mathf.Abs(coord.x - currentCameraPosition.x);
-        int dz = Mathf.Abs(coord.y - currentCameraPosition.y);
+        int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
+        int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
         return dx <= retentionRadius && dz <= retentionRadius;
     }
 
@@ -536,16 +566,16 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void SortBuildQueue()
     {
-        if (buildQueue.Count <= 1)
+        if (buildState.Queue.Count <= 1)
         {
             return;
         }
 
         // Capture camera pos in chunk-coordinates once to avoid repeated math
         // We use a local variable to avoid thread/sync issues during the sort
-        Vector2Int camCoord = currentCameraPosition;
+        Vector2Int camCoord = runtime.CurrentCameraPosition;
 
-        buildQueue.Sort(
+        buildState.Queue.Sort(
             (a, b) =>
             {
                 // Use "Manhattan Distance" or squared coordinate distance
@@ -560,23 +590,23 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private IEnumerator VisibilityCheckRoutine()
     {
-        while (worldMonitoringActive && this != null && isActiveAndEnabled)
+        while (runtime.WorldMonitoringActive && this != null && isActiveAndEnabled)
         {
-            cameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
+            runtime.CameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
 
             // Take a snapshot of the current keys
-            visibilityKeysSnapshot.Clear();
-            visibilityKeysSnapshot.AddRange(_terrainDataProcessor.ActiveChunkKeys);
+            cleanup.VisibilityKeysSnapshot.Clear();
+            cleanup.VisibilityKeysSnapshot.AddRange(_terrainDataProcessor.ActiveChunkKeys);
 
             // Iterate through the snapshot
-            for (int i = 0; i < visibilityKeysSnapshot.Count; i++)
+            for (int i = 0; i < cleanup.VisibilityKeysSnapshot.Count; i++)
             {
-                Vector2Int key = visibilityKeysSnapshot[i];
+                Vector2Int key = cleanup.VisibilityKeysSnapshot[i];
 
                 // Safety Check: Make sure the chunk wasn't purged while we were yielding
                 if (_terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
                 {
-                    chunk.UpdateVisibility(cameraPlanes);
+                    chunk.UpdateVisibility(runtime.CameraPlanes);
 
                     if (chunk.IsVisible && chunk.CurrentStep < 0)
                     {
@@ -585,7 +615,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
 
                 // Time Slicing: Only process after X frames
-                if (i % visibilityCheckFrameCount == 0)
+                if (i > 0 && i % visibilityCheckFrameCount == 0)
                     yield return null;
             }
 
