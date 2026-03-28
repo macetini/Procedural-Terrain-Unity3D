@@ -26,6 +26,7 @@ public class TerrainChunksGenerator : MonoBehaviour
         public int LastSceneChunkCount;
         public int LastOrphanedCount;
         public int LastDuplicateCount;
+        public int CleanupPassCounter; // Counter for periodic orphan sweeps
 
         public void ResetForRebuild()
         {
@@ -35,6 +36,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             LastSceneChunkCount = 0;
             LastOrphanedCount = 0;
             LastDuplicateCount = 0;
+            CleanupPassCounter = 0;
         }
 
         public void BeginCleanupPass()
@@ -43,6 +45,7 @@ public class TerrainChunksGenerator : MonoBehaviour
             LastRemovedCount = 0;
             LastScannedCount = 0;
             LastRemovedChunks.Clear();
+            CleanupPassCounter++;
         }
 
         public void BeginSceneSweep()
@@ -96,6 +99,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     [Header("Debug")]
     public bool debugCleanupLogs = false;
     public bool debugCleanupLogOnlyOnRemoval = true;
+    public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
 
     [Header("Prefabs")]
     public TerrainChunk chunkPrefab;
@@ -216,9 +220,26 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void CleanupRemoteChunks()
     {
-        CleanupSceneChunkOrphans();
+        if (ShouldRunOrphanSweep())
+        {
+            CleanupSceneChunkOrphans();
+        }
         RemoveOutOfBoundsRegisteredChunks();
         LogCleanupSummary();
+    }
+
+    private bool ShouldRunOrphanSweep()
+    {
+        // orphanSweepPeriod: 0 = always, -1 = never, N>0 = every N cycles
+        if (orphanSweepPeriod < 0)
+        {
+            return false;
+        }
+        if (orphanSweepPeriod == 0)
+        {
+            return true;
+        }
+        return cleanup.CleanupPassCounter % orphanSweepPeriod == 0;
     }
 
     private void CleanupSceneChunkOrphans()
@@ -486,16 +507,15 @@ public class TerrainChunksGenerator : MonoBehaviour
         return !_terrainDataProcessor.HasActiveChunk(coord) && IsWithinRetentionBounds(coord);
     }
 
-    private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
+    private IEnumerator IterateNeighbors3x3(Vector2Int center, System.Func<Vector2Int, bool> action)
     {
         for (int x = -1; x <= 1; x++)
         {
             for (int z = -1; z <= 1; z++)
             {
-                Vector2Int n = coord + new Vector2Int(x, z);
-                if (!_terrainDataProcessor.HasTileData(n))
+                Vector2Int neighbor = center + new Vector2Int(x, z);
+                if (action(neighbor))
                 {
-                    GenerateFullMeshData(n, 0);
                     yield return null;
                 }
             }
@@ -503,22 +523,37 @@ public class TerrainChunksGenerator : MonoBehaviour
         yield return null;
     }
 
+    private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
+    {
+        yield return IterateNeighbors3x3(
+            coord,
+            n =>
+            {
+                if (!_terrainDataProcessor.HasTileData(n))
+                {
+                    GenerateFullMeshData(n, 0);
+                    return true;
+                }
+                return false;
+            }
+        );
+    }
+
     private IEnumerator EnsureSanitized(Vector2Int coord)
     {
-        for (int x = -1; x <= 1; x++)
-        {
-            for (int z = -1; z <= 1; z++)
+        yield return IterateNeighbors3x3(
+            coord,
+            n =>
             {
-                Vector2Int n = coord + new Vector2Int(x, z);
                 if (!_terrainDataProcessor.IsSanitized(n))
                 {
                     _terrainDataProcessor.SanitizeGlobalChunk(n);
                     _terrainDataProcessor.MarkSanitized(n);
-                    yield return null;
+                    return true;
                 }
+                return false;
             }
-        }
-        yield return null;
+        );
     }
 
     private void SpawnChunkMesh(Vector2Int coord)
