@@ -9,6 +9,7 @@ public class CameraFlightController : MonoBehaviour
     public float warpSpeed = 500f;
 
     [Header("Look Sensitivity")]
+    public bool mouseLookEnabled = true; // Toggle for mouse look
     public float sensitivity = 0.1f; // New system uses pixel deltas, so lower is better
 
     private float rotationX = 0f;
@@ -25,14 +26,14 @@ public class CameraFlightController : MonoBehaviour
     void Update()
     {
         // --- 1. ROTATION (Mouse Delta) ---
-        /*if (Mouse.current != null)
+        if (mouseLookEnabled && Mouse.current != null)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
             rotationX += mouseDelta.x * sensitivity;
             rotationY += mouseDelta.y * sensitivity;
             rotationY = Mathf.Clamp(rotationY, -90f, 90f);
             transform.localRotation = Quaternion.Euler(-rotationY, rotationX, 0);
-        }*/
+        }
 
         // --- 2. SPEED MODIFIERS ---
         float currentSpeed = normalSpeed;

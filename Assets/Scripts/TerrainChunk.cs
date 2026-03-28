@@ -16,17 +16,17 @@ public class TerrainChunk : MonoBehaviour
         public int MaxElevationStep;
         public float ChunkBoundSize;
 
-        public static ChunkConfig FromGenerator(TerrainChunksGenerator generator)
+        public static ChunkConfig FromGenerator(TerrainGenerator generator)
         {
             return new ChunkConfig
             {
-                FrustumPadding = generator.frustumPadding,
-                SkirtDepth = generator.skirtDepth,
-                ChunkSize = generator.chunkSize,
-                TileSize = generator.tileSize,
-                ElevationStepHeight = generator.elevationStepHeight,
-                MaxElevationStep = generator.maxElevationStepsCount,
-                ChunkBoundSize = generator.chunkSize * generator.tileSize,
+                FrustumPadding = generator.cameraConfig.frustumPadding,
+                SkirtDepth = generator.terrain.skirtDepth,
+                ChunkSize = generator.terrain.chunkSize,
+                TileSize = generator.terrain.tileSize,
+                ElevationStepHeight = generator.terrain.elevationStepHeight,
+                MaxElevationStep = generator.terrain.maxElevationStepsCount,
+                ChunkBoundSize = generator.terrain.chunkSize * generator.terrain.tileSize,
             };
         }
     }
@@ -43,14 +43,14 @@ public class TerrainChunk : MonoBehaviour
     public bool IsVisible { get; private set; } = true;
     public int CurrentStep { get; private set; } = -1;
     public Vector2Int ChunkCoord => chunkCoord;
-    public TerrainChunksGenerator Generator => generator;
+    public TerrainGenerator Generator => generator;
 
     // References
     private MeshRenderer rendererReference;
     private MeshFilter filterReference;
 
     // Data
-    private TerrainChunksGenerator generator;
+    private TerrainGenerator generator;
     private Vector2Int chunkCoord;
     private ChunkConfig config;
 
@@ -80,7 +80,7 @@ public class TerrainChunk : MonoBehaviour
         }
     }
 
-    public void InitBuild(TerrainChunksGenerator generator, Vector2Int chunkCoord)
+    public void InitBuild(TerrainGenerator generator, Vector2Int chunkCoord)
     {
         this.generator = generator;
         this.chunkCoord = chunkCoord;
@@ -119,17 +119,17 @@ public class TerrainChunk : MonoBehaviour
         float halfSize = config.ChunkBoundSize * 0.5f;
         Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
-        float dist = Vector3.Distance(center, generator.cameraReference.transform.position);
+        float dist = Vector3.Distance(center, generator.cameraConfig.reference.transform.position);
 
-        if (dist > generator.lodDist2)
+        if (dist > generator.lod.distance2)
         {
-            return 4; // LOD 2
+            return generator.lod.step2; // LOD 2 (low)
         }
-        if (dist > generator.lodDist1)
+        if (dist > generator.lod.distance1)
         {
-            return 2; // LOD 1
+            return generator.lod.step1; // LOD 1 (medium)
         }
-        return 1; // LOD 0 (full detail)
+        return generator.lod.step0; // LOD 0 (full detail)
     }
 
     private void BuildProceduralMesh()

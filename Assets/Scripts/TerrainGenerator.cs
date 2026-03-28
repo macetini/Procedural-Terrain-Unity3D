@@ -4,7 +4,54 @@ using Assets.Scripts.Processor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class TerrainChunksGenerator : MonoBehaviour
+[System.Serializable]
+public class TerrainSettings
+{
+    public int chunkSize = 16;
+    public float tileSize = 1.0f;
+    public float elevationStepHeight = 1.0f;
+    public int maxElevationStepsCount = 5;
+    public float skirtDepth = 5f;
+}
+
+[System.Serializable]
+public class NoiseSettings
+{
+    public int seed = 1337;
+    public float scale = 0.05f;
+    public int octaves = 4;
+    public float persistence = 0.5f;
+    public float lacunarity = 2.0f;
+}
+
+[System.Serializable]
+public class CameraSettings
+{
+    public Camera reference;
+    public float frustumPadding = 5.0f;
+    public int viewDistanceChunks = 3;
+}
+
+[System.Serializable]
+public class LODSettings
+{
+    public float distance1 = 640f; // Distance to switch to MEDIUM detail
+    public float distance2 = 960f; // Distance to switch to LOW detail
+    public int visibilityBatchSize = 10; // Formerly visibilityCheckFrameCount
+    public int step0 = 1; // LOD 0 (full detail)
+    public int step1 = 2; // LOD 1 (medium)
+    public int step2 = 4; // LOD 2 (low)
+}
+
+[System.Serializable]
+public class DebugSettings
+{
+    public bool cleanupLogs = false;
+    public bool cleanupLogOnlyOnRemoval = true;
+    public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
+}
+
+public class TerrainGenerator : MonoBehaviour
 {
     private sealed class RuntimeState
     {
@@ -73,33 +120,19 @@ public class TerrainChunksGenerator : MonoBehaviour
     }
 
     [Header("Terrain Settings")]
-    public int chunkSize = 16;
-    public float tileSize = 1.0f;
-    public float elevationStepHeight = 1.0f;
-    public int maxElevationStepsCount = 5;
-    public float skirtDepth = 5f;
+    public TerrainSettings terrain = new();
 
     [Header("Noise Settings")]
-    public int noiseSeed = 1337;
-    public float noiseScale = 0.05f;
-    public int noiseOctaves = 4;
-    public float noisePersistence = 0.5f;
-    public float noiseLacunarity = 2.0f;
+    public NoiseSettings noise = new();
 
     [Header("Camera Settings")]
-    public Camera cameraReference;
-    public float frustumPadding = 5.0f;
-    public int viewDistanceChunks = 3;
+    public CameraSettings cameraConfig = new();
 
     [Header("LOD Settings")]
-    public float lodDist1 = 640f; // Distance to switch to MEDIUM detail
-    public float lodDist2 = 768f; // Distance to switch to LOW detail
-    public int visibilityCheckFrameCount = 10;
+    public LODSettings lod = new();
 
     [Header("Debug")]
-    public bool debugCleanupLogs = false;
-    public bool debugCleanupLogOnlyOnRemoval = true;
-    public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
+    public DebugSettings debug = new();
 
     [Header("Prefabs")]
     public TerrainChunk chunkPrefab;
@@ -117,7 +150,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     void Awake()
     {
-        _terrainDataProcessor = new TerrainDataProcessor(chunkSize);
+        _terrainDataProcessor = new TerrainDataProcessor(terrain.chunkSize);
     }
 
     void OnDestroy()
@@ -127,6 +160,14 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     void Start()
     {
+        if (cameraConfig.reference == null)
+        {
+            Debug.LogError(
+                "[TerrainGenerator] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
+                this
+            );
+            return;
+        }
         BuildTerrain();
     }
 
@@ -161,14 +202,14 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void BuildTerrain()
     {
         TerrainNoise.Init(
-            noiseSeed,
-            noiseScale,
-            noiseOctaves,
-            noisePersistence,
-            noiseLacunarity,
-            maxElevationStepsCount
+            noise.seed,
+            noise.scale,
+            noise.octaves,
+            noise.persistence,
+            noise.lacunarity,
+            terrain.maxElevationStepsCount
         );
-        runtime.ChunkBoundSize = chunkSize * tileSize;
+        runtime.ChunkBoundSize = terrain.chunkSize * terrain.tileSize;
         UpdateCurrentCameraPosition();
         FirstPass();
         SecondPass();
@@ -180,10 +221,10 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void UpdateCurrentCameraPosition()
     {
         int currentX = Mathf.FloorToInt(
-            cameraReference.transform.position.x / runtime.ChunkBoundSize
+            cameraConfig.reference.transform.position.x / runtime.ChunkBoundSize
         );
         int currentZ = Mathf.FloorToInt(
-            cameraReference.transform.position.z / runtime.ChunkBoundSize
+            cameraConfig.reference.transform.position.z / runtime.ChunkBoundSize
         );
         runtime.CurrentCameraPosition = new Vector2Int(currentX, currentZ);
     }
@@ -207,7 +248,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private IEnumerator ProcessLocalChunks()
     {
-        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
+        for (int x = -cameraConfig.viewDistanceChunks; x <= cameraConfig.viewDistanceChunks; x++)
         {
             EnqueueVisibleChunksAtColumnOffset(x);
 
@@ -230,16 +271,16 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private bool ShouldRunOrphanSweep()
     {
-        // orphanSweepPeriod: 0 = always, -1 = never, N>0 = every N cycles
-        if (orphanSweepPeriod < 0)
+        // debug.orphanSweepPeriod: 0 = always, -1 = never, N>0 = every N cycles
+        if (debug.orphanSweepPeriod < 0)
         {
             return false;
         }
-        if (orphanSweepPeriod == 0)
+        if (debug.orphanSweepPeriod == 0)
         {
             return true;
         }
-        return cleanup.CleanupPassCounter % orphanSweepPeriod == 0;
+        return cleanup.CleanupPassCounter % debug.orphanSweepPeriod == 0;
     }
 
     private void CleanupSceneChunkOrphans()
@@ -304,7 +345,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     private void LogCleanupSummary()
     {
         bool shouldLogCleanup =
-            debugCleanupLogs && (!debugCleanupLogOnlyOnRemoval || cleanup.LastRemovedCount > 0);
+            debug.cleanupLogs && (!debug.cleanupLogOnlyOnRemoval || cleanup.LastRemovedCount > 0);
 
         if (!shouldLogCleanup)
         {
@@ -359,7 +400,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void FirstPass()
     {
-        int dataRadius = viewDistanceChunks + 1;
+        int dataRadius = cameraConfig.viewDistanceChunks + 1;
 
         double totalMs = MeasureExecution(() =>
         {
@@ -440,7 +481,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void EnqueueVisibleChunksAroundCamera()
     {
-        for (int x = -viewDistanceChunks; x <= viewDistanceChunks; x++)
+        for (int x = -cameraConfig.viewDistanceChunks; x <= cameraConfig.viewDistanceChunks; x++)
         {
             EnqueueVisibleChunksAtColumnOffset(x);
         }
@@ -448,7 +489,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private void EnqueueVisibleChunksAtColumnOffset(int xOffset)
     {
-        for (int z = -viewDistanceChunks; z <= viewDistanceChunks; z++)
+        for (int z = -cameraConfig.viewDistanceChunks; z <= cameraConfig.viewDistanceChunks; z++)
         {
             Vector2Int coord = new(
                 runtime.CurrentCameraPosition.x + xOffset,
@@ -596,7 +637,7 @@ public class TerrainChunksGenerator : MonoBehaviour
 
     private int GetRetentionRadius()
     {
-        return Mathf.Max(0, viewDistanceChunks);
+        return Mathf.Max(0, cameraConfig.viewDistanceChunks);
     }
 
     private void SortBuildQueue()
@@ -627,7 +668,7 @@ public class TerrainChunksGenerator : MonoBehaviour
     {
         while (runtime.WorldMonitoringActive && this != null && isActiveAndEnabled)
         {
-            runtime.CameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraReference);
+            runtime.CameraPlanes = GeometryUtility.CalculateFrustumPlanes(cameraConfig.reference);
 
             // Take a snapshot of the current keys
             cleanup.VisibilityKeysSnapshot.Clear();
@@ -650,7 +691,7 @@ public class TerrainChunksGenerator : MonoBehaviour
                 }
 
                 // Time Slicing: Only process after X frames
-                if (i > 0 && i % visibilityCheckFrameCount == 0)
+                if (i > 0 && i % lod.visibilityBatchSize == 0)
                     yield return null;
             }
 

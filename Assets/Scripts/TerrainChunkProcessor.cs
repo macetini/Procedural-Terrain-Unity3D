@@ -3,7 +3,7 @@ using UnityEngine;
 public class TerrainChunkProcessor
 {
     // Terrain data
-    private TerrainChunksGenerator generator;
+    private TerrainGenerator generator;
     private ChunkNeighborStruct neighbors;
 
     // Terrain settings
@@ -26,16 +26,16 @@ public class TerrainChunkProcessor
     // Flags
     private int lastTriangleCount = -1;
 
-    public void Init(TerrainChunksGenerator generator)
+    public void Init(TerrainGenerator generator)
     {
         this.generator = generator;
 
-        chunkSize = generator.chunkSize;
-        tileSize = generator.tileSize;
+        chunkSize = generator.terrain.chunkSize;
+        tileSize = generator.terrain.tileSize;
         chunkBoundSize = chunkSize * tileSize;
 
-        elevationStepHeight = generator.elevationStepHeight;
-        skirtDepth = generator.skirtDepth;
+        elevationStepHeight = generator.terrain.elevationStepHeight;
+        skirtDepth = generator.terrain.skirtDepth;
     }
 
     public void BuildMeshData(int resolutionStep, Vector2Int chunkCoord)
