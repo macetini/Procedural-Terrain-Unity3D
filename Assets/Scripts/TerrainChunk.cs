@@ -17,6 +17,8 @@ public class TerrainChunk : MonoBehaviour
 
     public bool IsVisible { get; private set; } = true;
     public int CurrentStep { get; private set; } = -1;
+    public Vector2Int ChunkCoord => chunkCoord;
+    public TerrainChunksGenerator Generator => generator;
 
     // References
     private MeshRenderer rendererReference;

@@ -13,8 +13,23 @@ namespace Assets.Scripts.Processor
         public bool TryGetActiveChunk(Vector2Int coord, out TerrainChunk chunk) =>
             activeChunks.TryGetValue(coord, out chunk);
 
-        public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
+        public void RegisterChunk(Vector2Int coord, TerrainChunk chunk)
+        {
+            if (activeChunks.TryGetValue(coord, out TerrainChunk existingChunk))
+            {
+                if (existingChunk == chunk)
+                {
+                    return;
+                }
+
+                if (existingChunk != null)
+                {
+                    existingChunk.CallDestroy();
+                }
+            }
+
             activeChunks[coord] = chunk;
+        }
 
         public void UnregisterChunk(Vector2Int coord) => activeChunks.Remove(coord);
 
