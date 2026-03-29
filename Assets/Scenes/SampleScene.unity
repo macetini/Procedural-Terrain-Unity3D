@@ -446,8 +446,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainGenerator
   terrain:
-    chunkSize: 32
-    tileSize: 12
+    chunkSize: 64
+    tileSize: 8
     elevationStepHeight: 12
     maxElevationStepsCount: 12
     skirtDepth: 12
@@ -464,7 +464,7 @@ MonoBehaviour:
   lod:
     distance1: 640
     distance2: 960
-    visibilityBatchSize: 10
+    visibilityBatchSize: 5
     step0: 1
     step1: 2
     step2: 4

@@ -392,7 +392,7 @@ public class TerrainGenerator : MonoBehaviour
     {
         float chunkCount = (radius * 2) + 1;
         Vector3 worldCenter = ChunkToWorldCenter(centerChunk, boundSize, y);
-        Vector3 worldSize = new Vector3(chunkCount * boundSize, 0.05f, chunkCount * boundSize);
+        Vector3 worldSize = new(chunkCount * boundSize, 0.05f, chunkCount * boundSize);
 
         Gizmos.color = color;
         Gizmos.DrawWireCube(worldCenter, worldSize);
