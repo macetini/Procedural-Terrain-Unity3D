@@ -9,31 +9,6 @@ namespace Assets.Scripts.Terrain.Runtime
     {
         private const string MESH_IDENTIFIER = "TerrainChunk_";
 
-        private sealed class ChunkConfig
-        {
-            public float FrustumPadding;
-            public float SkirtDepth;
-            public int ChunkSize;
-            public float TileSize;
-            public float ElevationStepHeight;
-            public int MaxElevationStep;
-            public float ChunkBoundSize;
-
-            public static ChunkConfig FromGenerator(TerrainGenerator generator)
-            {
-                return new ChunkConfig
-                {
-                    FrustumPadding = generator.cameraConfig.frustumPadding,
-                    SkirtDepth = generator.terrain.skirtDepth,
-                    ChunkSize = generator.terrain.chunkSize,
-                    TileSize = generator.terrain.tileSize,
-                    ElevationStepHeight = generator.terrain.elevationStepHeight,
-                    MaxElevationStep = generator.terrain.maxElevationStepsCount,
-                    ChunkBoundSize = generator.terrain.chunkSize * generator.terrain.tileSize,
-                };
-            }
-        }
-
         [Header("Settings")]
         public Material terrainMaterial;
 
@@ -70,7 +45,7 @@ namespace Assets.Scripts.Terrain.Runtime
             filterReference = GetComponent<MeshFilter>();
         }
 
-        public void CallDestroy() // WARNING: Not optimized.Should only be only used during the development phase.
+        public void CallDestroy() // WARNING: Not optimized. Should only be only used during the development phase.
         {
             Destroy(gameObject);
         }
