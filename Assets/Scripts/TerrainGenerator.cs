@@ -4,53 +4,6 @@ using Assets.Scripts.Processor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[System.Serializable]
-public class TerrainSettings
-{
-    public int chunkSize = 16;
-    public float tileSize = 1.0f;
-    public float elevationStepHeight = 1.0f;
-    public int maxElevationStepsCount = 5;
-    public float skirtDepth = 5f;
-}
-
-[System.Serializable]
-public class NoiseSettings
-{
-    public int seed = 1337;
-    public float scale = 0.05f;
-    public int octaves = 4;
-    public float persistence = 0.5f;
-    public float lacunarity = 2.0f;
-}
-
-[System.Serializable]
-public class CameraSettings
-{
-    public Camera reference;
-    public float frustumPadding = 5.0f;
-    public int viewDistanceChunks = 3;
-}
-
-[System.Serializable]
-public class LODSettings
-{
-    public float distance1 = 640f; // Distance to switch to MEDIUM detail
-    public float distance2 = 960f; // Distance to switch to LOW detail
-    public int visibilityBatchSize = 10; // Formerly visibilityCheckFrameCount
-    public int step0 = 1; // LOD 0 (full detail)
-    public int step1 = 2; // LOD 1 (medium)
-    public int step2 = 4; // LOD 2 (low)
-}
-
-[System.Serializable]
-public class DebugSettings
-{
-    public bool cleanupLogs = false;
-    public bool cleanupLogOnlyOnRemoval = true;
-    public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
-}
-
 public class TerrainGenerator : MonoBehaviour
 {
     private sealed class RuntimeState

@@ -450,7 +450,7 @@ MonoBehaviour:
     tileSize: 8
     elevationStepHeight: 12
     maxElevationStepsCount: 12
-    skirtDepth: 12
+    skirtDepth: 8
   noise:
     seed: 1337
     scale: 0.02
