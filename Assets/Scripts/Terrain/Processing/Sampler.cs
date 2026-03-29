@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Assets.Scripts.Terrain.Data;
-using Assets.Scripts.Terrain.Generation;
-using Assets.Scripts.Terrain.Noise;
+using Assets.Scripts.Terrain.Utils;
 using UnityEngine;
 
 namespace Assets.Scripts.Terrain.Processing
