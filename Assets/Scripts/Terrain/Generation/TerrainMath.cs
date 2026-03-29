@@ -50,15 +50,24 @@ namespace Assets.Scripts.Terrain.Generation
 
         private static int GenerateSkirtTriangles(int resolution, int[] tris, int t)
         {
+            int southTris = GenerateSouthSkirtTriangles(resolution, tris, t);
+            int northTris = GenerateNorthSkirtTriangles(resolution, tris, t + southTris);
+            int westTris = GenerateWestSkirtTriangles(resolution, tris, t + southTris + northTris);
+            int eastTris = GenerateEastSkirtTriangles(
+                resolution,
+                tris,
+                t + southTris + northTris + westTris
+            );
+
+            return southTris + northTris + westTris + eastTris;
+        }
+
+        private static int GenerateSouthSkirtTriangles(int resolution, int[] tris, int t)
+        {
             int gridCount = resolution * resolution;
             int sStart = gridCount;
-            int nStart = gridCount + resolution;
-            int wStart = gridCount + resolution * 2;
-            int eStart = gridCount + resolution * 3;
-
             for (int j = 0; j < resolution - 1; j++)
             {
-                // South
                 int gL = j * resolution;
                 int gR = (j + 1) * resolution;
                 int sL = sStart + j;
@@ -69,8 +78,16 @@ namespace Assets.Scripts.Terrain.Generation
                 tris[t++] = gL;
                 tris[t++] = sL;
                 tris[t++] = sR;
+            }
+            return (resolution - 1) * 6;
+        }
 
-                // North
+        private static int GenerateNorthSkirtTriangles(int resolution, int[] tris, int t)
+        {
+            int gridCount = resolution * resolution;
+            int nStart = gridCount + resolution;
+            for (int j = 0; j < resolution - 1; j++)
+            {
                 int ngL = j * resolution + (resolution - 1);
                 int ngR = (j + 1) * resolution + (resolution - 1);
                 int nsL = nStart + j;
@@ -81,8 +98,16 @@ namespace Assets.Scripts.Terrain.Generation
                 tris[t++] = ngL;
                 tris[t++] = nsR;
                 tris[t++] = nsL;
+            }
+            return (resolution - 1) * 6;
+        }
 
-                // West
+        private static int GenerateWestSkirtTriangles(int resolution, int[] tris, int t)
+        {
+            int gridCount = resolution * resolution;
+            int wStart = gridCount + resolution * 2;
+            for (int j = 0; j < resolution - 1; j++)
+            {
                 int wgB = j;
                 int wgT = j + 1;
                 int wsB = wStart + j;
@@ -93,8 +118,16 @@ namespace Assets.Scripts.Terrain.Generation
                 tris[t++] = wgB;
                 tris[t++] = wsB;
                 tris[t++] = wsT;
+            }
+            return (resolution - 1) * 6;
+        }
 
-                // East
+        private static int GenerateEastSkirtTriangles(int resolution, int[] tris, int t)
+        {
+            int gridCount = resolution * resolution;
+            int eStart = gridCount + resolution * 3;
+            for (int j = 0; j < resolution - 1; j++)
+            {
                 int egB = (resolution - 1) * resolution + j;
                 int egT = (resolution - 1) * resolution + j + 1;
                 int esB = eStart + j;
@@ -106,7 +139,7 @@ namespace Assets.Scripts.Terrain.Generation
                 tris[t++] = esT;
                 tris[t++] = esB;
             }
-            return (resolution - 1) * 4 * 6;
+            return (resolution - 1) * 6;
         }
     }
 }
