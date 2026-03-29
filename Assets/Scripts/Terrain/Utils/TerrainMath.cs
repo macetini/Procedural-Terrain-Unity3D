@@ -1,7 +1,7 @@
-namespace Assets.Scripts.Terrain.Generation
-{
-    using Assets.Scripts.Terrain.Data;
+using Assets.Scripts.Terrain.Data;
 
+namespace Assets.Scripts.Terrain.Utils
+{
     public static class TerrainMath
     {
         // Moves the logic out of the manager to keep it pure

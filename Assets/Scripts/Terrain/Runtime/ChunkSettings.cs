@@ -1,18 +1,18 @@
 namespace Assets.Scripts.Terrain.Runtime
 {
-    public class ChunkConfig
+    internal class ChunkSettings
     {
-        public float FrustumPadding;
-        public float SkirtDepth;
-        public int ChunkSize;
-        public float TileSize;
-        public float ElevationStepHeight;
-        public int MaxElevationStep;
-        public float ChunkBoundSize;
+        public float FrustumPadding { get; private set; }
+        public float SkirtDepth { get; private set; }
+        public int ChunkSize { get; private set; }
+        public float TileSize { get; private set; }
+        public float ElevationStepHeight { get; private set; }
+        public int MaxElevationStep { get; private set; }
+        public float ChunkBoundSize { get; private set; }
 
-        public static ChunkConfig FromGenerator(TerrainGenerator generator)
+        public static ChunkSettings FromGenerator(TerrainGenerator generator)
         {
-            return new ChunkConfig
+            return new ChunkSettings
             {
                 FrustumPadding = generator.cameraConfig.frustumPadding,
                 SkirtDepth = generator.terrain.skirtDepth,

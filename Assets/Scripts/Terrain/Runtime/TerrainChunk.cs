@@ -30,7 +30,7 @@ namespace Assets.Scripts.Terrain.Runtime
         // Data
         private TerrainGenerator generator;
         private Vector2Int chunkCoord;
-        private ChunkConfig config;
+        private ChunkSettings settings;
 
         // Calculations
         private bool wasVisibleLastCheck = false; // Track state change
@@ -62,7 +62,7 @@ namespace Assets.Scripts.Terrain.Runtime
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;
-            config = ChunkConfig.FromGenerator(generator);
+            settings = ChunkSettings.FromGenerator(generator);
 
             rendererReference.enabled = false;
             isMeshReady = false;
@@ -94,7 +94,7 @@ namespace Assets.Scripts.Terrain.Runtime
         private int GetTargetStep()
         {
             // Calculate center for more accurate LOD switching
-            float halfSize = config.ChunkBoundSize * 0.5f;
+            float halfSize = settings.ChunkBoundSize * 0.5f;
             Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
             float dist = Vector3.Distance(
@@ -138,18 +138,18 @@ namespace Assets.Scripts.Terrain.Runtime
 
         private void FinalizeMesh(Mesh mesh)
         {
-            float maxHeight = config.MaxElevationStep * config.ElevationStepHeight;
+            float maxHeight = settings.MaxElevationStep * settings.ElevationStepHeight;
 
             // We center the bounds and apply the public frustumPadding
             Vector3 center = new(
-                config.ChunkBoundSize * 0.5f,
+                settings.ChunkBoundSize * 0.5f,
                 maxHeight * 0.5f,
-                config.ChunkBoundSize * 0.5f
+                settings.ChunkBoundSize * 0.5f
             );
             Vector3 size = new(
-                config.ChunkBoundSize + config.FrustumPadding,
-                maxHeight + config.SkirtDepth + config.FrustumPadding,
-                config.ChunkBoundSize + config.FrustumPadding
+                settings.ChunkBoundSize + settings.FrustumPadding,
+                maxHeight + settings.SkirtDepth + settings.FrustumPadding,
+                settings.ChunkBoundSize + settings.FrustumPadding
             );
             mesh.bounds = new Bounds(center, size);
 
@@ -159,16 +159,16 @@ namespace Assets.Scripts.Terrain.Runtime
 
         public void UpdateVisibility(Plane[] planes)
         {
-            float halfSize = config.ChunkBoundSize * 0.5f;
-            float height = config.MaxElevationStep * config.ElevationStepHeight;
+            float halfSize = settings.ChunkBoundSize * 0.5f;
+            float height = settings.MaxElevationStep * settings.ElevationStepHeight;
 
             // Use world space center
             Vector3 worldCenter =
                 transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
             Vector3 size = new(
-                config.ChunkBoundSize + config.FrustumPadding,
-                height + config.SkirtDepth + config.FrustumPadding,
-                config.ChunkBoundSize + config.FrustumPadding
+                settings.ChunkBoundSize + settings.FrustumPadding,
+                height + settings.SkirtDepth + settings.FrustumPadding,
+                settings.ChunkBoundSize + settings.FrustumPadding
             );
             Bounds checkBounds = new(worldCenter, size);
 
@@ -219,7 +219,7 @@ namespace Assets.Scripts.Terrain.Runtime
 
                 Gizmos.color = Color.blue;
                 // We only loop through the grid vertices (ignore the skirt for clarity)
-                int resolution = (config.ChunkSize / CurrentStep) + 1;
+                int resolution = (settings.ChunkSize / CurrentStep) + 1;
                 int gridCount = resolution * resolution;
 
                 for (int i = 0; i < gridCount; i++)

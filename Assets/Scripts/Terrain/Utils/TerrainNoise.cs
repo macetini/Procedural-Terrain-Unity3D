@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation
+namespace Assets.Scripts.Terrain.Utils
 {
     public static class TerrainNoise
     {
