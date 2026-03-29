@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using Assets.Scripts.Terrain.Data;
+using Assets.Scripts.Terrain.Runtime;
 using UnityEngine;
 
-namespace Assets.Scripts.Processor
+namespace Assets.Scripts.Terrain.Processing
 {
     public class TerrainDataProcessor
     {
