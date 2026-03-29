@@ -21,7 +21,14 @@ namespace Assets.Scripts.Terrain.Generation
             int[] tris = new int[gridTris + skirtTris];
             int t = 0;
 
-            // 1. Grid
+            t += GenerateGridTriangles(resolution, tris, t);
+            t += GenerateSkirtTriangles(resolution, tris, t);
+
+            return tris;
+        }
+
+        private static int GenerateGridTriangles(int resolution, int[] tris, int t)
+        {
             for (int x = 0; x < resolution - 1; x++)
             {
                 for (int z = 0; z < resolution - 1; z++)
@@ -38,8 +45,11 @@ namespace Assets.Scripts.Terrain.Generation
                     tris[t++] = br;
                 }
             }
+            return (resolution - 1) * (resolution - 1) * 6;
+        }
 
-            // 2. Skirts
+        private static int GenerateSkirtTriangles(int resolution, int[] tris, int t)
+        {
             int gridCount = resolution * resolution;
             int sStart = gridCount;
             int nStart = gridCount + resolution;
@@ -96,7 +106,7 @@ namespace Assets.Scripts.Terrain.Generation
                 tris[t++] = esT;
                 tris[t++] = esB;
             }
-            return tris;
+            return (resolution - 1) * 4 * 6;
         }
     }
 }
