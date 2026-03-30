@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Data
+namespace Assets.Scripts.Terrain.Chunk.Data
 {
     public struct TileMeshStruct
     {

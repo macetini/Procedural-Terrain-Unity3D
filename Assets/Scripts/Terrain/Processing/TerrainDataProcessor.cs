@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Data;
-using Assets.Scripts.Terrain.Runtime;
+using Assets.Scripts.Terrain.Chunk;
+using Assets.Scripts.Terrain.Chunk.Data;
 using UnityEngine;
 
 namespace Assets.Scripts.Terrain.Processing

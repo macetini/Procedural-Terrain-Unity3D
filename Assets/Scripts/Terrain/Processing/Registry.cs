@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Runtime;
+using Assets.Scripts.Terrain.Chunk;
 using UnityEngine;
 
 namespace Assets.Scripts.Terrain.Processing

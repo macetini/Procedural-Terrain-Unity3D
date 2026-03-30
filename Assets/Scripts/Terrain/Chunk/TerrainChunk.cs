@@ -1,8 +1,7 @@
 using Assets.Scripts.Terrain.Effects;
-using Assets.Scripts.Terrain.Generation;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Runtime
+namespace Assets.Scripts.Terrain.Chunk
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class TerrainChunk : MonoBehaviour
@@ -37,7 +36,7 @@ namespace Assets.Scripts.Terrain.Runtime
         private bool isMeshReady = false; // Prevents "Blips" before the first build
         private string meshName;
 
-        private readonly TerrainChunkProcessor processor = new();
+        private readonly ChunkProcessor processor = new();
 
         void Awake()
         {

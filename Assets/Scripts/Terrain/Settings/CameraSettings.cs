@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Config
+namespace Assets.Scripts.Terrain.Settings
 {
     [System.Serializable]
     public class CameraSettings

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Data;
+using Assets.Scripts.Terrain.Chunk.Data;
 using Assets.Scripts.Terrain.Utils;
 using UnityEngine;
 

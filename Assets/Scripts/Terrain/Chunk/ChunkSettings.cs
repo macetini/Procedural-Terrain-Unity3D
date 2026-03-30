@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Runtime
+namespace Assets.Scripts.Terrain.Chunk
 {
     internal class ChunkSettings
     {

@@ -1,9 +1,9 @@
-using Assets.Scripts.Terrain.Data;
+using Assets.Scripts.Terrain.Chunk.Data;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation
+namespace Assets.Scripts.Terrain.Chunk
 {
-    public class TerrainChunkProcessor
+    internal class ChunkProcessor
     {
         // Terrain data
         private TerrainGenerator generator;
