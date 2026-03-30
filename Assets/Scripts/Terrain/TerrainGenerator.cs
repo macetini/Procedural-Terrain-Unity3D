@@ -11,72 +11,6 @@ namespace Assets.Scripts.Terrain
 {
     public class TerrainGenerator : MonoBehaviour
     {
-        private sealed class RuntimeState
-        {
-            public Vector2Int CurrentCameraPosition = Vector2Int.zero;
-            public Plane[] CameraPlanes;
-            public float ChunkBoundSize;
-            public bool WorldMonitoringActive = true;
-        }
-
-        private sealed class CleanupState
-        {
-            public readonly List<Vector2Int> VisibilityKeysSnapshot = new();
-            public readonly List<TerrainChunk> SceneChunksSnapshot = new();
-            public readonly HashSet<Vector2Int> SeenCoords = new();
-            public readonly List<Vector2Int> LastRemovedChunks = new();
-
-            public int LastRemovedCount;
-            public int LastScannedCount;
-            public int LastSceneChunkCount;
-            public int LastOrphanedCount;
-            public int LastDuplicateCount;
-            public int CleanupPassCounter; // Counter for periodic orphan sweeps
-
-            public void ResetForRebuild()
-            {
-                LastRemovedChunks.Clear();
-                LastRemovedCount = 0;
-                LastScannedCount = 0;
-                LastSceneChunkCount = 0;
-                LastOrphanedCount = 0;
-                LastDuplicateCount = 0;
-                CleanupPassCounter = 0;
-            }
-
-            public void BeginCleanupPass()
-            {
-                VisibilityKeysSnapshot.Clear();
-                LastRemovedCount = 0;
-                LastScannedCount = 0;
-                LastRemovedChunks.Clear();
-                CleanupPassCounter++;
-            }
-
-            public void BeginSceneSweep()
-            {
-                SceneChunksSnapshot.Clear();
-                SeenCoords.Clear();
-                LastSceneChunkCount = 0;
-                LastOrphanedCount = 0;
-                LastDuplicateCount = 0;
-            }
-        }
-
-        private sealed class BuildQueueState
-        {
-            public readonly List<Vector2Int> Queue = new();
-            public readonly HashSet<Vector2Int> QueueHash = new();
-            public bool IsProcessing;
-
-            public void Clear()
-            {
-                Queue.Clear();
-                QueueHash.Clear();
-                IsProcessing = false;
-            }
-        }
-
         [Header("Terrain Settings")]
         public TerrainSettings terrain = new();
 
@@ -242,16 +176,14 @@ namespace Assets.Scripts.Terrain
             {
                 return true;
             }
-            return cleanup.CleanupPassCounter % debug.orphanSweepPeriod == 0;
+            // Orphan sweep period logic removed with CleanupPassCounter
+            return debug.orphanSweepPeriod == 0;
         }
 
         private void CleanupSceneChunkOrphans()
         {
             cleanup.BeginSceneSweep();
-
             GetComponentsInChildren(true, cleanup.SceneChunksSnapshot);
-            cleanup.LastSceneChunkCount = cleanup.SceneChunksSnapshot.Count;
-
             for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
             {
                 TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
@@ -259,10 +191,8 @@ namespace Assets.Scripts.Terrain
                 {
                     continue;
                 }
-
                 if (ShouldRemoveSceneChunk(sceneChunk, out Vector2Int coord))
                 {
-                    cleanup.LastOrphanedCount++;
                     RemoveChunk(coord, sceneChunk);
                 }
             }
@@ -272,15 +202,12 @@ namespace Assets.Scripts.Terrain
         {
             cleanup.BeginCleanupPass();
             _terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
-            cleanup.LastScannedCount = cleanup.VisibilityKeysSnapshot.Count;
-
             foreach (var coord in cleanup.VisibilityKeysSnapshot)
             {
                 if (IsWithinRetentionBounds(coord))
                 {
                     continue;
                 }
-
                 if (_terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     RemoveChunk(coord, chunk);
@@ -295,37 +222,23 @@ namespace Assets.Scripts.Terrain
             bool isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
             bool isOutOfBounds = !IsWithinRetentionBounds(coord);
             bool isForeignChunk = sceneChunk.Generator != null && sceneChunk.Generator != this;
-
-            if (isDuplicateCoord)
-            {
-                cleanup.LastDuplicateCount++;
-            }
-
             return isDuplicateCoord || isOutOfBounds || isForeignChunk;
         }
 
         private void LogCleanupSummary()
         {
-            bool shouldLogCleanup =
-                debug.cleanupLogs
-                && (!debug.cleanupLogOnlyOnRemoval || cleanup.LastRemovedCount > 0);
-
-            if (!shouldLogCleanup)
+            // Logging removed with statistics fields
+            if (!debug.cleanupLogs)
             {
                 return;
             }
-
-            int retainedCount = cleanup.LastScannedCount - cleanup.LastRemovedCount;
             Debug.Log(
-                $"[CleanupRemoteChunks] CameraChunk={runtime.CurrentCameraPosition}, RegistryScanned={cleanup.LastScannedCount}, SceneChunks={cleanup.LastSceneChunkCount}, Removed={cleanup.LastRemovedCount}, Retained={retainedCount}, Orphans={cleanup.LastOrphanedCount}, Duplicates={cleanup.LastDuplicateCount}, RetentionRadius={GetRetentionRadius()}"
+                $"[CleanupRemoteChunks] CameraChunk={runtime.CurrentCameraPosition}, RetentionRadius={GetRetentionRadius()}"
             );
         }
 
         private void RemoveChunk(Vector2Int coord, TerrainChunk chunk)
         {
-            cleanup.LastRemovedCount++;
-            cleanup.LastRemovedChunks.Add(coord);
-
             if (
                 _terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk activeChunk)
                 && activeChunk == chunk
@@ -333,7 +246,6 @@ namespace Assets.Scripts.Terrain
             {
                 _terrainDataProcessor.Clear(coord);
             }
-
             if (chunk != null)
             {
                 Destroy(chunk.gameObject);

@@ -9,9 +9,13 @@ namespace Assets.Scripts.Terrain.Utils
         {
             int diff = a.Elevation - b.Elevation;
             if (diff > 1)
+            {
                 b.Elevation = a.Elevation - 1;
+            }
             else if (diff < -1)
+            {
                 b.Elevation = a.Elevation + 1;
+            }
         }
 
         public static int[] GenerateTriangleIndices(int resolution)
@@ -19,16 +23,17 @@ namespace Assets.Scripts.Terrain.Utils
             int gridTris = (resolution - 1) * (resolution - 1) * 6;
             int skirtTris = (resolution - 1) * 4 * 6;
             int[] tris = new int[gridTris + skirtTris];
-            int t = 0;
 
-            t += GenerateGridTriangles(resolution, tris, t);
-            t += GenerateSkirtTriangles(resolution, tris, t);
+            int trisCount = GenerateGridTriangles(resolution, tris);
+            GenerateSkirtTriangles(resolution, tris, trisCount);
 
             return tris;
         }
 
-        private static int GenerateGridTriangles(int resolution, int[] tris, int t)
+        private static int GenerateGridTriangles(int resolution, int[] tris)
         {
+            int trisCount = 0;
+
             for (int x = 0; x < resolution - 1; x++)
             {
                 for (int z = 0; z < resolution - 1; z++)
@@ -37,32 +42,36 @@ namespace Assets.Scripts.Terrain.Utils
                     int tl = bl + 1;
                     int br = (x + 1) * resolution + z;
                     int tr = br + 1;
-                    tris[t++] = bl;
-                    tris[t++] = tl;
-                    tris[t++] = br;
-                    tris[t++] = tl;
-                    tris[t++] = tr;
-                    tris[t++] = br;
+                    tris[trisCount++] = bl;
+                    tris[trisCount++] = tl;
+                    tris[trisCount++] = br;
+                    tris[trisCount++] = tl;
+                    tris[trisCount++] = tr;
+                    tris[trisCount++] = br;
                 }
             }
             return (resolution - 1) * (resolution - 1) * 6;
         }
 
-        private static int GenerateSkirtTriangles(int resolution, int[] tris, int t)
+        private static int GenerateSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
-            int southTris = GenerateSouthSkirtTriangles(resolution, tris, t);
-            int northTris = GenerateNorthSkirtTriangles(resolution, tris, t + southTris);
-            int westTris = GenerateWestSkirtTriangles(resolution, tris, t + southTris + northTris);
+            int southTris = GenerateSouthSkirtTriangles(resolution, tris, trisCount);
+            int northTris = GenerateNorthSkirtTriangles(resolution, tris, trisCount + southTris);
+            int westTris = GenerateWestSkirtTriangles(
+                resolution,
+                tris,
+                trisCount + southTris + northTris
+            );
             int eastTris = GenerateEastSkirtTriangles(
                 resolution,
                 tris,
-                t + southTris + northTris + westTris
+                trisCount + southTris + northTris + westTris
             );
 
             return southTris + northTris + westTris + eastTris;
         }
 
-        private static int GenerateSouthSkirtTriangles(int resolution, int[] tris, int t)
+        private static int GenerateSouthSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
             int gridCount = resolution * resolution;
             int sStart = gridCount;
@@ -72,17 +81,17 @@ namespace Assets.Scripts.Terrain.Utils
                 int gR = (j + 1) * resolution;
                 int sL = sStart + j;
                 int sR = sStart + j + 1;
-                tris[t++] = gL;
-                tris[t++] = sR;
-                tris[t++] = gR;
-                tris[t++] = gL;
-                tris[t++] = sL;
-                tris[t++] = sR;
+                tris[trisCount++] = gL;
+                tris[trisCount++] = sR;
+                tris[trisCount++] = gR;
+                tris[trisCount++] = gL;
+                tris[trisCount++] = sL;
+                tris[trisCount++] = sR;
             }
             return (resolution - 1) * 6;
         }
 
-        private static int GenerateNorthSkirtTriangles(int resolution, int[] tris, int t)
+        private static int GenerateNorthSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
             int gridCount = resolution * resolution;
             int nStart = gridCount + resolution;
@@ -92,17 +101,17 @@ namespace Assets.Scripts.Terrain.Utils
                 int ngR = (j + 1) * resolution + (resolution - 1);
                 int nsL = nStart + j;
                 int nsR = nStart + j + 1;
-                tris[t++] = ngL;
-                tris[t++] = ngR;
-                tris[t++] = nsR;
-                tris[t++] = ngL;
-                tris[t++] = nsR;
-                tris[t++] = nsL;
+                tris[trisCount++] = ngL;
+                tris[trisCount++] = ngR;
+                tris[trisCount++] = nsR;
+                tris[trisCount++] = ngL;
+                tris[trisCount++] = nsR;
+                tris[trisCount++] = nsL;
             }
             return (resolution - 1) * 6;
         }
 
-        private static int GenerateWestSkirtTriangles(int resolution, int[] tris, int t)
+        private static int GenerateWestSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
             int gridCount = resolution * resolution;
             int wStart = gridCount + resolution * 2;
@@ -112,17 +121,17 @@ namespace Assets.Scripts.Terrain.Utils
                 int wgT = j + 1;
                 int wsB = wStart + j;
                 int wsT = wStart + j + 1;
-                tris[t++] = wgB;
-                tris[t++] = wsT;
-                tris[t++] = wgT;
-                tris[t++] = wgB;
-                tris[t++] = wsB;
-                tris[t++] = wsT;
+                tris[trisCount++] = wgB;
+                tris[trisCount++] = wsT;
+                tris[trisCount++] = wgT;
+                tris[trisCount++] = wgB;
+                tris[trisCount++] = wsB;
+                tris[trisCount++] = wsT;
             }
             return (resolution - 1) * 6;
         }
 
-        private static int GenerateEastSkirtTriangles(int resolution, int[] tris, int t)
+        private static int GenerateEastSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
             int gridCount = resolution * resolution;
             int eStart = gridCount + resolution * 3;
@@ -132,12 +141,12 @@ namespace Assets.Scripts.Terrain.Utils
                 int egT = (resolution - 1) * resolution + j + 1;
                 int esB = eStart + j;
                 int esT = eStart + j + 1;
-                tris[t++] = egB;
-                tris[t++] = egT;
-                tris[t++] = esT;
-                tris[t++] = egB;
-                tris[t++] = esT;
-                tris[t++] = esB;
+                tris[trisCount++] = egB;
+                tris[trisCount++] = egT;
+                tris[trisCount++] = esT;
+                tris[trisCount++] = egB;
+                tris[trisCount++] = esT;
+                tris[trisCount++] = esB;
             }
             return (resolution - 1) * 6;
         }
