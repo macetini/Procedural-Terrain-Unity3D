@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Assets.Scripts.Terrain.Chunk;
 using Assets.Scripts.Terrain.Chunk.Data;
 using Assets.Scripts.Terrain.Processing;
-using Assets.Scripts.Terrain.Settings;
 using Assets.Scripts.Terrain.Utils;
 using UnityEngine;
 
@@ -11,14 +10,19 @@ namespace Assets.Scripts.Terrain
 {
     public class TerrainController
     {
-        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
-            terrainDataProcessor.GetNeighborGrids(coord);
+        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord)
+        {
+            if (coord == null)
+                return default;
+            return TerrainDataProcessor.GetNeighborGrids(coord);
+        }
 
         private readonly RuntimeState runtime = new();
         private readonly CleanupState cleanup = new();
         private readonly BuildQueueState buildState = new();
         private readonly TerrainGenerator generator;
         private readonly TerrainDataProcessor terrainDataProcessor;
+        public TerrainDataProcessor TerrainDataProcessor => terrainDataProcessor;
         private readonly Dictionary<int, int[]> triangleCache = new();
 
         public void Destroy()
@@ -43,7 +47,7 @@ namespace Assets.Scripts.Terrain
 
         public void BuildTerrain()
         {
-            NoiseSettings noise = generator.noise;
+            var noise = generator.noise;
             TerrainNoise.Init(
                 noise.seed,
                 noise.scale,
@@ -55,22 +59,18 @@ namespace Assets.Scripts.Terrain
             runtime.ChunkBoundSize = generator.terrain.chunkSize * generator.terrain.tileSize;
 
             UpdateCurrentCameraPosition();
-
             FirstPass();
             SecondPass();
 
-            generator.StartCoroutine(WorldMonitoringRoutine()); // The manager
-            generator.StartCoroutine(VisibilityCheckRoutine()); // The culler
+            generator.StartCoroutine(WorldMonitoringRoutine());
+            generator.StartCoroutine(VisibilityCheckRoutine());
         }
 
         public void UpdateCurrentCameraPosition()
         {
-            int currentX = Mathf.FloorToInt(
-                generator.cameraConfig.reference.transform.position.x / runtime.ChunkBoundSize
-            );
-            int currentZ = Mathf.FloorToInt(
-                generator.cameraConfig.reference.transform.position.z / runtime.ChunkBoundSize
-            );
+            var pos = generator.cameraConfig.reference.transform.position;
+            int currentX = Mathf.FloorToInt(pos.x / runtime.ChunkBoundSize);
+            int currentZ = Mathf.FloorToInt(pos.z / runtime.ChunkBoundSize);
             runtime.CurrentCameraPosition = new Vector2Int(currentX, currentZ);
         }
 
@@ -121,18 +121,14 @@ namespace Assets.Scripts.Terrain
         }
 
         // -----------------------------------------------------------------------
+
         private void GenerateFullMeshData(Vector2Int cameraOrigin, int dataRadius)
         {
-            // If radius is 0, this only runs once for the cameraOrigin.
-            // If radius is 1, it runs 9 times.
-            for (int xChunkOffset = -dataRadius; xChunkOffset <= dataRadius; xChunkOffset++)
+            for (int x = -dataRadius; x <= dataRadius; x++)
             {
-                for (int zChunkOffset = -dataRadius; zChunkOffset <= dataRadius; zChunkOffset++)
+                for (int z = -dataRadius; z <= dataRadius; z++)
                 {
-                    Vector2Int coord = new(
-                        cameraOrigin.x + xChunkOffset,
-                        cameraOrigin.y + zChunkOffset
-                    );
+                    var coord = new Vector2Int(cameraOrigin.x + x, cameraOrigin.y + z);
                     terrainDataProcessor.GenerateRawData(coord);
                 }
             }
@@ -149,11 +145,8 @@ namespace Assets.Scripts.Terrain
 
         private void EnqueueVisibleChunksAroundCamera()
         {
-            for (
-                int x = -generator.cameraConfig.viewDistanceChunks;
-                x <= generator.cameraConfig.viewDistanceChunks;
-                x++
-            )
+            int viewDist = generator.cameraConfig.viewDistanceChunks;
+            for (int x = -viewDist; x <= viewDist; x++)
             {
                 EnqueueVisibleChunksAtColumnOffset(x);
             }
@@ -161,17 +154,12 @@ namespace Assets.Scripts.Terrain
 
         private void EnqueueVisibleChunksAtColumnOffset(int xOffset)
         {
-            for (
-                int z = -generator.cameraConfig.viewDistanceChunks;
-                z <= generator.cameraConfig.viewDistanceChunks;
-                z++
-            )
+            int viewDist = generator.cameraConfig.viewDistanceChunks;
+            int baseX = runtime.CurrentCameraPosition.x + xOffset;
+            int baseY = runtime.CurrentCameraPosition.y;
+            for (int z = -viewDist; z <= viewDist; z++)
             {
-                Vector2Int coord = new(
-                    runtime.CurrentCameraPosition.x + xOffset,
-                    runtime.CurrentCameraPosition.y + z
-                );
-
+                var coord = new Vector2Int(baseX, baseY + z);
                 if (
                     !TryEnqueueChunkBuild(coord)
                     && terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
@@ -184,22 +172,22 @@ namespace Assets.Scripts.Terrain
 
         private bool TryEnqueueChunkBuild(Vector2Int coord)
         {
-            if (terrainDataProcessor.HasActiveChunk(coord) || !buildState.QueueHash.Add(coord))
+            if (
+                coord == null
+                || terrainDataProcessor.HasActiveChunk(coord)
+                || !buildState.QueueHash.Add(coord)
+            )
             {
                 return false;
             }
-
             buildState.Queue.Add(coord);
             return true;
         }
 
         private void StartBuildQueueIfNeeded()
         {
-            if (buildState.Queue.Count <= 0)
-            {
+            if (buildState.Queue.Count == 0)
                 return;
-            }
-
             SortBuildQueue();
             if (!buildState.IsProcessing)
             {
@@ -210,22 +198,13 @@ namespace Assets.Scripts.Terrain
         private void SortBuildQueue()
         {
             if (buildState.Queue.Count <= 1)
-            {
                 return;
-            }
-
-            // Capture camera pos in chunk-coordinates once to avoid repeated math
-            // We use a local variable to avoid thread/sync issues during the sort
-            Vector2Int camCoord = runtime.CurrentCameraPosition;
-
+            var camCoord = runtime.CurrentCameraPosition;
             buildState.Queue.Sort(
                 (a, b) =>
                 {
-                    // Use "Manhattan Distance" or squared coordinate distance
-                    // Manhattan: abs(x1-x2) + abs(y1-y2) is even faster than squaring
                     int distA = Mathf.Abs(a.x - camCoord.x) + Mathf.Abs(a.y - camCoord.y);
                     int distB = Mathf.Abs(b.x - camCoord.x) + Mathf.Abs(b.y - camCoord.y);
-
                     return distA.CompareTo(distB);
                 }
             );
@@ -341,23 +320,19 @@ namespace Assets.Scripts.Terrain
 
         private void SpawnChunkMesh(Vector2Int coord)
         {
-            if (terrainDataProcessor.HasActiveChunk(coord))
-            {
+            if (coord == null || terrainDataProcessor.HasActiveChunk(coord))
                 return;
-            }
-
-            Vector3 position = new(
+            var position = new Vector3(
                 coord.x * runtime.ChunkBoundSize,
                 0,
                 coord.y * runtime.ChunkBoundSize
             );
-            TerrainChunk chunk = Object.Instantiate(
+            var chunk = Object.Instantiate(
                 generator.chunkPrefab,
                 position,
                 Quaternion.identity,
                 generator.transform
             );
-
             chunk.InitBuild(generator, coord);
             chunk.UpdateVisibility(runtime.CameraPlanes);
             terrainDataProcessor.RegisterChunk(coord, chunk);
@@ -461,6 +436,7 @@ namespace Assets.Scripts.Terrain
             {
                 return;
             }
+
             Debug.Log(
                 $"[CleanupRemoteChunks] CameraChunk={runtime.CurrentCameraPosition}, RetentionRadius={GetRetentionRadius()}"
             );
@@ -527,12 +503,12 @@ namespace Assets.Scripts.Terrain
                             chunk.UpdateLOD(true);
                         }
                     }
-
                     // Time Slicing: Only process after X frames
                     if (i > 0 && i % generator.lod.visibilityBatchSize == 0)
+                    {
                         yield return null;
+                    }
                 }
-
                 // Short rest before the next full world sweep
                 yield return null;
             }
@@ -540,14 +516,10 @@ namespace Assets.Scripts.Terrain
 
         public int[] GetPrecalculatedTriangles(int resolution)
         {
-            if (triangleCache.TryGetValue(resolution, out int[] cachedTris))
-            {
+            if (triangleCache.TryGetValue(resolution, out var cachedTris))
                 return cachedTris;
-            }
-
-            // If not in cache, calculate it once
-            int[] newTris = TerrainMath.GenerateTriangleIndices(resolution);
-            triangleCache.Add(resolution, newTris);
+            var newTris = TerrainMath.GenerateTriangleIndices(resolution);
+            triangleCache[resolution] = newTris;
             return newTris;
         }
     }
