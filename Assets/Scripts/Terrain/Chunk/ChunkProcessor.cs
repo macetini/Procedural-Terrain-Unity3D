@@ -52,7 +52,7 @@ namespace Assets.Scripts.Terrain.Chunk
 
         private void InitializeNeighbors(Vector2Int chunkCoord)
         {
-            neighbors = generator.TerrainDataProcessor.GetNeighborGrids(chunkCoord);
+            neighbors = generator.GetNeighborGrids(chunkCoord);
         }
 
         private void InitializeResolution(int resolutionStep)
