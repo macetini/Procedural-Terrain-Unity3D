@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Chunk
+namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 {
     internal class ChunkSettings
     {
@@ -10,7 +10,7 @@ namespace Assets.Scripts.Terrain.Chunk
         public int MaxElevationStep { get; private set; }
         public float ChunkBoundSize { get; private set; }
 
-        public static ChunkSettings FromGenerator(TerrainGenerator generator)
+        public static ChunkSettings FromGenerator(ProceduralTerrain generator)
         {
             return new ChunkSettings
             {

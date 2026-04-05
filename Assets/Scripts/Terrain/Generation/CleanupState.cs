@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Chunk;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain
+namespace Assets.Scripts.Terrain.Generation
 {
     internal class CleanupState
     {

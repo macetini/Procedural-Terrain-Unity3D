@@ -1,4 +1,4 @@
-using Assets.Scripts.Terrain.Chunk.Data;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
 
 namespace Assets.Scripts.Terrain.Utils
 {

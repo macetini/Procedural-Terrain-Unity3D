@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Chunk;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Processing
+namespace Assets.Scripts.Terrain.Generation.Processing
 {
     internal class Registry
     {

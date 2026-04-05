@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain
+namespace Assets.Scripts.Terrain.Generation
 {
     internal class BuildQueueState
     {

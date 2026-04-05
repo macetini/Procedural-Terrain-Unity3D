@@ -1,7 +1,7 @@
 using Assets.Scripts.Terrain.Effects;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Chunk
+namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class TerrainChunk : MonoBehaviour
@@ -20,14 +20,14 @@ namespace Assets.Scripts.Terrain.Chunk
         public bool IsVisible { get; private set; } = true;
         public int CurrentStep { get; private set; } = -1;
         public Vector2Int ChunkCoord => chunkCoord;
-        public TerrainGenerator Generator => generator;
+        public ProceduralTerrain Generator => generator;
 
         // References
         private MeshRenderer rendererReference;
         private MeshFilter filterReference;
 
         // Data
-        private TerrainGenerator generator;
+        private ProceduralTerrain generator;
         private Vector2Int chunkCoord;
         private ChunkSettings settings;
 
@@ -36,7 +36,7 @@ namespace Assets.Scripts.Terrain.Chunk
         private bool isMeshReady = false; // Prevents "Blips" before the first build
         private string meshName;
 
-        private readonly ChunkProcessor processor = new();
+        private readonly ChunkDataProcessor processor = new();
 
         void Awake()
         {
@@ -57,7 +57,7 @@ namespace Assets.Scripts.Terrain.Chunk
             }
         }
 
-        public void InitBuild(TerrainGenerator generator, Vector2Int chunkCoord)
+        public void InitBuild(ProceduralTerrain generator, Vector2Int chunkCoord)
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;

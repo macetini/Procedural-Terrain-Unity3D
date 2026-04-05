@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Chunk;
-using Assets.Scripts.Terrain.Chunk.Data;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Processing
+namespace Assets.Scripts.Terrain.Generation.Processing
 {
     public class TerrainDataProcessor
     {

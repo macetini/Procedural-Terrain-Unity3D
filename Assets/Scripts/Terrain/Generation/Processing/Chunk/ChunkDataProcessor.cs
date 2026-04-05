@@ -1,12 +1,12 @@
-using Assets.Scripts.Terrain.Chunk.Data;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Chunk
+namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 {
-    internal class ChunkProcessor
+    internal class ChunkDataProcessor
     {
         // Terrain data
-        private TerrainGenerator generator;
+        private ProceduralTerrain generator;
         private ChunkNeighborStruct neighbors;
 
         // Terrain settings
@@ -29,7 +29,7 @@ namespace Assets.Scripts.Terrain.Chunk
         // Flags
         private int lastTriangleCount = -1;
 
-        public void Init(TerrainGenerator generator)
+        public void Init(ProceduralTerrain generator)
         {
             this.generator = generator;
 

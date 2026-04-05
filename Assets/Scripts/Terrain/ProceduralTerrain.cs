@@ -1,12 +1,13 @@
-using Assets.Scripts.Terrain.Chunk;
-using Assets.Scripts.Terrain.Chunk.Data;
+using Assets.Scripts.Terrain.Generation;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
 using Assets.Scripts.Terrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Assets.Scripts.Terrain
 {
-    public class TerrainGenerator : MonoBehaviour
+    public class ProceduralTerrain : MonoBehaviour
     {
         [Header("Terrain Settings")]
         public TerrainSettings terrain = new();
@@ -26,22 +27,22 @@ namespace Assets.Scripts.Terrain
         [Header("Prefabs")]
         public TerrainChunk chunkPrefab;
 
-        private TerrainController terrainController;
+        private TerrainDataGenerator dataGenerator;
 
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord) =>
-            terrainController.GetNeighborGrids(chunkCoord);
+            dataGenerator.GetNeighborGrids(chunkCoord);
 
         public int[] GetPrecalculatedTriangles(int resolution) =>
-            terrainController.GetPrecalculatedTriangles(resolution);
+            dataGenerator.GetPrecalculatedTriangles(resolution);
 
         void Awake()
         {
-            terrainController = new TerrainController(this);
+            dataGenerator = new TerrainDataGenerator(this);
         }
 
         void OnDestroy()
         {
-            terrainController.Destroy();
+            dataGenerator.Destroy();
         }
 
         void Start()
@@ -54,12 +55,12 @@ namespace Assets.Scripts.Terrain
                 );
                 return;
             }
-            terrainController.BuildTerrain();
+            dataGenerator.BuildTerrain();
         }
 
         void Update()
         {
-            terrainController.UpdateCurrentCameraPosition();
+            dataGenerator.UpdateCurrentCameraPosition();
 
             // WARNING: This will rebuild the whole terrain. Should only be used during development.
             if (Keyboard.current.enterKey.wasPressedThisFrame)
@@ -71,8 +72,8 @@ namespace Assets.Scripts.Terrain
         private void HandleDebugRebuild()
         {
             Debug.Log("Rebuilding terrain.");
-            terrainController.ResetGeneratorState();
-            terrainController.BuildTerrain();
+            dataGenerator.ResetGeneratorState();
+            dataGenerator.BuildTerrain();
         }
     }
 }
