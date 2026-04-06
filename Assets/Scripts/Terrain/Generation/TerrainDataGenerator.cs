@@ -225,11 +225,8 @@ namespace Assets.Scripts.Terrain.Generation
             while (buildState.Queue.Count > 0)
             {
                 Vector2Int coord = buildState.Queue.Dequeue();
-
-                // Pass control to the safe runner
                 yield return SafeBuildChunk(coord);
 
-                // Always clean up the hash so this coord can be queued again later
                 buildState.QueueHash.Remove(coord);
                 yield return null;
             }
@@ -248,27 +245,23 @@ namespace Assets.Scripts.Terrain.Generation
 
                 try
                 {
-                    // MoveNext() returns false when the coroutine is finished
-                    hasNextStep = buildTask.MoveNext();
+                    hasNextStep = buildTask.MoveNext(); // MoveNext() returns false when the coroutine is finished
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError(
                         $"<color=red>[Terrain] Crash building chunk {coord}:</color> {e.Message}\n{e.StackTrace}"
                     );
-                    // Exit this specific chunk's build immediately
-                    yield break;
+                    yield break; // Exit this specific chunk's build immediately
                 }
 
                 if (hasNextStep)
                 {
-                    // The task is still running; pass the yield up to Unity
                     yield return buildTask.Current;
                 }
                 else
                 {
-                    // Task is finished normally
-                    canProcess = false;
+                    canProcess = false; // Task is finished normally
                 }
             }
         }
