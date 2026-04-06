@@ -14,7 +14,7 @@ namespace Assets.Scripts.Terrain.Generation
         {
             if (coord == null)
             {
-                Debug.LogError("[TerrainDataGenerator] Coord is null");
+                Debug.LogError("[TerrainDataGenerator] GetNeighborGrids called with null coord");
                 return default;
             }
             return terrainDataProcessor.GetNeighborGrids(coord);
