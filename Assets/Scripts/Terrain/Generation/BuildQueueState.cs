@@ -5,7 +5,7 @@ namespace Assets.Scripts.Terrain.Generation
 {
     internal class BuildQueueState
     {
-        public readonly List<Vector2Int> Queue = new();
+        public readonly Queue<Vector2Int> Queue = new();
         public readonly HashSet<Vector2Int> QueueHash = new();
         public bool IsProcessing;
 

@@ -182,7 +182,7 @@ namespace Assets.Scripts.Terrain.Generation
             {
                 return false;
             }
-            buildState.Queue.Add(coord);
+            buildState.Queue.Enqueue(coord);
             return true;
         }
 
@@ -202,7 +202,8 @@ namespace Assets.Scripts.Terrain.Generation
             if (buildState.Queue.Count <= 1)
                 return;
             var camCoord = runtime.CurrentCameraPosition;
-            buildState.Queue.Sort(
+            var sorted = new List<Vector2Int>(buildState.Queue);
+            sorted.Sort(
                 (a, b) =>
                 {
                     int distA = Mathf.Abs(a.x - camCoord.x) + Mathf.Abs(a.y - camCoord.y);
@@ -210,6 +211,11 @@ namespace Assets.Scripts.Terrain.Generation
                     return distA.CompareTo(distB);
                 }
             );
+            buildState.Queue.Clear();
+            foreach (var coord in sorted)
+            {
+                buildState.Queue.Enqueue(coord);
+            }
         }
 
         private IEnumerator ProcessBuildQueue()
@@ -217,8 +223,7 @@ namespace Assets.Scripts.Terrain.Generation
             buildState.IsProcessing = true;
             while (buildState.Queue.Count > 0)
             {
-                Vector2Int coord = buildState.Queue[0];
-                buildState.Queue.RemoveAt(0);
+                Vector2Int coord = buildState.Queue.Dequeue();
                 buildState.QueueHash.Remove(coord);
 
                 yield return ProcessQueuedChunk(coord);
