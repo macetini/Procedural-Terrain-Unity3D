@@ -221,15 +221,56 @@ namespace Assets.Scripts.Terrain.Generation
         private IEnumerator ProcessBuildQueue()
         {
             buildState.IsProcessing = true;
+
             while (buildState.Queue.Count > 0)
             {
                 Vector2Int coord = buildState.Queue.Dequeue();
-                buildState.QueueHash.Remove(coord);
 
-                yield return ProcessQueuedChunk(coord);
+                // Pass control to the safe runner
+                yield return SafeBuildChunk(coord);
+
+                // Always clean up the hash so this coord can be queued again later
+                buildState.QueueHash.Remove(coord);
                 yield return null;
             }
+
             buildState.IsProcessing = false;
+        }
+
+        private IEnumerator SafeBuildChunk(Vector2Int coord)
+        {
+            IEnumerator buildTask = ProcessQueuedChunk(coord);
+            bool canProcess = true;
+
+            while (canProcess)
+            {
+                bool hasNextStep;
+
+                try
+                {
+                    // MoveNext() returns false when the coroutine is finished
+                    hasNextStep = buildTask.MoveNext();
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError(
+                        $"<color=red>[Terrain] Crash building chunk {coord}:</color> {e.Message}\n{e.StackTrace}"
+                    );
+                    // Exit this specific chunk's build immediately
+                    yield break;
+                }
+
+                if (hasNextStep)
+                {
+                    // The task is still running; pass the yield up to Unity
+                    yield return buildTask.Current;
+                }
+                else
+                {
+                    // Task is finished normally
+                    canProcess = false;
+                }
+            }
         }
 
         private IEnumerator ProcessQueuedChunk(Vector2Int coord)
