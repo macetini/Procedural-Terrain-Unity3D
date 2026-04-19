@@ -39,6 +39,8 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 
             elevationStepHeight = generator.terrain.elevationStepHeight;
             skirtDepth = generator.terrain.skirtDepth;
+
+            lastTriangleCount = -1;
         }
 
         public void BuildMeshData(int resolutionStep, Vector2Int chunkCoord)

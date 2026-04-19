@@ -49,6 +49,17 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             Destroy(gameObject);
         }
 
+        public void PrepareForPool()
+        {
+            CurrentStep = -1;
+            isMeshReady = false;
+            wasVisibleLastCheck = false;
+            IsVisible = true;
+
+            if (fadeEffect != null)
+                fadeEffect.ResetEffect();
+        }
+
         void OnDestroy()
         {
             if (filterReference != null && filterReference.sharedMesh != null)
@@ -132,6 +143,10 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
                 filterReference.sharedMesh = new Mesh { name = meshName };
                 filterReference.sharedMesh.MarkDynamic();
             }
+            else
+            {
+                filterReference.sharedMesh.name = meshName;
+            }
             return filterReference.sharedMesh;
         }
 
@@ -196,7 +211,8 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 
         public void StartFadeIn()
         {
-            fadeEffect.Play();
+            if (fadeEffect != null)
+                fadeEffect.Play();
         }
 
         // ------------------------------------------------------------------------------------------------

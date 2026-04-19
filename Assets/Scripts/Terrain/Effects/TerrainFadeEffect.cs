@@ -54,9 +54,14 @@ namespace Assets.Scripts.Terrain.Effects
             _renderer.SetPropertyBlock(_propBlock);
         }
 
-        // Optional: Reset alpha if the chunk is pooled/reused
+        // Reset for pool reuse — must stop coroutine before GO deactivates
         public void ResetEffect()
         {
+            if (_fadeCoroutine != null)
+            {
+                StopCoroutine(_fadeCoroutine);
+                _fadeCoroutine = null;
+            }
             SetAlpha(0);
         }
     }

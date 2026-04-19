@@ -20,6 +20,9 @@ namespace Assets.Scripts.Terrain.Generation.Processing
             registry = new Registry();
         }
 
+        public void SetChunkDisposeAction(System.Action<TerrainChunk> action) =>
+            registry.SetChunkDisposeAction(action);
+
         public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
         {
             registry.ClearAll();

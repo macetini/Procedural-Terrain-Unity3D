@@ -25,17 +25,21 @@ namespace Assets.Scripts.Terrain.Generation
         private readonly BuildQueueState buildState = new();
         private readonly ProceduralTerrain generator;
         private readonly TerrainDataProcessor terrainDataProcessor;
+        private readonly TerrainChunkPool chunkPool;
         private readonly Dictionary<int, int[]> triangleCache = new();
 
         public void Destroy()
         {
             runtime.WorldMonitoringActive = false;
+            chunkPool.Clear();
         }
 
         public TerrainDataGenerator(ProceduralTerrain generator)
         {
             this.generator = generator;
             terrainDataProcessor = new TerrainDataProcessor(generator.terrain.chunkSize);
+            chunkPool = new TerrainChunkPool(generator.chunkPrefab, generator.transform);
+            terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
         }
 
         public void ResetGeneratorState()
@@ -45,6 +49,7 @@ namespace Assets.Scripts.Terrain.Generation
             triangleCache.Clear();
             cleanup.ResetForRebuild();
             terrainDataProcessor.ClearAll();
+            chunkPool.Clear();
         }
 
         public void BuildTerrain()
@@ -368,12 +373,7 @@ namespace Assets.Scripts.Terrain.Generation
                 0,
                 coord.y * runtime.ChunkBoundSize
             );
-            var chunk = Object.Instantiate(
-                generator.chunkPrefab,
-                position,
-                Quaternion.identity,
-                generator.transform
-            );
+            var chunk = chunkPool.Get(position);
             chunk.InitBuild(generator, coord);
             chunk.UpdateVisibility(runtime.CameraPlanes);
             terrainDataProcessor.RegisterChunk(coord, chunk);
@@ -494,7 +494,7 @@ namespace Assets.Scripts.Terrain.Generation
             }
             if (chunk != null)
             {
-                Object.Destroy(chunk.gameObject);
+                chunkPool.Return(chunk);
             }
         }
 

@@ -7,6 +7,10 @@ namespace Assets.Scripts.Terrain.Generation.Processing
     internal class Registry
     {
         private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
+        private System.Action<TerrainChunk> onChunkDispose;
+
+        public void SetChunkDisposeAction(System.Action<TerrainChunk> action) =>
+            onChunkDispose = action;
 
         // Registry Helpers
         public bool HasActiveChunk(Vector2Int coord) => activeChunks.ContainsKey(coord);
@@ -25,7 +29,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing
 
                 if (existingChunk != null)
                 {
-                    existingChunk.CallDestroy();
+                    DisposeChunk(existingChunk);
                 }
             }
 
@@ -44,10 +48,18 @@ namespace Assets.Scripts.Terrain.Generation.Processing
             {
                 if (chunk != null)
                 {
-                    chunk.CallDestroy();
+                    DisposeChunk(chunk);
                 }
             }
             activeChunks.Clear();
+        }
+
+        private void DisposeChunk(TerrainChunk chunk)
+        {
+            if (onChunkDispose != null)
+                onChunkDispose(chunk);
+            else
+                chunk.CallDestroy();
         }
 
         public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)
