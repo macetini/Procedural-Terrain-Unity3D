@@ -1,13 +1,12 @@
 using Assets.Scripts.Terrain.Effects;
+using Assets.Scripts.Terrain.Generation.Processing.Chunk;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
+namespace Assets.Scripts.Terrain
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class TerrainChunk : MonoBehaviour
     {
-        private const string MESH_IDENTIFIER = "TerrainChunk_";
-
         [Header("Settings")]
         public Material terrainMaterial;
 
@@ -18,9 +17,12 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         public TerrainFadeEffect fadeEffect;
 
         public bool IsVisible { get; private set; } = true;
-        public int CurrentStep { get; private set; } = -1;
+        public int CurrentStep => chunkGenerator.CurrentStep;
         public Vector2Int ChunkCoord => chunkCoord;
         public ProceduralTerrain Generator => generator;
+
+        internal MeshRenderer RendererReference => rendererReference;
+        internal MeshFilter FilterReference => filterReference;
 
         // References
         private MeshRenderer rendererReference;
@@ -29,20 +31,17 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         // Data
         private ProceduralTerrain generator;
         private Vector2Int chunkCoord;
-        private ChunkSettings settings;
-        private Transform cameraTransform;
 
         // Calculations
         private bool wasVisibleLastCheck = false; // Track state change
-        private bool isMeshReady = false; // Prevents "Blips" before the first build
-        private string meshName;
 
-        private readonly ChunkDataProcessor processor = new();
+        private ChunkGenerator chunkGenerator;
 
         void Awake()
         {
             rendererReference = GetComponent<MeshRenderer>();
             filterReference = GetComponent<MeshFilter>();
+            chunkGenerator = new ChunkGenerator(this);
         }
 
         public void CallDestroy() // WARNING: Not optimized. Should only be only used during the development phase.
@@ -52,8 +51,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 
         public void PrepareForPool()
         {
-            CurrentStep = -1;
-            isMeshReady = false;
+            chunkGenerator.Reset();
             wasVisibleLastCheck = false;
             IsVisible = true;
 
@@ -75,106 +73,17 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;
-            settings = ChunkSettings.FromGenerator(generator);
-            cameraTransform = generator.cameraConfig.reference.transform;
-
-            rendererReference.enabled = false;
-            isMeshReady = false;
-
-            meshName = $"{MESH_IDENTIFIER}{chunkCoord.x}_{chunkCoord.y}";
-
-            if (terrainMaterial != null)
-            {
-                // Use sharedMaterial to allow the GPU to batch all chunks together
-                rendererReference.sharedMaterial = terrainMaterial;
-            }
-
-            processor.Init(generator);
-            UpdateLOD(true);
+            chunkGenerator.Init(generator, chunkCoord);
         }
 
         public void UpdateLOD(bool force = false)
         {
-            int targetStep = GetTargetStep();
-
-            // Only rebuild if the LOD changed OR we are forcing it (initial build)
-            if (targetStep != CurrentStep || force)
-            {
-                CurrentStep = targetStep;
-                BuildProceduralMesh();
-            }
-        }
-
-        private int GetTargetStep()
-        {
-            // Calculate center for more accurate LOD switching
-            float halfSize = settings.ChunkBoundSize * 0.5f;
-            Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
-
-            Vector3 diff = center - cameraTransform.position;
-            float sqrDist = diff.sqrMagnitude;
-
-            if (sqrDist > settings.SqrLodDistance2)
-            {
-                return generator.lod.step2; // LOD 2 (low)
-            }
-            if (sqrDist > settings.SqrLodDistance1)
-            {
-                return generator.lod.step1; // LOD 1 (medium)
-            }
-            return generator.lod.step0; // LOD 0 (full detail)
-        }
-
-        private void BuildProceduralMesh()
-        {
-            processor.BuildMeshData(CurrentStep, chunkCoord);
-            processor.GenerateGeometryData();
-            processor.CalculateNormals();
-
-            Mesh mesh = CreateRawMesh();
-            processor.PopulateMesh(mesh);
-
-            isMeshReady = true;
-            FinalizeMesh(mesh);
-        }
-
-        private Mesh CreateRawMesh()
-        {
-            if (filterReference.sharedMesh == null)
-            {
-                filterReference.sharedMesh = new Mesh { name = meshName };
-                filterReference.sharedMesh.MarkDynamic();
-            }
-            else
-            {
-                filterReference.sharedMesh.name = meshName;
-            }
-            return filterReference.sharedMesh;
-        }
-
-        private void FinalizeMesh(Mesh mesh)
-        {
-            float maxHeight = settings.MaxElevationStep * settings.ElevationStepHeight;
-
-            // We center the bounds and apply the public frustumPadding
-            Vector3 center = new(
-                settings.ChunkBoundSize * 0.5f,
-                maxHeight * 0.5f,
-                settings.ChunkBoundSize * 0.5f
-            );
-            Vector3 size = new(
-                settings.ChunkBoundSize + settings.FrustumPadding,
-                maxHeight + settings.SkirtDepth + settings.FrustumPadding,
-                settings.ChunkBoundSize + settings.FrustumPadding
-            );
-            mesh.bounds = new Bounds(center, size);
-
-            if (!rendererReference.enabled)
-                rendererReference.enabled = true;
+            chunkGenerator.UpdateLOD(force);
         }
 
         public void UpdateVisibility(Plane[] planes)
         {
+            var settings = chunkGenerator.Settings;
             Vector3 worldCenter = transform.position + settings.VisibilityBoundsOffset;
             Bounds checkBounds = new(worldCenter, settings.VisibilityBoundsSize);
 
@@ -182,7 +91,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             bool frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
             IsVisible = frustumVisible;
 
-            bool finalShowState = frustumVisible && isMeshReady;
+            bool finalShowState = frustumVisible && chunkGenerator.IsMeshReady;
 
             if (fadeEffect != null && finalShowState && !wasVisibleLastCheck)
             {
@@ -226,7 +135,8 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 
                 Gizmos.color = Color.blue;
                 // We only loop through the grid vertices (ignore the skirt for clarity)
-                int resolution = (settings.ChunkSize / CurrentStep) + 1;
+                int resolution =
+                    (chunkGenerator.Settings.ChunkSize / chunkGenerator.CurrentStep) + 1;
                 int gridCount = resolution * resolution;
 
                 for (int i = 0; i < gridCount; i++)

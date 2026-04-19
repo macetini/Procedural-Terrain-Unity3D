@@ -61,11 +61,11 @@ Assets/Scripts/
    CleanupState.cs
    Processing/Chunk/
     ChunkDataProcessor.cs
+    ChunkGenerator.cs
     ChunkSettings.cs
     Data/
      ChunkNeighborStruct.cs
      TileMeshStruct.cs
-    TerrainChunk.cs
     TerrainChunkPool.cs
    Processing/
     Registry.cs
@@ -81,6 +81,7 @@ Assets/Scripts/
    LODSettings.cs
    NoiseSettings.cs
    TerrainSettings.cs
+  TerrainChunk.cs
   Utils/
    TerrainMath.cs
    TerrainNoise.cs
