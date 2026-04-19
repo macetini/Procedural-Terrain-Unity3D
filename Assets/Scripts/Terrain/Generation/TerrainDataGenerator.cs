@@ -204,8 +204,12 @@ namespace Assets.Scripts.Terrain.Generation
         private void StartBuildQueueIfNeeded()
         {
             if (buildState.Queue.Count == 0)
+            {
                 return;
+            }
+
             SortBuildQueue();
+
             if (!buildState.IsProcessing)
             {
                 generator.StartCoroutine(ProcessBuildQueue());
@@ -215,11 +219,18 @@ namespace Assets.Scripts.Terrain.Generation
         private void SortBuildQueue()
         {
             if (buildState.Queue.Count <= 1)
+            {
                 return;
+            }
+
             buildState.SortOrigin = runtime.CurrentCameraPosition;
             buildState.SortBuffer.Clear();
+
             foreach (var item in buildState.Queue)
+            {
                 buildState.SortBuffer.Add(item);
+            }
+
             buildState.SortBuffer.Sort(buildState.DistanceComparison);
             buildState.Queue.Clear();
             foreach (var coord in buildState.SortBuffer)
@@ -556,15 +567,12 @@ namespace Assets.Scripts.Terrain.Generation
                     runtime.CameraPlanes
                 );
 
-                // Take a snapshot of the current keys
                 terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
 
-                // Iterate through the snapshot
                 for (int i = 0; i < cleanup.VisibilityKeysSnapshot.Count; i++)
                 {
                     Vector2Int key = cleanup.VisibilityKeysSnapshot[i];
 
-                    // Safety Check: Make sure the chunk wasn't purged while we were yielding
                     if (terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
                     {
                         chunk.UpdateVisibility(runtime.CameraPlanes);
@@ -588,9 +596,13 @@ namespace Assets.Scripts.Terrain.Generation
         public int[] GetPrecalculatedTriangles(int resolution)
         {
             if (triangleCache.TryGetValue(resolution, out var cachedTris))
+            {
                 return cachedTris;
+            }
+
             var newTris = TerrainMath.GenerateTriangleIndices(resolution);
             triangleCache[resolution] = newTris;
+
             return newTris;
         }
     }
