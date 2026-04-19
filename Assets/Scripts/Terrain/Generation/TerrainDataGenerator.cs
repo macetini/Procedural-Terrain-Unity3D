@@ -216,18 +216,11 @@ namespace Assets.Scripts.Terrain.Generation
         {
             if (buildState.Queue.Count <= 1)
                 return;
-            var camCoord = runtime.CurrentCameraPosition;
+            buildState.SortOrigin = runtime.CurrentCameraPosition;
             buildState.SortBuffer.Clear();
             foreach (var item in buildState.Queue)
                 buildState.SortBuffer.Add(item);
-            buildState.SortBuffer.Sort(
-                (a, b) =>
-                {
-                    int distA = Mathf.Abs(a.x - camCoord.x) + Mathf.Abs(a.y - camCoord.y);
-                    int distB = Mathf.Abs(b.x - camCoord.x) + Mathf.Abs(b.y - camCoord.y);
-                    return distA.CompareTo(distB);
-                }
-            );
+            buildState.SortBuffer.Sort(buildState.DistanceComparison);
             buildState.Queue.Clear();
             foreach (var coord in buildState.SortBuffer)
             {

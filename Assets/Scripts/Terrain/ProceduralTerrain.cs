@@ -1,5 +1,4 @@
 using Assets.Scripts.Terrain.Generation;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk;
 using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
 using Assets.Scripts.Terrain.Settings;
 using UnityEngine;
