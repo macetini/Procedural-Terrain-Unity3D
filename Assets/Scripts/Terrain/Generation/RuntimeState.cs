@@ -5,7 +5,7 @@ namespace Assets.Scripts.Terrain.Generation
     internal class RuntimeState
     {
         public Vector2Int CurrentCameraPosition = Vector2Int.zero;
-        public Plane[] CameraPlanes;
+        public readonly Plane[] CameraPlanes = new Plane[6];
         public float ChunkBoundSize;
         public bool WorldMonitoringActive = true;
     }

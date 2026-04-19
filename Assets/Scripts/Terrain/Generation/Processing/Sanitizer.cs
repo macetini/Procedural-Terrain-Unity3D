@@ -42,39 +42,10 @@ namespace Assets.Scripts.Terrain.Generation.Processing
 
         public void SanitizeGlobalChunk(Vector2Int coord)
         {
-            if (tileMap.TryGetValue(coord, out TileMeshStruct[,] currentData))
-            {
-                SanitizeGlobalChunkEast(coord, currentData);
-                SanitizeGlobalChunkNorth(coord, currentData);
-            }
-        }
+            if (!tileMap.TryGetValue(coord, out TileMeshStruct[,] currentData))
+                return;
 
-        private void SanitizeGlobalChunkEast(Vector2Int coord, TileMeshStruct[,] currentData)
-        {
             tileMap.TryGetValue(coord + Vector2Int.right, out TileMeshStruct[,] eastData);
-
-            int edge = chunkSize - 1;
-
-            for (int x = 0; x < chunkSize; x++)
-            {
-                for (int z = 0; z < chunkSize; z++)
-                {
-                    ref TileMeshStruct current = ref currentData[x, z];
-
-                    if (x < edge)
-                    {
-                        TerrainMath.ClampNeighbor(ref current, ref currentData[x + 1, z]);
-                    }
-                    else if (eastData != null)
-                    {
-                        TerrainMath.ClampNeighbor(ref current, ref eastData[0, z]);
-                    }
-                }
-            }
-        }
-
-        private void SanitizeGlobalChunkNorth(Vector2Int coord, TileMeshStruct[,] currentData)
-        {
             tileMap.TryGetValue(coord + Vector2Int.up, out TileMeshStruct[,] northData);
 
             int edge = chunkSize - 1;
@@ -85,6 +56,17 @@ namespace Assets.Scripts.Terrain.Generation.Processing
                 {
                     ref TileMeshStruct current = ref currentData[x, z];
 
+                    // East neighbor clamping
+                    if (x < edge)
+                    {
+                        TerrainMath.ClampNeighbor(ref current, ref currentData[x + 1, z]);
+                    }
+                    else if (eastData != null)
+                    {
+                        TerrainMath.ClampNeighbor(ref current, ref eastData[0, z]);
+                    }
+
+                    // North neighbor clamping
                     if (z < edge)
                     {
                         TerrainMath.ClampNeighbor(ref current, ref currentData[x, z + 1]);

@@ -1,6 +1,6 @@
 namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 {
-    internal class ChunkSettings
+    internal struct ChunkSettings
     {
         public float FrustumPadding { get; private set; }
         public float SkirtDepth { get; private set; }

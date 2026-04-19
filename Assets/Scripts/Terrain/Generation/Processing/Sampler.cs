@@ -9,15 +9,27 @@ namespace Assets.Scripts.Terrain.Generation.Processing
     {
         private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
         private readonly int chunkSize;
+        private readonly Stack<TileMeshStruct[,]> arrayPool = new();
 
         public Sampler(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
             (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
-        public void ClearAll() => tileMap.Clear();
+        public void ClearAll()
+        {
+            tileMap.Clear();
+            arrayPool.Clear();
+        }
 
         public bool HasTile(Vector2Int coord) => tileMap.ContainsKey(coord);
 
-        public void RemoveTile(Vector2Int coord) => tileMap.Remove(coord);
+        public void RemoveTile(Vector2Int coord)
+        {
+            if (tileMap.TryGetValue(coord, out var data))
+            {
+                arrayPool.Push(data);
+                tileMap.Remove(coord);
+            }
+        }
 
         public void GenerateRawData(Vector2Int coord)
         {
@@ -26,7 +38,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing
                 return;
             }
 
-            TileMeshStruct[,] data = new TileMeshStruct[chunkSize, chunkSize];
+            TileMeshStruct[,] data = RentArray();
             int offsetX = coord.x * chunkSize;
             int offsetZ = coord.y * chunkSize;
 
@@ -39,6 +51,11 @@ namespace Assets.Scripts.Terrain.Generation.Processing
                 }
             }
             tileMap.Add(coord, data);
+        }
+
+        private TileMeshStruct[,] RentArray()
+        {
+            return arrayPool.Count > 0 ? arrayPool.Pop() : new TileMeshStruct[chunkSize, chunkSize];
         }
     }
 }

@@ -57,7 +57,9 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             IsVisible = true;
 
             if (fadeEffect != null)
+            {
                 fadeEffect.ResetEffect();
+            }
         }
 
         void OnDestroy()
@@ -77,7 +79,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             rendererReference.enabled = false;
             isMeshReady = false;
 
-            meshName = MESH_IDENTIFIER + chunkCoord.x + "_" + chunkCoord.y;
+            meshName = $"{MESH_IDENTIFIER}{chunkCoord.x}_{chunkCoord.y}";
 
             if (terrainMaterial != null)
             {
@@ -107,16 +109,14 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             float halfSize = settings.ChunkBoundSize * 0.5f;
             Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
-            float dist = Vector3.Distance(
-                center,
-                generator.cameraConfig.reference.transform.position
-            );
+            Vector3 diff = center - generator.cameraConfig.reference.transform.position;
+            float sqrDist = diff.sqrMagnitude;
 
-            if (dist > generator.lod.distance2)
+            if (sqrDist > generator.lod.distance2 * generator.lod.distance2)
             {
                 return generator.lod.step2; // LOD 2 (low)
             }
-            if (dist > generator.lod.distance1)
+            if (sqrDist > generator.lod.distance1 * generator.lod.distance1)
             {
                 return generator.lod.step1; // LOD 1 (medium)
             }

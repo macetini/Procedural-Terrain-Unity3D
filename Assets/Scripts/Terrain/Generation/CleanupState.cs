@@ -9,8 +9,12 @@ namespace Assets.Scripts.Terrain.Generation
         public readonly List<Vector2Int> VisibilityKeysSnapshot = new();
         public readonly List<TerrainChunk> SceneChunksSnapshot = new();
         public readonly HashSet<Vector2Int> SeenCoords = new();
+        public int CleanupPassCounter;
 
-        public void ResetForRebuild() { }
+        public void ResetForRebuild()
+        {
+            CleanupPassCounter = 0;
+        }
 
         public void BeginCleanupPass()
         {

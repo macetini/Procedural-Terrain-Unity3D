@@ -35,7 +35,9 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             {
                 var chunk = pool.Pop();
                 if (chunk == null)
+                {
                     continue; // destroyed externally, skip
+                }
 
                 chunk.transform.SetPositionAndRotation(position, Quaternion.identity);
                 chunk.gameObject.SetActive(true);
@@ -48,7 +50,11 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         public void Return(TerrainChunk chunk)
         {
             if (chunk == null)
+            {
+                Debug.LogWarning("Attempted to return a null chunk to the pool.");
                 return;
+            }
+
             chunk.PrepareForPool();
 
             if (pool.Count >= maxSize)

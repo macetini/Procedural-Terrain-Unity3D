@@ -7,12 +7,14 @@ namespace Assets.Scripts.Terrain.Generation
     {
         public readonly Queue<Vector2Int> Queue = new();
         public readonly HashSet<Vector2Int> QueueHash = new();
+        public readonly List<Vector2Int> SortBuffer = new();
         public bool IsProcessing;
 
         public void Clear()
         {
             Queue.Clear();
             QueueHash.Clear();
+            SortBuffer.Clear();
             IsProcessing = false;
         }
     }

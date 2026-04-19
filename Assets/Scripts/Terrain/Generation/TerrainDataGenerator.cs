@@ -112,10 +112,10 @@ namespace Assets.Scripts.Terrain.Generation
         // ---------------------- MEASUREMENT UTILITIES -------------------------------------------------
         private static double MeasureExecution(System.Action action)
         {
-            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            long start = System.Diagnostics.Stopwatch.GetTimestamp();
             action();
-            stopwatch.Stop();
-            return stopwatch.Elapsed.TotalMilliseconds;
+            long end = System.Diagnostics.Stopwatch.GetTimestamp();
+            return (end - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
         }
 
         private static void LogMeasuredStep(string label, System.Action action)
@@ -214,8 +214,10 @@ namespace Assets.Scripts.Terrain.Generation
             if (buildState.Queue.Count <= 1)
                 return;
             var camCoord = runtime.CurrentCameraPosition;
-            var sorted = new List<Vector2Int>(buildState.Queue);
-            sorted.Sort(
+            buildState.SortBuffer.Clear();
+            foreach (var item in buildState.Queue)
+                buildState.SortBuffer.Add(item);
+            buildState.SortBuffer.Sort(
                 (a, b) =>
                 {
                     int distA = Mathf.Abs(a.x - camCoord.x) + Mathf.Abs(a.y - camCoord.y);
@@ -224,7 +226,7 @@ namespace Assets.Scripts.Terrain.Generation
                 }
             );
             buildState.Queue.Clear();
-            foreach (var coord in sorted)
+            foreach (var coord in buildState.SortBuffer)
             {
                 buildState.Queue.Enqueue(coord);
             }
@@ -428,8 +430,13 @@ namespace Assets.Scripts.Terrain.Generation
             {
                 return true;
             }
-            // Orphan sweep period logic removed with CleanupPassCounter
-            return generator.debug.orphanSweepPeriod == 0;
+            cleanup.CleanupPassCounter++;
+            if (cleanup.CleanupPassCounter >= generator.debug.orphanSweepPeriod)
+            {
+                cleanup.CleanupPassCounter = 0;
+                return true;
+            }
+            return false;
         }
 
         private void CleanupSceneChunkOrphans()
@@ -528,13 +535,13 @@ namespace Assets.Scripts.Terrain.Generation
         {
             while (runtime.WorldMonitoringActive && this != null && generator.isActiveAndEnabled)
             {
-                runtime.CameraPlanes = GeometryUtility.CalculateFrustumPlanes(
-                    generator.cameraConfig.reference
+                GeometryUtility.CalculateFrustumPlanes(
+                    generator.cameraConfig.reference,
+                    runtime.CameraPlanes
                 );
 
                 // Take a snapshot of the current keys
-                cleanup.VisibilityKeysSnapshot.Clear();
-                cleanup.VisibilityKeysSnapshot.AddRange(terrainDataProcessor.ActiveChunkKeys);
+                terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
 
                 // Iterate through the snapshot
                 for (int i = 0; i < cleanup.VisibilityKeysSnapshot.Count; i++)
