@@ -62,11 +62,13 @@ namespace Assets.Scripts.Terrain
         {
             dataGenerator.UpdateCurrentCameraPosition();
 
+#if UNITY_EDITOR
             // WARNING: This will rebuild the whole terrain. Should only be used during development.
             if (Keyboard.current.enterKey.wasPressedThisFrame)
             {
                 HandleDebugRebuild();
             }
+#endif
         }
 
         private void HandleDebugRebuild()

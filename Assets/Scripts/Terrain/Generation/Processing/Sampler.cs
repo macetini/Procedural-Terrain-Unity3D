@@ -31,6 +31,13 @@ namespace Assets.Scripts.Terrain.Generation.Processing
             }
         }
 
+        public void GetTileKeysNonAlloc(List<Vector2Int> targetList)
+        {
+            targetList.Clear();
+            foreach (var key in tileMap.Keys)
+                targetList.Add(key);
+        }
+
         public void GenerateRawData(Vector2Int coord)
         {
             if (tileMap.ContainsKey(coord))
@@ -50,7 +57,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing
                     data[x, z] = new TileMeshStruct(x, z, elevation);
                 }
             }
-            tileMap.Add(coord, data);
+            tileMap[coord] = data;
         }
 
         private TileMeshStruct[,] RentArray()

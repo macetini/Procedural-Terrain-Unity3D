@@ -85,7 +85,10 @@ namespace Assets.Scripts.Terrain.Generation
             var pos = generator.cameraConfig.reference.transform.position;
             int currentX = Mathf.FloorToInt(pos.x / runtime.ChunkBoundSize);
             int currentZ = Mathf.FloorToInt(pos.z / runtime.ChunkBoundSize);
-            runtime.CurrentCameraPosition = new Vector2Int(currentX, currentZ);
+            var newPos = new Vector2Int(currentX, currentZ);
+            if (newPos == runtime.CurrentCameraPosition)
+                return;
+            runtime.CurrentCameraPosition = newPos;
         }
 
         // --------------- FIRST PASS START : GENERATE RAW DATA FOR ALL CHUNKS IN VIEW DISTANCE ---------------
@@ -242,7 +245,6 @@ namespace Assets.Scripts.Terrain.Generation
                 yield return SafeBuildChunk(coord);
 
                 buildState.QueueHash.Remove(coord);
-                yield return null;
             }
 
             buildState.IsProcessing = false;
@@ -370,7 +372,6 @@ namespace Assets.Scripts.Terrain.Generation
                     }
                 }
             }
-            yield return null;
         }
 
         private void SpawnChunkMesh(Vector2Int coord)
@@ -416,6 +417,7 @@ namespace Assets.Scripts.Terrain.Generation
                 CleanupSceneChunkOrphans();
             }
             RemoveOutOfBoundsRegisteredChunks();
+            EvictStaleTileData();
             LogCleanupSummary();
         }
 
@@ -512,18 +514,39 @@ namespace Assets.Scripts.Terrain.Generation
             }
         }
 
+        private void EvictStaleTileData()
+        {
+            int dataRetentionRadius = generator.cameraConfig.viewDistanceChunks + 2;
+            terrainDataProcessor.GetTileDataKeysNonAlloc(cleanup.TileDataKeysSnapshot);
+
+            for (int i = 0; i < cleanup.TileDataKeysSnapshot.Count; i++)
+            {
+                Vector2Int coord = cleanup.TileDataKeysSnapshot[i];
+                int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
+                int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
+
+                if (dx > dataRetentionRadius || dz > dataRetentionRadius)
+                {
+                    terrainDataProcessor.EvictTileData(coord);
+                }
+            }
+        }
+
         private IEnumerator ProcessLocalChunks()
         {
-            for (
-                int x = -generator.cameraConfig.viewDistanceChunks;
-                x <= generator.cameraConfig.viewDistanceChunks;
-                x++
-            )
+            int viewDist = generator.cameraConfig.viewDistanceChunks;
+            int batchSize = Mathf.Max(1, generator.lod.visibilityBatchSize);
+            int processed = 0;
+
+            for (int x = -viewDist; x <= viewDist; x++)
             {
                 EnqueueVisibleChunksAtColumnOffset(x);
+                processed++;
 
-                // Yield after every 'X' column to keep framerate perfect
-                yield return null; // Row-by-row time slicing
+                if (processed % batchSize == 0)
+                {
+                    yield return null;
+                }
             }
 
             StartBuildQueueIfNeeded();

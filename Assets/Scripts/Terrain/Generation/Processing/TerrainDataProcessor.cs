@@ -72,6 +72,15 @@ namespace Assets.Scripts.Terrain.Generation.Processing
         public void GetActiveKeysNonAlloc(List<Vector2Int> targetList) =>
             registry.GetActiveKeysNonAlloc(targetList);
 
+        public void GetTileDataKeysNonAlloc(List<Vector2Int> targetList) =>
+            sampler.GetTileKeysNonAlloc(targetList);
+
+        public void EvictTileData(Vector2Int coord)
+        {
+            sampler.RemoveTile(coord);
+            sanitizer.Invalidate(coord);
+        }
+
         public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
             registry.ActiveChunkKeys;
         //

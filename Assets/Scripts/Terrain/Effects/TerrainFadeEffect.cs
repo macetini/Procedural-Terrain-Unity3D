@@ -48,8 +48,6 @@ namespace Assets.Scripts.Terrain.Effects
 
         private void SetAlpha(float alpha)
         {
-            // We use GetPropertyBlock to preserve other properties (like Triplanar scales)
-            _renderer.GetPropertyBlock(_propBlock);
             _propBlock.SetFloat(AlphaID, alpha);
             _renderer.SetPropertyBlock(_propBlock);
         }

@@ -30,6 +30,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         private ProceduralTerrain generator;
         private Vector2Int chunkCoord;
         private ChunkSettings settings;
+        private Transform cameraTransform;
 
         // Calculations
         private bool wasVisibleLastCheck = false; // Track state change
@@ -75,6 +76,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             this.generator = generator;
             this.chunkCoord = chunkCoord;
             settings = ChunkSettings.FromGenerator(generator);
+            cameraTransform = generator.cameraConfig.reference.transform;
 
             rendererReference.enabled = false;
             isMeshReady = false;
@@ -109,14 +111,14 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             float halfSize = settings.ChunkBoundSize * 0.5f;
             Vector3 center = transform.position + new Vector3(halfSize, 0, halfSize);
 
-            Vector3 diff = center - generator.cameraConfig.reference.transform.position;
+            Vector3 diff = center - cameraTransform.position;
             float sqrDist = diff.sqrMagnitude;
 
-            if (sqrDist > generator.lod.distance2 * generator.lod.distance2)
+            if (sqrDist > settings.SqrLodDistance2)
             {
                 return generator.lod.step2; // LOD 2 (low)
             }
-            if (sqrDist > generator.lod.distance1 * generator.lod.distance1)
+            if (sqrDist > settings.SqrLodDistance1)
             {
                 return generator.lod.step1; // LOD 1 (medium)
             }
@@ -173,18 +175,8 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 
         public void UpdateVisibility(Plane[] planes)
         {
-            float halfSize = settings.ChunkBoundSize * 0.5f;
-            float height = settings.MaxElevationStep * settings.ElevationStepHeight;
-
-            // Use world space center
-            Vector3 worldCenter =
-                transform.position + new Vector3(halfSize, height * 0.5f, halfSize);
-            Vector3 size = new(
-                settings.ChunkBoundSize + settings.FrustumPadding,
-                height + settings.SkirtDepth + settings.FrustumPadding,
-                settings.ChunkBoundSize + settings.FrustumPadding
-            );
-            Bounds checkBounds = new(worldCenter, size);
+            Vector3 worldCenter = transform.position + settings.VisibilityBoundsOffset;
+            Bounds checkBounds = new(worldCenter, settings.VisibilityBoundsSize);
 
             // 1. Calculate logical visibility (Frustum check)
             bool frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
