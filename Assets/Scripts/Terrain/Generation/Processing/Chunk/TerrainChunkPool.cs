@@ -8,13 +8,25 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         private readonly Stack<TerrainChunk> pool = new();
         private readonly TerrainChunk prefab;
         private readonly Transform parent;
+        private readonly int maxSize;
 
         public int Count => pool.Count;
 
-        public TerrainChunkPool(TerrainChunk prefab, Transform parent)
+        /// <summary>
+        /// Calculates the maximum number of chunks visible in a square grid
+        /// around the camera: (viewDistance * 2 + 1)².
+        /// </summary>
+        public static int CalculateMaxSize(int viewDistanceChunks)
+        {
+            int side = viewDistanceChunks * 2 + 1;
+            return side * side;
+        }
+
+        public TerrainChunkPool(TerrainChunk prefab, Transform parent, int maxSize)
         {
             this.prefab = prefab;
             this.parent = parent;
+            this.maxSize = maxSize;
         }
 
         public TerrainChunk Get(Vector3 position)
@@ -38,6 +50,13 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             if (chunk == null)
                 return;
             chunk.PrepareForPool();
+
+            if (pool.Count >= maxSize)
+            {
+                Object.Destroy(chunk.gameObject);
+                return;
+            }
+
             chunk.gameObject.SetActive(false);
             pool.Push(chunk);
         }

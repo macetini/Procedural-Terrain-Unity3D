@@ -38,7 +38,14 @@ namespace Assets.Scripts.Terrain.Generation
         {
             this.generator = generator;
             terrainDataProcessor = new TerrainDataProcessor(generator.terrain.chunkSize);
-            chunkPool = new TerrainChunkPool(generator.chunkPrefab, generator.transform);
+            int poolMaxSize = TerrainChunkPool.CalculateMaxSize(
+                generator.cameraConfig.viewDistanceChunks
+            );
+            chunkPool = new TerrainChunkPool(
+                generator.chunkPrefab,
+                generator.transform,
+                poolMaxSize
+            );
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
         }
 
@@ -432,7 +439,7 @@ namespace Assets.Scripts.Terrain.Generation
             for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
             {
                 TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
-                if (sceneChunk == null)
+                if (sceneChunk == null || !sceneChunk.gameObject.activeSelf)
                 {
                     continue;
                 }
