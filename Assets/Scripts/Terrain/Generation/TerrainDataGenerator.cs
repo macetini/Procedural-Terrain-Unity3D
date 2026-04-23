@@ -10,6 +10,15 @@ namespace Assets.Scripts.Terrain.Generation
 {
     public class TerrainDataGenerator
     {
+        private readonly RuntimeState runtime = new();
+        private readonly ProceduralTerrain generator;
+        private readonly TerrainDataProcessor terrainDataProcessor;
+        private readonly TerrainChunkPool chunkPool;
+        private readonly ChunkBuildQueue buildQueue;
+        private readonly ChunkCleanupManager cleanupManager;
+        private readonly ChunkVisibilitySystem visibilitySystem;
+        private readonly Dictionary<int, int[]> triangleCache = new();
+
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord)
         {
             if (coord == null)
@@ -19,14 +28,6 @@ namespace Assets.Scripts.Terrain.Generation
             }
             return terrainDataProcessor.GetNeighborGrids(coord);
         }
-
-        private readonly RuntimeState runtime = new();
-        private readonly CleanupState cleanup = new();
-        private readonly BuildQueueState buildState = new();
-        private readonly ProceduralTerrain generator;
-        private readonly TerrainDataProcessor terrainDataProcessor;
-        private readonly TerrainChunkPool chunkPool;
-        private readonly Dictionary<int, int[]> triangleCache = new();
 
         public void Destroy()
         {
@@ -47,14 +48,18 @@ namespace Assets.Scripts.Terrain.Generation
                 poolMaxSize
             );
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
+
+            buildQueue = new ChunkBuildQueue(runtime, terrainDataProcessor, chunkPool, generator);
+            cleanupManager = new ChunkCleanupManager(runtime, terrainDataProcessor, chunkPool, generator);
+            visibilitySystem = new ChunkVisibilitySystem(runtime, terrainDataProcessor, generator);
         }
 
         public void ResetGeneratorState()
         {
             generator.StopAllCoroutines();
-            buildState.Clear();
+            buildQueue.Clear();
             triangleCache.Clear();
-            cleanup.ResetForRebuild();
+            cleanupManager.ResetForRebuild();
             terrainDataProcessor.ClearAll();
             chunkPool.Clear();
         }
@@ -77,7 +82,7 @@ namespace Assets.Scripts.Terrain.Generation
             SecondPass();
 
             generator.StartCoroutine(WorldMonitoringRoutine());
-            generator.StartCoroutine(VisibilityCheckRoutine());
+            generator.StartCoroutine(visibilitySystem.VisibilityCheckRoutine());
         }
 
         public void UpdateCurrentCameraPosition()
@@ -91,7 +96,8 @@ namespace Assets.Scripts.Terrain.Generation
             runtime.CurrentCameraPosition = newPos;
         }
 
-        // --------------- FIRST PASS START : GENERATE RAW DATA FOR ALL CHUNKS IN VIEW DISTANCE ---------------
+        // --------------- FIRST PASS : GENERATE RAW DATA FOR ALL CHUNKS IN VIEW DISTANCE ---------------
+
         private void FirstPass()
         {
             int dataRadius = generator.cameraConfig.viewDistanceChunks + 1;
@@ -112,7 +118,6 @@ namespace Assets.Scripts.Terrain.Generation
             LogExecutionTime("Total", totalMs);
         }
 
-        // ---------------------- MEASUREMENT UTILITIES -------------------------------------------------
         private static double MeasureExecution(System.Action action)
         {
             long start = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -137,8 +142,6 @@ namespace Assets.Scripts.Terrain.Generation
             Debug.Log($"<color=orange>'{label}' Execution Time: {elapsedMs:F2} ms</color>");
         }
 
-        // -----------------------------------------------------------------------
-
         private void GenerateFullMeshData(Vector2Int cameraOrigin, int dataRadius)
         {
             for (int x = -dataRadius; x <= dataRadius; x++)
@@ -151,444 +154,29 @@ namespace Assets.Scripts.Terrain.Generation
             }
         }
 
-        // --------------- FIRST PASS END ------------------------------------------------------------------------------------
+        // --------------- SECOND PASS : BUILD MESHES FOR VISIBLE CHUNKS ---------------
 
-        // ---------------- SECOND PASS START : BUILD MESHES FOR VISIBLE CHUNKS AND ENQUEUE THEM FOR RENDERING ---------------
         private void SecondPass()
         {
-            EnqueueVisibleChunksAroundCamera();
-            StartBuildQueueIfNeeded();
+            buildQueue.EnqueueVisibleChunksAroundCamera();
+            buildQueue.StartBuildQueueIfNeeded();
         }
 
-        private void EnqueueVisibleChunksAroundCamera()
-        {
-            int viewDist = generator.cameraConfig.viewDistanceChunks;
-            for (int x = -viewDist; x <= viewDist; x++)
-            {
-                EnqueueVisibleChunksAtColumnOffset(x);
-            }
-        }
-
-        private void EnqueueVisibleChunksAtColumnOffset(int xOffset)
-        {
-            int viewDist = generator.cameraConfig.viewDistanceChunks;
-            int baseX = runtime.CurrentCameraPosition.x + xOffset;
-            int baseY = runtime.CurrentCameraPosition.y;
-            for (int z = -viewDist; z <= viewDist; z++)
-            {
-                var coord = new Vector2Int(baseX, baseY + z);
-                if (
-                    !TryEnqueueChunkBuild(coord)
-                    && terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
-                )
-                {
-                    chunk.UpdateLOD();
-                }
-            }
-        }
-
-        private bool TryEnqueueChunkBuild(Vector2Int coord)
-        {
-            if (
-                coord == null
-                || terrainDataProcessor.HasActiveChunk(coord)
-                || !buildState.QueueHash.Add(coord)
-            )
-            {
-                return false;
-            }
-            buildState.Queue.Enqueue(coord);
-            return true;
-        }
-
-        private void StartBuildQueueIfNeeded()
-        {
-            if (buildState.Queue.Count == 0)
-            {
-                return;
-            }
-
-            SortBuildQueue();
-
-            if (!buildState.IsProcessing)
-            {
-                generator.StartCoroutine(ProcessBuildQueue());
-            }
-        }
-
-        private void SortBuildQueue()
-        {
-            if (buildState.Queue.Count <= 1)
-            {
-                return;
-            }
-
-            buildState.SortOrigin = runtime.CurrentCameraPosition;
-            buildState.SortBuffer.Clear();
-
-            foreach (var item in buildState.Queue)
-            {
-                buildState.SortBuffer.Add(item);
-            }
-
-            buildState.SortBuffer.Sort(buildState.DistanceComparison);
-            buildState.Queue.Clear();
-            foreach (var coord in buildState.SortBuffer)
-            {
-                buildState.Queue.Enqueue(coord);
-            }
-        }
-
-        private IEnumerator ProcessBuildQueue()
-        {
-            buildState.IsProcessing = true;
-
-            while (buildState.Queue.Count > 0)
-            {
-                Vector2Int coord = buildState.Queue.Dequeue();
-                yield return SafeBuildChunk(coord);
-
-                buildState.QueueHash.Remove(coord);
-            }
-
-            buildState.IsProcessing = false;
-        }
-
-        private IEnumerator SafeBuildChunk(Vector2Int coord)
-        {
-            IEnumerator buildTask = ProcessQueuedChunk(coord);
-            bool canProcess = true;
-
-            while (canProcess)
-            {
-                bool hasNextStep;
-
-                try
-                {
-                    hasNextStep = buildTask.MoveNext(); // MoveNext() returns false when the coroutine is finished
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogError(
-                        $"<color=red>[Terrain] Crash building chunk {coord}:</color> {e.Message}\n{e.StackTrace}"
-                    );
-                    yield break; // Exit this specific chunk's build immediately
-                }
-
-                if (hasNextStep)
-                {
-                    yield return buildTask.Current;
-                }
-                else
-                {
-                    canProcess = false; // Task is finished normally
-                }
-            }
-        }
-
-        private IEnumerator ProcessQueuedChunk(Vector2Int coord)
-        {
-            if (!ShouldBuildQueuedChunk(coord))
-            {
-                yield break;
-            }
-
-            yield return GenerateRawDataForChunk(coord);
-            yield return EnsureSanitized(coord);
-
-            if (!ShouldBuildQueuedChunk(coord))
-            {
-                yield break;
-            }
-
-            SpawnChunkMesh(coord);
-
-            if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
-            {
-                chunk.StartFadeIn();
-            }
-        }
-
-        private bool ShouldBuildQueuedChunk(Vector2Int coord)
-        {
-            return !terrainDataProcessor.HasActiveChunk(coord) && IsWithinRetentionBounds(coord);
-        }
-
-        private bool IsWithinRetentionBounds(Vector2Int coord)
-        {
-            int retentionRadius = GetRetentionRadius();
-            int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
-            int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
-            return dx <= retentionRadius && dz <= retentionRadius;
-        }
-
-        private int GetRetentionRadius()
-        {
-            return Mathf.Max(0, generator.cameraConfig.viewDistanceChunks);
-        }
-
-        private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
-        {
-            yield return IterateNeighbors3x3(
-                coord,
-                n =>
-                {
-                    if (!terrainDataProcessor.HasTileData(n))
-                    {
-                        GenerateFullMeshData(n, 0);
-                        return true;
-                    }
-                    return false;
-                }
-            );
-        }
-
-        private IEnumerator EnsureSanitized(Vector2Int coord)
-        {
-            yield return IterateNeighbors3x3(
-                coord,
-                n =>
-                {
-                    if (!terrainDataProcessor.IsSanitized(n))
-                    {
-                        terrainDataProcessor.SanitizeGlobalChunk(n);
-                        terrainDataProcessor.MarkSanitized(n);
-                        return true;
-                    }
-                    return false;
-                }
-            );
-        }
-
-        private IEnumerator IterateNeighbors3x3(
-            Vector2Int center,
-            System.Func<Vector2Int, bool> action
-        )
-        {
-            for (int x = -1; x <= 1; x++)
-            {
-                for (int z = -1; z <= 1; z++)
-                {
-                    Vector2Int neighbor = center + new Vector2Int(x, z);
-                    if (action(neighbor))
-                    {
-                        yield return null;
-                    }
-                }
-            }
-        }
-
-        private void SpawnChunkMesh(Vector2Int coord)
-        {
-            if (coord == null || terrainDataProcessor.HasActiveChunk(coord))
-                return;
-            var position = new Vector3(
-                coord.x * runtime.ChunkBoundSize,
-                0,
-                coord.y * runtime.ChunkBoundSize
-            );
-            var chunk = chunkPool.Get(position);
-            chunk.InitBuild(generator, coord);
-            chunk.UpdateVisibility(runtime.CameraPlanes);
-            terrainDataProcessor.RegisterChunk(coord, chunk);
-        }
-
-        // --------------- SECOND PASS END ------------------------------------------------------------------------------------
-
-        // --------------- MONITOR WORLD AND CLEAN UP REMOTE CHUNKS ------------------------------------------------------------
+        // --------------- WORLD MONITORING ---------------
 
         private IEnumerator WorldMonitoringRoutine()
         {
             Vector2Int lastProcessedPos = new(-9999, -9999);
-            while (runtime.WorldMonitoringActive && this != null && generator.isActiveAndEnabled)
+            while (runtime.WorldMonitoringActive && generator != null && generator.isActiveAndEnabled)
             {
                 if (runtime.CurrentCameraPosition != lastProcessedPos)
                 {
                     lastProcessedPos = runtime.CurrentCameraPosition;
 
-                    CleanupRemoteChunks();
+                    cleanupManager.CleanupRemoteChunks();
 
-                    yield return ProcessLocalChunks();
+                    yield return buildQueue.ProcessLocalChunks();
                 }
-                yield return null;
-            }
-        }
-
-        private void CleanupRemoteChunks()
-        {
-            if (ShouldRunOrphanSweep())
-            {
-                CleanupSceneChunkOrphans();
-            }
-            RemoveOutOfBoundsRegisteredChunks();
-            EvictStaleTileData();
-            LogCleanupSummary();
-        }
-
-        private bool ShouldRunOrphanSweep()
-        {
-            // debug.orphanSweepPeriod: 0 = always, -1 = never, N>0 = every N cycles
-            if (generator.debug.orphanSweepPeriod < 0)
-            {
-                return false;
-            }
-            if (generator.debug.orphanSweepPeriod == 0)
-            {
-                return true;
-            }
-            cleanup.CleanupPassCounter++;
-            if (cleanup.CleanupPassCounter >= generator.debug.orphanSweepPeriod)
-            {
-                cleanup.CleanupPassCounter = 0;
-                return true;
-            }
-            return false;
-        }
-
-        private void CleanupSceneChunkOrphans()
-        {
-            cleanup.BeginSceneSweep();
-            generator.GetComponentsInChildren(true, cleanup.SceneChunksSnapshot);
-            for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
-            {
-                TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
-                if (sceneChunk == null || !sceneChunk.gameObject.activeSelf)
-                {
-                    continue;
-                }
-                if (ShouldRemoveSceneChunk(sceneChunk, out Vector2Int coord))
-                {
-                    RemoveChunk(coord, sceneChunk);
-                }
-            }
-        }
-
-        private void RemoveOutOfBoundsRegisteredChunks()
-        {
-            cleanup.BeginCleanupPass();
-            terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
-            foreach (var coord in cleanup.VisibilityKeysSnapshot)
-            {
-                if (IsWithinRetentionBounds(coord))
-                {
-                    continue;
-                }
-                if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
-                {
-                    RemoveChunk(coord, chunk);
-                }
-            }
-        }
-
-        private bool ShouldRemoveSceneChunk(TerrainChunk sceneChunk, out Vector2Int coord)
-        {
-            coord = sceneChunk.ChunkCoord;
-
-            bool isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
-            bool isOutOfBounds = !IsWithinRetentionBounds(coord);
-            bool isForeignChunk = sceneChunk.Generator != null && sceneChunk.Generator != generator;
-            return isDuplicateCoord || isOutOfBounds || isForeignChunk;
-        }
-
-        private void LogCleanupSummary()
-        {
-            // Logging removed with statistics fields
-            if (!generator.debug.cleanupLogs)
-            {
-                return;
-            }
-
-            Debug.Log(
-                $"[CleanupRemoteChunks] CameraChunk={runtime.CurrentCameraPosition}, RetentionRadius={GetRetentionRadius()}"
-            );
-        }
-
-        private void RemoveChunk(Vector2Int coord, TerrainChunk chunk)
-        {
-            if (
-                terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk activeChunk)
-                && activeChunk == chunk
-            )
-            {
-                terrainDataProcessor.Clear(coord);
-            }
-            if (chunk != null)
-            {
-                chunkPool.Return(chunk);
-            }
-        }
-
-        private void EvictStaleTileData()
-        {
-            int dataRetentionRadius = generator.cameraConfig.viewDistanceChunks + 2;
-            terrainDataProcessor.GetTileDataKeysNonAlloc(cleanup.TileDataKeysSnapshot);
-
-            for (int i = 0; i < cleanup.TileDataKeysSnapshot.Count; i++)
-            {
-                Vector2Int coord = cleanup.TileDataKeysSnapshot[i];
-                int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
-                int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
-
-                if (dx > dataRetentionRadius || dz > dataRetentionRadius)
-                {
-                    terrainDataProcessor.EvictTileData(coord);
-                }
-            }
-        }
-
-        private IEnumerator ProcessLocalChunks()
-        {
-            int viewDist = generator.cameraConfig.viewDistanceChunks;
-            int batchSize = Mathf.Max(1, generator.lod.visibilityBatchSize);
-            int processed = 0;
-
-            for (int x = -viewDist; x <= viewDist; x++)
-            {
-                EnqueueVisibleChunksAtColumnOffset(x);
-                processed++;
-
-                if (processed % batchSize == 0)
-                {
-                    yield return null;
-                }
-            }
-
-            StartBuildQueueIfNeeded();
-        }
-
-        // --------------- VISIBILITY CHECK ROUTINE : CULL CHUNKS BASED ON CAMERA FRUSTUM EACH FRAME ---------------
-
-        private IEnumerator VisibilityCheckRoutine()
-        {
-            while (runtime.WorldMonitoringActive && this != null && generator.isActiveAndEnabled)
-            {
-                GeometryUtility.CalculateFrustumPlanes(
-                    generator.cameraConfig.reference,
-                    runtime.CameraPlanes
-                );
-
-                terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
-
-                for (int i = 0; i < cleanup.VisibilityKeysSnapshot.Count; i++)
-                {
-                    Vector2Int key = cleanup.VisibilityKeysSnapshot[i];
-
-                    if (terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
-                    {
-                        chunk.UpdateVisibility(runtime.CameraPlanes);
-
-                        if (chunk.IsVisible && chunk.CurrentStep < 0)
-                        {
-                            chunk.UpdateLOD(true);
-                        }
-                    }
-                    // Time Slicing: Only process after X frames
-                    if (i > 0 && i % generator.lod.visibilityBatchSize == 0)
-                    {
-                        yield return null;
-                    }
-                }
-                // Short rest before the next full world sweep
                 yield return null;
             }
         }
