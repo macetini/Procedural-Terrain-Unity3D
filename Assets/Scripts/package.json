@@ -1,0 +1,12 @@
+{
+  "name": "com.macetini.terrain",
+  "version": "0.1.0",
+  "displayName": "Procedural Terrain",
+  "description": "Procedural terrain generation with noise-based heightmaps, LOD, and runtime mesh generation.",
+  "unity": "6000.0",
+  "author": {
+    "name": "Marko Cetinic",
+    "email": "macetini@gmail.com"
+  },
+  "license": "CC0-1.0"
+}
