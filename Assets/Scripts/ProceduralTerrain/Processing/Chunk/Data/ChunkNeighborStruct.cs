@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk.Data
+namespace SSHexMap.Terrain.Data
 {
     public struct ChunkNeighborStruct
     {

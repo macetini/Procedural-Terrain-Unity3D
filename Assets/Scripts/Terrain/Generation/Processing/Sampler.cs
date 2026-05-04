@@ -1,18 +1,22 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
-using Assets.Scripts.Terrain.Utils;
+using SSHexMap.Terrain.Data;
+using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing
+namespace SSHexMap.Terrain.Processing
 {
     internal class Sampler
     {
         private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
         private readonly int chunkSize;
+        private readonly TerrainNoise noise;
         private readonly Stack<TileMeshStruct[,]> arrayPool = new();
 
-        public Sampler(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
-            (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
+        public Sampler(
+            Dictionary<Vector2Int, TileMeshStruct[,]> tileMap,
+            int chunkSize,
+            TerrainNoise noise
+        ) => (this.tileMap, this.chunkSize, this.noise) = (tileMap, chunkSize, noise);
 
         public void ClearAll()
         {
@@ -53,7 +57,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing
             {
                 for (int z = 0; z < chunkSize; z++)
                 {
-                    int elevation = TerrainNoise.GetElevation(offsetX + x, offsetZ + z);
+                    int elevation = noise.GetElevation(offsetX + x, offsetZ + z);
                     data[x, z] = new TileMeshStruct(x, z, elevation);
                 }
             }
@@ -66,3 +70,4 @@ namespace Assets.Scripts.Terrain.Generation.Processing
         }
     }
 }
+

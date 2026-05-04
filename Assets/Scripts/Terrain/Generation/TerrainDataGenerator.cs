@@ -1,17 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Generation.Processing;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
-using Assets.Scripts.Terrain.Utils;
+using Assets.Scripts.ProceduralTerrain;
+using Assets.Scripts.ProceduralTerrain.Processing;
+using SSHexMap.Terrain.Data;
+using SSHexMap.Terrain.Processing;
+using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation
+namespace SSHexMap.Terrain.Generation
 {
     public class TerrainDataGenerator
     {
         private readonly RuntimeState runtime = new();
         private readonly ProceduralTerrain generator;
+        private readonly TerrainNoise terrainNoise;
         private readonly TerrainDataProcessor terrainDataProcessor;
         private readonly TerrainChunkPool chunkPool;
         private readonly ChunkBuildQueue buildQueue;
@@ -38,7 +40,18 @@ namespace Assets.Scripts.Terrain.Generation
         public TerrainDataGenerator(ProceduralTerrain generator)
         {
             this.generator = generator;
-            terrainDataProcessor = new TerrainDataProcessor(generator.terrain.chunkSize);
+            terrainNoise = new TerrainNoise(
+                generator.noise.seed,
+                generator.noise.scale,
+                generator.noise.octaves,
+                generator.noise.persistence,
+                generator.noise.lacunarity,
+                generator.terrain.maxElevationStepsCount
+            );
+            terrainDataProcessor = new TerrainDataProcessor(
+                generator.terrain.chunkSize,
+                terrainNoise
+            );
             int poolMaxSize = TerrainChunkPool.CalculateMaxSize(
                 generator.cameraConfig.viewDistanceChunks
             );
@@ -71,15 +84,6 @@ namespace Assets.Scripts.Terrain.Generation
 
         public void BuildTerrain()
         {
-            var noise = generator.noise;
-            TerrainNoise.Init(
-                noise.seed,
-                noise.scale,
-                noise.octaves,
-                noise.persistence,
-                noise.lacunarity,
-                generator.terrain.maxElevationStepsCount
-            );
             runtime.ChunkBoundSize = generator.terrain.chunkSize * generator.terrain.tileSize;
 
             UpdateCurrentCameraPosition();

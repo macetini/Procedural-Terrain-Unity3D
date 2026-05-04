@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk.Data
+namespace SSHexMap.Terrain.Data
 {
     public struct TileMeshStruct
     {

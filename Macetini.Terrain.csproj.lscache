@@ -52,6 +52,17 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 [sourceFiles]
 Assets/Scripts/
  Development/CameraFlightController.cs
+ ProceduralTerrain/
+  ProceduralTerrain.cs
+  Processing/Chunk/
+   ChunkGenerator.cs
+   ChunkSettings.cs
+   Data/
+    ChunkNeighborStruct.cs
+    TileMeshStruct.cs
+   TerrainChunkPool.cs
+  Processing/ChunkDataProcessor.cs
+  TerrainChunk.cs
  Terrain/
   Effects/TerrainFadeEffect.cs
   Generation/
@@ -60,14 +71,6 @@ Assets/Scripts/
    ChunkCleanupManager.cs
    ChunkVisibilitySystem.cs
    CleanupState.cs
-   Processing/Chunk/
-    ChunkDataProcessor.cs
-    ChunkGenerator.cs
-    ChunkSettings.cs
-    Data/
-     ChunkNeighborStruct.cs
-     TileMeshStruct.cs
-    TerrainChunkPool.cs
    Processing/
     Registry.cs
     Sampler.cs
@@ -75,14 +78,12 @@ Assets/Scripts/
     TerrainDataProcessor.cs
    RuntimeState.cs
    TerrainDataGenerator.cs
-  ProceduralTerrain.cs
   Settings/
    CameraSettings.cs
    DebugSettings.cs
    LODSettings.cs
    NoiseSettings.cs
    TerrainSettings.cs
-  TerrainChunk.cs
   Utils/
    TerrainMath.cs
    TerrainNoise.cs

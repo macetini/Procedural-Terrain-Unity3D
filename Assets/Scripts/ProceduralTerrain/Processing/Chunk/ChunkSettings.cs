@@ -1,4 +1,6 @@
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
+using Assets.Scripts.ProceduralTerrain;
+
+namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
 {
     public struct ChunkSettings
     {
@@ -27,18 +29,25 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             {
                 FrustumPadding = padding,
                 SkirtDepth = skirtDepth,
+
                 ChunkSize = generator.terrain.chunkSize,
                 TileSize = generator.terrain.tileSize,
+
                 ElevationStepHeight = generator.terrain.elevationStepHeight,
+
                 MaxElevationStep = generator.terrain.maxElevationStepsCount,
+
                 ChunkBoundSize = chunkBoundSize,
+
                 SqrLodDistance1 = generator.lod.distance1 * generator.lod.distance1,
                 SqrLodDistance2 = generator.lod.distance2 * generator.lod.distance2,
+
                 VisibilityBoundsOffset = new UnityEngine.Vector3(
                     halfSize,
                     maxHeight * 0.5f,
                     halfSize
                 ),
+
                 VisibilityBoundsSize = new UnityEngine.Vector3(
                     chunkBoundSize + padding,
                     maxHeight + skirtDepth + padding,

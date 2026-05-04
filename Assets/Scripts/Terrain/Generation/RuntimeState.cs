@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation
+namespace SSHexMap.Terrain.Generation
 {
     internal class RuntimeState
     {
@@ -10,3 +10,4 @@ namespace Assets.Scripts.Terrain.Generation
         public bool WorldMonitoringActive = true;
     }
 }
+

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
-using Assets.Scripts.Terrain.Utils;
+using SSHexMap.Terrain.Data;
+using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing
+namespace SSHexMap.Terrain.Processing
 {
     internal class Sanitizer
     {
@@ -80,3 +80,4 @@ namespace Assets.Scripts.Terrain.Generation.Processing
         }
     }
 }
+

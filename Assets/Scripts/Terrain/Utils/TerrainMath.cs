@@ -1,6 +1,6 @@
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
+using SSHexMap.Terrain.Data;
 
-namespace Assets.Scripts.Terrain.Utils
+namespace SSHexMap.Terrain.Utils
 {
     public static class TerrainMath
     {
@@ -152,3 +152,4 @@ namespace Assets.Scripts.Terrain.Utils
         }
     }
 }
+

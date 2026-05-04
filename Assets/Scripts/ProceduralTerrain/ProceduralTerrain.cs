@@ -1,10 +1,10 @@
-using Assets.Scripts.Terrain.Generation;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
-using Assets.Scripts.Terrain.Settings;
+using SSHexMap.Terrain.Data;
+using SSHexMap.Terrain.Generation;
+using SSHexMap.Terrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Assets.Scripts.Terrain
+namespace Assets.Scripts.ProceduralTerrain
 {
     public class ProceduralTerrain : MonoBehaviour
     {

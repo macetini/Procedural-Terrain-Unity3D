@@ -1,8 +1,9 @@
 using System;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
+using Assets.Scripts.ProceduralTerrain.Processing.Chunk;
+using SSHexMap.Terrain.Data;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
+namespace Assets.Scripts.ProceduralTerrain.Processing
 {
     internal class ChunkDataProcessor
     {

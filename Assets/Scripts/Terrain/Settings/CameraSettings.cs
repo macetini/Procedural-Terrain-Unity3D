@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Settings
+namespace SSHexMap.Terrain.Settings
 {
     [System.Serializable]
     public class CameraSettings
@@ -10,3 +10,4 @@ namespace Assets.Scripts.Terrain.Settings
         public int viewDistanceChunks = 3;
     }
 }
+

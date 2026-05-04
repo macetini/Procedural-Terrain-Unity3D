@@ -1,8 +1,8 @@
-using Assets.Scripts.Terrain.Effects;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk;
+using Assets.Scripts.ProceduralTerrain.Processing.Chunk;
+using SSHexMap.Terrain.Effects;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain
+namespace Assets.Scripts.ProceduralTerrain
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class TerrainChunk : MonoBehaviour

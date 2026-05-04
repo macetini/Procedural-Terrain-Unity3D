@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk;
+using Assets.Scripts.ProceduralTerrain;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing
+namespace SSHexMap.Terrain.Processing
 {
     internal class Registry
     {

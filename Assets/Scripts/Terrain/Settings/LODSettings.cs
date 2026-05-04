@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Settings
+namespace SSHexMap.Terrain.Settings
 {
     [System.Serializable]
     public class LODSettings
@@ -11,3 +11,4 @@ namespace Assets.Scripts.Terrain.Settings
         public int step2 = 4; // LOD 2 (low)
     }
 }
+

@@ -1,11 +1,10 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
+namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
 {
     public class ChunkGenerator
     {
         private const string MESH_IDENTIFIER = "TerrainChunk_";
-
         private readonly ChunkDataProcessor processor = new();
 
         private ProceduralTerrain generator;

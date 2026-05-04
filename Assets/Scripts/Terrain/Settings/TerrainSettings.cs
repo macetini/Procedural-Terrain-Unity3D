@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Settings
+namespace SSHexMap.Terrain.Settings
 {
     [System.Serializable]
     public class TerrainSettings
@@ -10,3 +10,4 @@ namespace Assets.Scripts.Terrain.Settings
         public float skirtDepth = 5f;
     }
 }
+

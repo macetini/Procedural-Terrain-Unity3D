@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Effects
+namespace SSHexMap.Terrain.Effects
 {
     [RequireComponent(typeof(Renderer))]
     public class TerrainFadeEffect : MonoBehaviour
@@ -64,3 +64,4 @@ namespace Assets.Scripts.Terrain.Effects
         }
     }
 }
+

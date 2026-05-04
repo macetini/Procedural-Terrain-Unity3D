@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Terrain.Settings
+namespace SSHexMap.Terrain.Settings
 {
     [System.Serializable]
     public class DebugSettings
@@ -7,3 +7,4 @@ namespace Assets.Scripts.Terrain.Settings
         public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
     }
 }
+

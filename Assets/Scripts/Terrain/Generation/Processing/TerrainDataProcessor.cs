@@ -1,9 +1,11 @@
 using System.Collections.Generic;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk;
-using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
+using Assets.Scripts.ProceduralTerrain;
+using SSHexMap.Terrain.Data;
+using SSHexMap.Terrain.Processing;
+using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing
+namespace SSHexMap.Terrain.Processing
 {
     public class TerrainDataProcessor
     {
@@ -13,9 +15,9 @@ namespace Assets.Scripts.Terrain.Generation.Processing
 
         private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
 
-        public TerrainDataProcessor(int chunkSize)
+        public TerrainDataProcessor(int chunkSize, TerrainNoise noise)
         {
-            sampler = new Sampler(tileMap, chunkSize);
+            sampler = new Sampler(tileMap, chunkSize, noise);
             sanitizer = new Sanitizer(tileMap, chunkSize);
             registry = new Registry();
         }

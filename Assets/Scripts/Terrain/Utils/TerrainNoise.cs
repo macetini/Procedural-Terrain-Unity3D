@@ -1,17 +1,17 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Utils
+namespace SSHexMap.Terrain.Utils
 {
-    public static class TerrainNoise
+    public sealed class TerrainNoise
     {
-        private static int seed;
-        private static float scale;
-        private static int octaves;
-        private static float persistence;
-        private static float lacunarity;
-        private static int maxSteps;
+        private readonly int seed;
+        private readonly float scale;
+        private readonly int octaves;
+        private readonly float persistence;
+        private readonly float lacunarity;
+        private readonly int maxSteps;
 
-        public static void Init(
+        public TerrainNoise(
             int seed,
             float scale,
             int octaves,
@@ -20,12 +20,12 @@ namespace Assets.Scripts.Terrain.Utils
             int maxSteps
         )
         {
-            TerrainNoise.seed = seed;
-            TerrainNoise.scale = scale;
-            TerrainNoise.octaves = octaves;
-            TerrainNoise.persistence = persistence;
-            TerrainNoise.lacunarity = lacunarity;
-            TerrainNoise.maxSteps = maxSteps;
+            this.seed = seed;
+            this.scale = scale;
+            this.octaves = octaves;
+            this.persistence = persistence;
+            this.lacunarity = lacunarity;
+            this.maxSteps = maxSteps;
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace Assets.Scripts.Terrain.Utils
         /// <param name="octaves">How many layers of detail (e.g., 4)</param>
         /// <param name="persistence">How much each octave's amplitude diminishes (e.g., 0.5f)</param>
         /// <param name="lacunarity">How much the frequency increases per octave (e.g., 2.0f)</param>
-        public static int GetElevation(int x, int z)
+        public int GetElevation(int x, int z)
         {
             float total = 0;
             float frequency = scale;
@@ -62,7 +62,7 @@ namespace Assets.Scripts.Terrain.Utils
             return Mathf.Clamp(Mathf.FloorToInt(normalized * (maxSteps + 1)), 0, maxSteps);
         }
 
-        private static float GetValueNoise(float x, float z)
+        private float GetValueNoise(float x, float z)
         {
             int iX = Mathf.FloorToInt(x);
             int iZ = Mathf.FloorToInt(z);
@@ -80,7 +80,7 @@ namespace Assets.Scripts.Terrain.Utils
             return Lerp(Lerp(v1, v2, tX), Lerp(v3, v4, tX), tZ);
         }
 
-        private static float Hash(int x, int z)
+        private float Hash(int x, int z)
         {
             // Deterministic Hash (Same in Java)
             int n = x + z * 57 + seed * 131;

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
+namespace Assets.Scripts.ProceduralTerrain.Processing
 {
     internal class TerrainChunkPool
     {
