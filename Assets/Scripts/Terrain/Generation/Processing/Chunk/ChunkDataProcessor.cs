@@ -1,3 +1,4 @@
+using System;
 using Assets.Scripts.Terrain.Generation.Processing.Chunk.Data;
 using UnityEngine;
 
@@ -6,7 +7,8 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
     internal class ChunkDataProcessor
     {
         // Terrain data
-        private ProceduralTerrain generator;
+        private Func<Vector2Int, ChunkNeighborStruct> neighborProvider;
+        private Func<int, int[]> triangleProvider;
         private ChunkNeighborStruct neighbors;
 
         // Terrain settings
@@ -29,16 +31,21 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
         // Flags
         private int lastTriangleCount = -1;
 
-        public void Init(ProceduralTerrain generator)
+        public void Init(
+            ChunkSettings settings,
+            Func<Vector2Int, ChunkNeighborStruct> neighborProvider,
+            Func<int, int[]> triangleProvider
+        )
         {
-            this.generator = generator;
+            this.neighborProvider = neighborProvider;
+            this.triangleProvider = triangleProvider;
 
-            chunkSize = generator.terrain.chunkSize;
-            tileSize = generator.terrain.tileSize;
+            chunkSize = settings.ChunkSize;
+            tileSize = settings.TileSize;
             chunkBoundSize = chunkSize * tileSize;
 
-            elevationStepHeight = generator.terrain.elevationStepHeight;
-            skirtDepth = generator.terrain.skirtDepth;
+            elevationStepHeight = settings.ElevationStepHeight;
+            skirtDepth = settings.SkirtDepth;
 
             lastTriangleCount = -1;
         }
@@ -54,7 +61,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
 
         private void InitializeNeighbors(Vector2Int chunkCoord)
         {
-            neighbors = generator.GetNeighborGrids(chunkCoord);
+            neighbors = neighborProvider(chunkCoord);
         }
 
         private void InitializeResolution(int resolutionStep)
@@ -267,7 +274,7 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
             targetMesh.SetUVs(0, uvs);
             targetMesh.SetNormals(normals);
 
-            int[] tris = generator.GetPrecalculatedTriangles(resolution);
+            int[] tris = triangleProvider(resolution);
             if (lastTriangleCount != tris.Length)
             {
                 targetMesh.SetTriangles(tris, 0);

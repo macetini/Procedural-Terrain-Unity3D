@@ -50,7 +50,12 @@ namespace Assets.Scripts.Terrain.Generation
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
 
             buildQueue = new ChunkBuildQueue(runtime, terrainDataProcessor, chunkPool, generator);
-            cleanupManager = new ChunkCleanupManager(runtime, terrainDataProcessor, chunkPool, generator);
+            cleanupManager = new ChunkCleanupManager(
+                runtime,
+                terrainDataProcessor,
+                chunkPool,
+                generator
+            );
             visibilitySystem = new ChunkVisibilitySystem(runtime, terrainDataProcessor, generator);
         }
 
@@ -167,7 +172,9 @@ namespace Assets.Scripts.Terrain.Generation
         private IEnumerator WorldMonitoringRoutine()
         {
             Vector2Int lastProcessedPos = new(-9999, -9999);
-            while (runtime.WorldMonitoringActive && generator != null && generator.isActiveAndEnabled)
+            while (
+                runtime.WorldMonitoringActive && generator != null && generator.isActiveAndEnabled
+            )
             {
                 if (runtime.CurrentCameraPosition != lastProcessedPos)
                 {

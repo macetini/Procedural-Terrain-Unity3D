@@ -13,17 +13,17 @@ primary
 lastDtbSucceeded
 
 [properties]
-AssemblyName=Assembly-CSharp
+AssemblyName=Macetini.Terrain
 CommandLineArgsForDesignTimeEvaluation=-langversion:9.0 -define:UNITY_6000_2_8;UNITY_6000_2;UNITY_6000;UNITY_5_3_OR_NEWER;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER;UNITY_5_6_OR_NEWER;UNITY_2017_1_OR_NEWER;UNITY_2017_2_OR_NEWER;UNITY_2017_3_OR_NEWER;UNITY_2017_4_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2018_2_OR_NEWER;UNITY_2018_3_OR_NEWER;UNITY_2018_4_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2019_2_OR_NEWER;UNITY_2019_3_OR_NEWER;UNITY_2019_4_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_2020_3_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_2022_2_OR_NEWER;UNITY_2022_3_OR_NEWER;UNITY_2023_1_OR_NEWER;UNITY_2023_2_OR_NEWER;UNITY_2023_3_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_6000_1_OR_NEWER;UNITY_6000_2_OR_NEWER;UNITY_INCLUDE_TESTS;ENABLE_AUDIO;ENABLE_CLOTH;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_TEXTURE_STREAMING;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_UNITYWEBREQUEST;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_UNITY_CONSENT;ENABLE_UNITY_CLOUD_IDENTIFIERS;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_EDITOR_GAME_SERVICES;ENABLE_UNITY_GAME_SERVICES_ANALYTICS_SUPPORT;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_HUB_LICENSE;ENABLE_WEBSOCKET_CLIENT;ENABLE_GENERATE_NATIVE_PLUGINS_FOR_ASSEMBLIES_API;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;ENABLE_ENGINE_CODE_STRIPPING;ENABLE_ONSCREEN_KEYBOARD;ENABLE_MANAGED_UNITYTLS;RENDER_SOFTWARE_CURSOR;ENABLE_MARSHALLING_TESTS;ENABLE_VIDEO;ENABLE_NAVIGATION_OFFMESHLINK_TO_NAVMESHLINK;ENABLE_ACCELERATOR_CLIENT_DEBUGGING;TEXTCORE_1_0_OR_NEWER;EDITOR_ONLY_NAVMESH_BUILDER_DEPRECATED;PLATFORM_WEBGL;UNITY_WEBGL;UNITY_WEBGL_API;UNITY_DISABLE_WEB_VERIFICATION;UNITY_GFX_USE_PLATFORM_VSYNC;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_SPATIALTRACKING;ENABLE_MONO;NET_STANDARD_2_0;NET_STANDARD;NET_STANDARD_2_1;NETSTANDARD;NETSTANDARD2_1;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_BURST_AOT;UNITY_TEAM_LICENSE;ENABLE_CUSTOM_RENDER_TEXTURE;ENABLE_DIRECTOR;ENABLE_LOCALIZATION;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_TILEMAP;ENABLE_TIMELINE;ENABLE_INPUT_SYSTEM;TEXTCORE_FONT_ENGINE_1_5_OR_NEWER;TEXTCORE_TEXT_ENGINE_1_5_OR_NEWER;CSHARP_7_OR_LATER;CSHARP_7_3_OR_NEWER
 CompilerGeneratedFilesOutputPath=
 MaxSupportedLangVersion=8.0
-ProjectAssetsFile=<PATH>Temp/obj/Assembly-CSharp/project.assets.json
+ProjectAssetsFile=<PATH>Temp/obj/Macetini.Terrain/project.assets.json
 RootNamespace=
 RunAnalyzers=
 RunAnalyzersDuringLiveAnalysis=
 SolutionPath=<PATH>SSHexMap.sln
 TargetFrameworkIdentifier=.NETStandard
-TargetPath=<PATH>Temp/bin/Debug/Assembly-CSharp.dll
+TargetPath=<PATH>Temp/bin/Debug/Macetini.Terrain.dll
 TargetRefPath=
 TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 
@@ -41,7 +41,7 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 /debug:portable
 /filealign:512
 /optimize-
-/out:Temp\obj\Assembly-CSharp\Assembly-CSharp.dll
+/out:Temp\obj\Macetini.Terrain\Macetini.Terrain.dll
 /target:library
 /warnaserror-
 /utf8output
@@ -50,128 +50,165 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 /warnaserror+:NU1605
 
 [sourceFiles]
-Assets/TutorialInfo/Scripts/Readme.cs
-Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
+Assets/Scripts/
+ Development/CameraFlightController.cs
+ Terrain/
+  Effects/TerrainFadeEffect.cs
+  Generation/
+   BuildQueueState.cs
+   ChunkBuildQueue.cs
+   ChunkCleanupManager.cs
+   ChunkVisibilitySystem.cs
+   CleanupState.cs
+   Processing/Chunk/
+    ChunkDataProcessor.cs
+    ChunkGenerator.cs
+    ChunkSettings.cs
+    Data/
+     ChunkNeighborStruct.cs
+     TileMeshStruct.cs
+    TerrainChunkPool.cs
+   Processing/
+    Registry.cs
+    Sampler.cs
+    Sanitizer.cs
+    TerrainDataProcessor.cs
+   RuntimeState.cs
+   TerrainDataGenerator.cs
+  ProceduralTerrain.cs
+  Settings/
+   CameraSettings.cs
+   DebugSettings.cs
+   LODSettings.cs
+   NoiseSettings.cs
+   TerrainSettings.cs
+  TerrainChunk.cs
+  Utils/
+   TerrainMath.cs
+   TerrainNoise.cs
+Temp/obj/Macetini.Terrain/.NETStandard,Version=v2.1.AssemblyAttributes.cs
 
 [metadataReferences]
-../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/Managed/UnityEngine/
- UnityEditor.AccessibilityModule.dll
- UnityEditor.AdaptivePerformanceModule.dll
- UnityEditor.BuildProfileModule.dll
- UnityEditor.ClothModule.dll
- UnityEditor.CoreBusinessMetricsModule.dll
- UnityEditor.CoreModule.dll
- UnityEditor.DeviceSimulatorModule.dll
- UnityEditor.DiagnosticsModule.dll
- UnityEditor.dll
- UnityEditor.EditorToolbarModule.dll
- UnityEditor.EmbreeModule.dll
- UnityEditor.GIModule.dll
- UnityEditor.GraphicsStateCollectionSerializerModule.dll
- UnityEditor.GraphViewModule.dll
- UnityEditor.GridAndSnapModule.dll
- UnityEditor.GridModule.dll
- UnityEditor.InAppPurchasingModule.dll
- UnityEditor.LevelPlayModule.dll
- UnityEditor.MultiplayerModule.dll
- UnityEditor.Physics2DModule.dll
- UnityEditor.PhysicsModule.dll
- UnityEditor.PresetsUIModule.dll
- UnityEditor.PropertiesModule.dll
- UnityEditor.QuickSearchModule.dll
- UnityEditor.SafeModeModule.dll
- UnityEditor.SceneTemplateModule.dll
- UnityEditor.SceneViewModule.dll
- UnityEditor.ShaderFoundryModule.dll
- UnityEditor.SketchUpModule.dll
- UnityEditor.SpriteMaskModule.dll
- UnityEditor.SpriteShapeModule.dll
- UnityEditor.SubstanceModule.dll
- UnityEditor.TerrainModule.dll
- UnityEditor.TextCoreFontEngineModule.dll
- UnityEditor.TextCoreTextEngineModule.dll
- UnityEditor.TextRenderingModule.dll
- UnityEditor.TilemapModule.dll
- UnityEditor.TreeModule.dll
- UnityEditor.UIAutomationModule.dll
- UnityEditor.UIBuilderModule.dll
- UnityEditor.UIElementsModule.dll
- UnityEditor.UIElementsSamplesModule.dll
- UnityEditor.UmbraModule.dll
- UnityEditor.UnityConnectModule.dll
- UnityEditor.VFXModule.dll
- UnityEditor.VideoModule.dll
- UnityEditor.XRModule.dll
- UnityEngine.AccessibilityModule.dll
- UnityEngine.AIModule.dll
- UnityEngine.AndroidJNIModule.dll
- UnityEngine.AnimationModule.dll
- UnityEngine.AssetBundleModule.dll
- UnityEngine.AudioModule.dll
- UnityEngine.ClothModule.dll
- UnityEngine.ContentLoadModule.dll
- UnityEngine.CoreModule.dll
- UnityEngine.CrashReportingModule.dll
- UnityEngine.DirectorModule.dll
- UnityEngine.dll
- UnityEngine.DSPGraphModule.dll
- UnityEngine.GameCenterModule.dll
- UnityEngine.GIModule.dll
- UnityEngine.GraphicsStateCollectionSerializerModule.dll
- UnityEngine.GridModule.dll
- UnityEngine.HierarchyCoreModule.dll
- UnityEngine.HotReloadModule.dll
- UnityEngine.IdentifiersModule.dll
- UnityEngine.ImageConversionModule.dll
- UnityEngine.IMGUIModule.dll
- UnityEngine.InputForUIModule.dll
- UnityEngine.InputLegacyModule.dll
- UnityEngine.InputModule.dll
- UnityEngine.JSONSerializeModule.dll
- UnityEngine.LocalizationModule.dll
- UnityEngine.MarshallingModule.dll
- UnityEngine.MultiplayerModule.dll
- UnityEngine.ParticleSystemModule.dll
- UnityEngine.PerformanceReportingModule.dll
- UnityEngine.Physics2DModule.dll
- UnityEngine.PhysicsModule.dll
- UnityEngine.PropertiesModule.dll
- UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll
- UnityEngine.ScreenCaptureModule.dll
- UnityEngine.ShaderVariantAnalyticsModule.dll
- UnityEngine.SharedInternalsModule.dll
- UnityEngine.SpriteMaskModule.dll
- UnityEngine.SpriteShapeModule.dll
- UnityEngine.StreamingModule.dll
- UnityEngine.SubstanceModule.dll
- UnityEngine.SubsystemsModule.dll
- UnityEngine.TerrainModule.dll
- UnityEngine.TerrainPhysicsModule.dll
- UnityEngine.TextCoreFontEngineModule.dll
- UnityEngine.TextCoreTextEngineModule.dll
- UnityEngine.TextRenderingModule.dll
- UnityEngine.TilemapModule.dll
- UnityEngine.TLSModule.dll
- UnityEngine.UIElementsModule.dll
- UnityEngine.UIModule.dll
- UnityEngine.UmbraModule.dll
- UnityEngine.UnityAnalyticsCommonModule.dll
- UnityEngine.UnityAnalyticsModule.dll
- UnityEngine.UnityConnectModule.dll
- UnityEngine.UnityConsentModule.dll
- UnityEngine.UnityCurlModule.dll
- UnityEngine.UnityTestProtocolModule.dll
- UnityEngine.UnityWebRequestAssetBundleModule.dll
- UnityEngine.UnityWebRequestAudioModule.dll
- UnityEngine.UnityWebRequestModule.dll
- UnityEngine.UnityWebRequestTextureModule.dll
- UnityEngine.UnityWebRequestWWWModule.dll
- UnityEngine.VehiclesModule.dll
- UnityEngine.VFXModule.dll
- UnityEngine.VideoModule.dll
- UnityEngine.VRModule.dll
- UnityEngine.WindModule.dll
- UnityEngine.XRModule.dll
+../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/Managed/
+ UnityEditor.Graphs.dll
+ UnityEngine/
+  UnityEditor.AccessibilityModule.dll
+  UnityEditor.AdaptivePerformanceModule.dll
+  UnityEditor.BuildProfileModule.dll
+  UnityEditor.ClothModule.dll
+  UnityEditor.CoreBusinessMetricsModule.dll
+  UnityEditor.CoreModule.dll
+  UnityEditor.DeviceSimulatorModule.dll
+  UnityEditor.DiagnosticsModule.dll
+  UnityEditor.dll
+  UnityEditor.EditorToolbarModule.dll
+  UnityEditor.EmbreeModule.dll
+  UnityEditor.GIModule.dll
+  UnityEditor.GraphicsStateCollectionSerializerModule.dll
+  UnityEditor.GraphViewModule.dll
+  UnityEditor.GridAndSnapModule.dll
+  UnityEditor.GridModule.dll
+  UnityEditor.InAppPurchasingModule.dll
+  UnityEditor.LevelPlayModule.dll
+  UnityEditor.MultiplayerModule.dll
+  UnityEditor.Physics2DModule.dll
+  UnityEditor.PhysicsModule.dll
+  UnityEditor.PresetsUIModule.dll
+  UnityEditor.PropertiesModule.dll
+  UnityEditor.QuickSearchModule.dll
+  UnityEditor.SafeModeModule.dll
+  UnityEditor.SceneTemplateModule.dll
+  UnityEditor.SceneViewModule.dll
+  UnityEditor.ShaderFoundryModule.dll
+  UnityEditor.SketchUpModule.dll
+  UnityEditor.SpriteMaskModule.dll
+  UnityEditor.SpriteShapeModule.dll
+  UnityEditor.SubstanceModule.dll
+  UnityEditor.TerrainModule.dll
+  UnityEditor.TextCoreFontEngineModule.dll
+  UnityEditor.TextCoreTextEngineModule.dll
+  UnityEditor.TextRenderingModule.dll
+  UnityEditor.TilemapModule.dll
+  UnityEditor.TreeModule.dll
+  UnityEditor.UIAutomationModule.dll
+  UnityEditor.UIBuilderModule.dll
+  UnityEditor.UIElementsModule.dll
+  UnityEditor.UIElementsSamplesModule.dll
+  UnityEditor.UmbraModule.dll
+  UnityEditor.UnityConnectModule.dll
+  UnityEditor.VFXModule.dll
+  UnityEditor.VideoModule.dll
+  UnityEditor.XRModule.dll
+  UnityEngine.AccessibilityModule.dll
+  UnityEngine.AIModule.dll
+  UnityEngine.AndroidJNIModule.dll
+  UnityEngine.AnimationModule.dll
+  UnityEngine.AssetBundleModule.dll
+  UnityEngine.AudioModule.dll
+  UnityEngine.ClothModule.dll
+  UnityEngine.ContentLoadModule.dll
+  UnityEngine.CoreModule.dll
+  UnityEngine.CrashReportingModule.dll
+  UnityEngine.DirectorModule.dll
+  UnityEngine.dll
+  UnityEngine.DSPGraphModule.dll
+  UnityEngine.GameCenterModule.dll
+  UnityEngine.GIModule.dll
+  UnityEngine.GraphicsStateCollectionSerializerModule.dll
+  UnityEngine.GridModule.dll
+  UnityEngine.HierarchyCoreModule.dll
+  UnityEngine.HotReloadModule.dll
+  UnityEngine.IdentifiersModule.dll
+  UnityEngine.ImageConversionModule.dll
+  UnityEngine.IMGUIModule.dll
+  UnityEngine.InputForUIModule.dll
+  UnityEngine.InputLegacyModule.dll
+  UnityEngine.InputModule.dll
+  UnityEngine.JSONSerializeModule.dll
+  UnityEngine.LocalizationModule.dll
+  UnityEngine.MarshallingModule.dll
+  UnityEngine.MultiplayerModule.dll
+  UnityEngine.ParticleSystemModule.dll
+  UnityEngine.PerformanceReportingModule.dll
+  UnityEngine.Physics2DModule.dll
+  UnityEngine.PhysicsModule.dll
+  UnityEngine.PropertiesModule.dll
+  UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll
+  UnityEngine.ScreenCaptureModule.dll
+  UnityEngine.ShaderVariantAnalyticsModule.dll
+  UnityEngine.SharedInternalsModule.dll
+  UnityEngine.SpriteMaskModule.dll
+  UnityEngine.SpriteShapeModule.dll
+  UnityEngine.StreamingModule.dll
+  UnityEngine.SubstanceModule.dll
+  UnityEngine.SubsystemsModule.dll
+  UnityEngine.TerrainModule.dll
+  UnityEngine.TerrainPhysicsModule.dll
+  UnityEngine.TextCoreFontEngineModule.dll
+  UnityEngine.TextCoreTextEngineModule.dll
+  UnityEngine.TextRenderingModule.dll
+  UnityEngine.TilemapModule.dll
+  UnityEngine.TLSModule.dll
+  UnityEngine.UIElementsModule.dll
+  UnityEngine.UIModule.dll
+  UnityEngine.UmbraModule.dll
+  UnityEngine.UnityAnalyticsCommonModule.dll
+  UnityEngine.UnityAnalyticsModule.dll
+  UnityEngine.UnityConnectModule.dll
+  UnityEngine.UnityConsentModule.dll
+  UnityEngine.UnityCurlModule.dll
+  UnityEngine.UnityTestProtocolModule.dll
+  UnityEngine.UnityWebRequestAssetBundleModule.dll
+  UnityEngine.UnityWebRequestAudioModule.dll
+  UnityEngine.UnityWebRequestModule.dll
+  UnityEngine.UnityWebRequestTextureModule.dll
+  UnityEngine.UnityWebRequestWWWModule.dll
+  UnityEngine.VehiclesModule.dll
+  UnityEngine.VFXModule.dll
+  UnityEngine.VideoModule.dll
+  UnityEngine.VRModule.dll
+  UnityEngine.WindModule.dll
+  UnityEngine.XRModule.dll
 ../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/NetStandard/compat/2.1.0/shims/netfx/
  mscorlib.dll
  System.ComponentModel.Composition.dll
@@ -300,7 +337,16 @@ Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
 ../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/PlaybackEngines/AndroidPlayer/
  Unity.Android.Gradle.dll
  Unity.Android.Types.dll
-../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/PlaybackEngines/WebGLSupport/Managed/UnityEngine.WebGLModule.dll
+ UnityEditor.Android.Extensions.dll
+../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/PlaybackEngines/WebGLSupport/
+ Managed/UnityEngine.WebGLModule.dll
+ UnityEditor.WebGL.Extensions.dll
+../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Library/PackageCache/com.unity.collab-proxy@ab839cc7d2ad/Lib/Editor/
+ log4netPlastic.dll
+ Unity.Plastic.Antlr3.Runtime.dll
+ Unity.Plastic.Newtonsoft.Json.dll
+ unityplastic.dll
 Library/PackageCache/com.unity.collections@d49facba0036/
  Unity.Collections.LowLevel.ILSupport/Unity.Collections.LowLevel.ILSupport.dll
  Unity.Collections.Tests/
@@ -309,58 +355,16 @@ Library/PackageCache/com.unity.collections@d49facba0036/
 Library/PackageCache/
  com.unity.ext.nunit@031a54704bff/net40/unity-custom/nunit.framework.dll
  com.unity.nuget.mono-cecil@d78732e851eb/Mono.Cecil.dll
- com.unity.visualscripting@6279e2b7c485/Runtime/VisualScripting.Flow/Dependencies/NCalc/Unity.VisualScripting.Antlr3.Runtime.dll
+ com.unity.visualscripting@6279e2b7c485/Editor/VisualScripting.Core/Dependencies/
+  DotNetZip/Unity.VisualScripting.IonicZip.dll
+  YamlDotNet/Unity.VisualScripting.YamlDotNet.dll
+ com.unity.visualscripting@6279e2b7c485/
+  Editor/VisualScripting.Core/EditorAssetResources/Unity.VisualScripting.TextureAssets.dll
+  Runtime/VisualScripting.Flow/Dependencies/NCalc/Unity.VisualScripting.Antlr3.Runtime.dll
 Library/ScriptAssemblies/
- PPv2URPConverters.dll
- Unity.AI.Navigation.dll
- Unity.AI.Navigation.Editor.ConversionSystem.dll
- Unity.AI.Navigation.Editor.dll
- Unity.AI.Navigation.Updater.dll
- Unity.Burst.dll
- Unity.Burst.Editor.dll
- Unity.Collections.dll
- Unity.Collections.Editor.dll
  Unity.InputSystem.dll
- Unity.InputSystem.ForUI.dll
- Unity.Mathematics.dll
- Unity.Mathematics.Editor.dll
- Unity.Multiplayer.Center.Common.dll
- Unity.Multiplayer.Center.Editor.dll
- Unity.PlasticSCM.Editor.dll
- Unity.Rendering.LightTransport.Editor.dll
- Unity.Rendering.LightTransport.Runtime.dll
- Unity.RenderPipeline.Universal.ShaderLibrary.dll
- Unity.RenderPipelines.Core.Editor.dll
- Unity.RenderPipelines.Core.Editor.Shared.dll
- Unity.RenderPipelines.Core.Runtime.dll
- Unity.RenderPipelines.Core.Runtime.Shared.dll
- Unity.RenderPipelines.Core.ShaderLibrary.dll
- Unity.RenderPipelines.GPUDriven.Runtime.dll
- Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll
- Unity.RenderPipelines.Universal.2D.Runtime.dll
- Unity.RenderPipelines.Universal.Config.Runtime.dll
- Unity.RenderPipelines.Universal.Editor.dll
- Unity.RenderPipelines.Universal.Runtime.dll
- Unity.RenderPipelines.Universal.Shaders.dll
- Unity.Rider.Editor.dll
- Unity.Searcher.Editor.dll
- Unity.ShaderGraph.Editor.dll
- Unity.TextMeshPro.dll
- Unity.TextMeshPro.Editor.dll
- Unity.Timeline.dll
- Unity.Timeline.Editor.dll
- Unity.VisualScripting.Core.dll
- Unity.VisualScripting.Core.Editor.dll
- Unity.VisualScripting.Flow.dll
- Unity.VisualScripting.Flow.Editor.dll
- Unity.VisualScripting.SettingsProvider.Editor.dll
- Unity.VisualScripting.Shared.Editor.dll
- Unity.VisualScripting.State.dll
- Unity.VisualScripting.State.Editor.dll
- Unity.VisualStudio.Editor.dll
  UnityEditor.UI.dll
  UnityEngine.UI.dll
-Temp/bin/Debug/Macetini.Terrain.dll
 
 [analyzerReferences]
 ../../../../Program Files/Unity/Hub/Editor/6000.2.8f1/Editor/Data/Tools/Unity.SourceGenerators/
@@ -370,4 +374,4 @@ Temp/bin/Debug/Macetini.Terrain.dll
 ../../../../Users/Marko Cetinic/.vscode/extensions/visualstudiotoolsforunity.vstuc-1.2.2/Analyzers/Microsoft.Unity.Analyzers.dll
 
 [analyzerConfigFiles]
-Temp/obj/Assembly-CSharp/Assembly-CSharp.GeneratedMSBuildEditorConfig.editorconfig
+Temp/obj/Macetini.Terrain/Macetini.Terrain.GeneratedMSBuildEditorConfig.editorconfig

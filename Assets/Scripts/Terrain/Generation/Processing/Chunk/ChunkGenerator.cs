@@ -49,7 +49,11 @@ namespace Assets.Scripts.Terrain.Generation.Processing.Chunk
                 chunk.RendererReference.sharedMaterial = chunk.terrainMaterial;
             }
 
-            processor.Init(generator);
+            processor.Init(
+                settings,
+                coord => generator.GetNeighborGrids(coord),
+                resolution => generator.GetPrecalculatedTriangles(resolution)
+            );
             UpdateLOD(true);
         }
 
