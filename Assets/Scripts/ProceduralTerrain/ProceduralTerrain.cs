@@ -1,6 +1,6 @@
 using Assets.Scripts.ProceduralTerrain.Generation;
-using SSHexMap.Terrain.Data;
-using SSHexMap.Terrain.Settings;
+using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
+using Assets.Scripts.ProceduralTerrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

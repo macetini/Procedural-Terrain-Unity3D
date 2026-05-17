@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Utils
+namespace Assets.Scripts.ProceduralTerrain.Utils
 {
     public sealed class TerrainNoise
     {

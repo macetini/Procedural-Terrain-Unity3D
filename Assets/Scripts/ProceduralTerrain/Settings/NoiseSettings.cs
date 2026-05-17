@@ -1,4 +1,4 @@
-namespace SSHexMap.Terrain.Settings
+namespace Assets.Scripts.ProceduralTerrain.Settings
 {
     [System.Serializable]
     public class NoiseSettings
@@ -10,4 +10,3 @@ namespace SSHexMap.Terrain.Settings
         public float lacunarity = 2.0f;
     }
 }
-

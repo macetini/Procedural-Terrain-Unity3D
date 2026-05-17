@@ -1,4 +1,4 @@
-namespace SSHexMap.Terrain.Settings
+namespace Assets.Scripts.ProceduralTerrain.Settings
 {
     [System.Serializable]
     public class TerrainSettings

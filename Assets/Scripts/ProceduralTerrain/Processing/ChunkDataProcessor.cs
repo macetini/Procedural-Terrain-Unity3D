@@ -1,6 +1,6 @@
 using System;
 using Assets.Scripts.ProceduralTerrain.Processing.Chunk;
-using SSHexMap.Terrain.Data;
+using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
 using UnityEngine;
 
 namespace Assets.Scripts.ProceduralTerrain.Processing

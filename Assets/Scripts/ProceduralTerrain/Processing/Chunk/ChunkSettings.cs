@@ -1,5 +1,3 @@
-using Assets.Scripts.ProceduralTerrain;
-
 namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
 {
     public struct ChunkSettings

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using SSHexMap.Terrain.Data;
-using SSHexMap.Terrain.Utils;
+using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
+using Assets.Scripts.ProceduralTerrain.Utils;
 using UnityEngine;
 
 namespace Assets.Scripts.ProceduralTerrain.Generation.Processing

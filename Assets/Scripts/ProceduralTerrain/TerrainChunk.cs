@@ -1,5 +1,5 @@
+using Assets.Scripts.ProceduralTerrain.Effects;
 using Assets.Scripts.ProceduralTerrain.Processing.Chunk;
-using SSHexMap.Terrain.Effects;
 using UnityEngine;
 
 namespace Assets.Scripts.ProceduralTerrain

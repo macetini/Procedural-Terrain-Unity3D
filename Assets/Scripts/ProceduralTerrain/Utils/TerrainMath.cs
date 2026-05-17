@@ -1,6 +1,6 @@
-using SSHexMap.Terrain.Data;
+using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
 
-namespace SSHexMap.Terrain.Utils
+namespace Assets.Scripts.ProceduralTerrain.Utils
 {
     public static class TerrainMath
     {
