@@ -1,11 +1,9 @@
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain;
 using SSHexMap.Terrain.Data;
-using SSHexMap.Terrain.Processing;
 using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Processing
+namespace Assets.Scripts.ProceduralTerrain.Generation.Processing
 {
     public class TerrainDataProcessor
     {

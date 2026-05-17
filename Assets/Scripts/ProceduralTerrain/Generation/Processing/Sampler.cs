@@ -3,7 +3,7 @@ using SSHexMap.Terrain.Data;
 using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Processing
+namespace Assets.Scripts.ProceduralTerrain.Generation.Processing
 {
     internal class Sampler
     {
@@ -70,4 +70,3 @@ namespace SSHexMap.Terrain.Processing
         }
     }
 }
-

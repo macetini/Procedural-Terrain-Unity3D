@@ -1,5 +1,5 @@
+using Assets.Scripts.ProceduralTerrain.Generation;
 using SSHexMap.Terrain.Data;
-using SSHexMap.Terrain.Generation;
 using SSHexMap.Terrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;

@@ -152,4 +152,3 @@ namespace SSHexMap.Terrain.Utils
         }
     }
 }
-

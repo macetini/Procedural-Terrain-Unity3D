@@ -10,4 +10,3 @@ namespace SSHexMap.Terrain.Settings
         public float skirtDepth = 5f;
     }
 }
-

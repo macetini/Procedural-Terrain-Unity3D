@@ -1,9 +1,8 @@
-using Assets.Scripts.ProceduralTerrain;
+using Assets.Scripts.ProceduralTerrain.Generation.Processing;
 using Assets.Scripts.ProceduralTerrain.Processing;
-using SSHexMap.Terrain.Processing;
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Generation
+namespace Assets.Scripts.ProceduralTerrain.Generation
 {
     internal class ChunkCleanupManager
     {

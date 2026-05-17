@@ -1,13 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain;
+using Assets.Scripts.ProceduralTerrain.Generation.Processing;
 using Assets.Scripts.ProceduralTerrain.Processing;
 using SSHexMap.Terrain.Data;
-using SSHexMap.Terrain.Processing;
 using SSHexMap.Terrain.Utils;
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Generation
+namespace Assets.Scripts.ProceduralTerrain.Generation
 {
     public class TerrainDataGenerator
     {

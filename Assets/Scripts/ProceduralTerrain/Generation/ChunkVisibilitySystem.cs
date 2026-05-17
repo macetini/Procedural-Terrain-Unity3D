@@ -1,10 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain;
-using SSHexMap.Terrain.Processing;
+using Assets.Scripts.ProceduralTerrain.Generation.Processing;
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Generation
+namespace Assets.Scripts.ProceduralTerrain.Generation
 {
     internal class ChunkVisibilitySystem
     {

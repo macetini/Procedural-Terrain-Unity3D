@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace SSHexMap.Terrain.Generation
+namespace Assets.Scripts.ProceduralTerrain.Generation
 {
     internal class BuildQueueState
     {
@@ -32,4 +32,3 @@ namespace SSHexMap.Terrain.Generation
         }
     }
 }
-
