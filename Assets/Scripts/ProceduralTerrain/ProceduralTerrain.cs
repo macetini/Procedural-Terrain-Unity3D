@@ -27,7 +27,7 @@ namespace ProceduralTerrain
         [Header("Prefabs")]
         public TerrainChunk chunkPrefab;
 
-        private TerrainDataGenerator dataGenerator;
+        private ITerrainOrchestrator dataGenerator;
 
         // ITerrainHost explicit implementations (Unity serializes fields, not auto-properties)
         TerrainSettings ITerrainHost.terrain => terrain;

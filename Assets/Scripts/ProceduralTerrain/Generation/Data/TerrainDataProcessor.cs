@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation.Data
 {
-    public class TerrainDataProcessor : ITerrainDataProcessor
+    internal class TerrainDataProcessor : ITerrainDataProcessor
     {
         private readonly Sampler sampler;
         private readonly Sanitizer sanitizer;

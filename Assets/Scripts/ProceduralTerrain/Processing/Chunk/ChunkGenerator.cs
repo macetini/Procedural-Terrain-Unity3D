@@ -68,25 +68,15 @@ namespace ProceduralTerrain.Processing.Chunk
             }
         }
 
-        private int GetTargetStep()
-        {
-            // Calculate center for more accurate LOD switching
-            float halfSize = settings.ChunkBoundSize * 0.5f;
-            Vector3 center = chunk.transform.position + new Vector3(halfSize, 0, halfSize);
-
-            Vector3 diff = center - cameraTransform.position;
-            float sqrDist = diff.sqrMagnitude;
-
-            if (sqrDist > settings.SqrLodDistance2)
-            {
-                return generator.lod.step2; // LOD 2 (low)
-            }
-            if (sqrDist > settings.SqrLodDistance1)
-            {
-                return generator.lod.step1; // LOD 1 (medium)
-            }
-            return generator.lod.step0; // LOD 0 (full detail)
-        }
+        private int GetTargetStep() =>
+            ChunkLodSelector.GetStep(
+                settings,
+                chunk.transform.position,
+                cameraTransform,
+                generator.lod.step0,
+                generator.lod.step1,
+                generator.lod.step2
+            );
 
         private void BuildProceduralMesh()
         {

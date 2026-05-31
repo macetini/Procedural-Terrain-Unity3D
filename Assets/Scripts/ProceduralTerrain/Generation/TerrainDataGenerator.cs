@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation
 {
-    public class TerrainDataGenerator
+    internal class TerrainDataGenerator : ITerrainOrchestrator
     {
         private readonly RuntimeState runtime = new();
         private readonly ITerrainHost generator;
@@ -66,12 +66,14 @@ namespace ProceduralTerrain.Generation
 
         public void ResetGeneratorState()
         {
+            runtime.IsBuildCancelled = true;
             generator.StopAllCoroutines();
             buildQueue.Clear();
             triangleCache.Clear();
             cleanupManager.ResetForRebuild();
             terrainDataProcessor.ClearAll();
             chunkPool.Clear();
+            runtime.IsBuildCancelled = false;
         }
 
         public void BuildTerrain()
