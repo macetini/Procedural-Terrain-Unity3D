@@ -1,4 +1,4 @@
-using Assets.Scripts.ProceduralTerrain.Generation.Processing;
+using Assets.Scripts.ProceduralTerrain.Generation.Data;
 using Assets.Scripts.ProceduralTerrain.Processing;
 using UnityEngine;
 

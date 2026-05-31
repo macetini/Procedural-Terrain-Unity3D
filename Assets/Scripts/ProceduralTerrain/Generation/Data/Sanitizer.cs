@@ -3,7 +3,7 @@ using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
 using Assets.Scripts.ProceduralTerrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation.Processing
+namespace Assets.Scripts.ProceduralTerrain.Generation.Data
 {
     internal class Sanitizer
     {

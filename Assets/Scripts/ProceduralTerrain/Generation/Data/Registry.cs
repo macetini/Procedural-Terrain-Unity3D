@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation.Processing
+namespace Assets.Scripts.ProceduralTerrain.Generation.Data
 {
     internal class Registry
     {

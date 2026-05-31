@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain.Generation.Processing;
+using Assets.Scripts.ProceduralTerrain.Generation.Data;
 using UnityEngine;
 
 namespace Assets.Scripts.ProceduralTerrain.Generation
