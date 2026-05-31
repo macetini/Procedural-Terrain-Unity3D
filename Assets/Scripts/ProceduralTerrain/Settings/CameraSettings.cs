@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Settings
+namespace ProceduralTerrain.Settings
 {
     [System.Serializable]
     public class CameraSettings
@@ -8,5 +8,11 @@ namespace Assets.Scripts.ProceduralTerrain.Settings
         public Camera reference;
         public float frustumPadding = 5.0f;
         public int viewDistanceChunks = 3;
+
+        public void ClampValues()
+        {
+            frustumPadding = Mathf.Max(0f, frustumPadding);
+            viewDistanceChunks = Mathf.Max(0, viewDistanceChunks);
+        }
     }
 }

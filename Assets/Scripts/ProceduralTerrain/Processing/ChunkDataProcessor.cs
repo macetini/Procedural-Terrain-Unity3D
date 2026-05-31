@@ -1,9 +1,9 @@
 using System;
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk;
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Chunk;
+using ProceduralTerrain.Processing.Chunk.Data;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Processing
+namespace ProceduralTerrain.Processing
 {
     internal class ChunkDataProcessor
     {

@@ -1,22 +1,22 @@
-using Assets.Scripts.ProceduralTerrain.Generation.Data;
-using Assets.Scripts.ProceduralTerrain.Processing;
+using ProceduralTerrain.Generation.Data;
+using ProceduralTerrain.Processing;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation
+namespace ProceduralTerrain.Generation
 {
     internal class ChunkCleanupManager
     {
         private readonly CleanupState cleanup = new();
         private readonly RuntimeState runtime;
-        private readonly TerrainDataProcessor terrainDataProcessor;
-        private readonly TerrainChunkPool chunkPool;
-        private readonly ProceduralTerrain generator;
+        private readonly ITerrainDataProcessor terrainDataProcessor;
+        private readonly IChunkPool chunkPool;
+        private readonly ITerrainHost generator;
 
         public ChunkCleanupManager(
             RuntimeState runtime,
-            TerrainDataProcessor terrainDataProcessor,
-            TerrainChunkPool chunkPool,
-            ProceduralTerrain generator
+            ITerrainDataProcessor terrainDataProcessor,
+            IChunkPool chunkPool,
+            ITerrainHost generator
         )
         {
             this.runtime = runtime;
@@ -63,7 +63,7 @@ namespace Assets.Scripts.ProceduralTerrain.Generation
         private void CleanupSceneChunkOrphans()
         {
             cleanup.BeginSceneSweep();
-            generator.GetComponentsInChildren(true, cleanup.SceneChunksSnapshot);
+            generator.GetChunkChildren(cleanup.SceneChunksSnapshot);
             for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
             {
                 TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
@@ -101,7 +101,8 @@ namespace Assets.Scripts.ProceduralTerrain.Generation
 
             bool isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
             bool isOutOfBounds = !IsWithinRetentionBounds(coord);
-            bool isForeignChunk = sceneChunk.Generator != null && sceneChunk.Generator != generator;
+            bool isForeignChunk =
+                sceneChunk.Generator != null && !ReferenceEquals(sceneChunk.Generator, generator);
             return isDuplicateCoord || isOutOfBounds || isForeignChunk;
         }
 

@@ -1,12 +1,13 @@
-using Assets.Scripts.ProceduralTerrain.Generation;
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
-using Assets.Scripts.ProceduralTerrain.Settings;
+using System.Collections.Generic;
+using ProceduralTerrain.Generation;
+using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Assets.Scripts.ProceduralTerrain
+namespace ProceduralTerrain
 {
-    public class ProceduralTerrain : MonoBehaviour
+    public class ProceduralTerrain : MonoBehaviour, ITerrainHost
     {
         [Header("Terrain Settings")]
         public TerrainSettings terrain = new();
@@ -28,30 +29,64 @@ namespace Assets.Scripts.ProceduralTerrain
 
         private TerrainDataGenerator dataGenerator;
 
-        public ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord) =>
-            dataGenerator.GetNeighborGrids(chunkCoord);
+        // ITerrainHost explicit implementations (Unity serializes fields, not auto-properties)
+        TerrainSettings ITerrainHost.terrain => terrain;
+        NoiseSettings ITerrainHost.noise => noise;
+        CameraSettings ITerrainHost.cameraConfig => cameraConfig;
+        LODSettings ITerrainHost.lod => lod;
+        DebugSettings ITerrainHost.debug => debug;
+        TerrainChunk ITerrainHost.chunkPrefab => chunkPrefab;
 
-        public int[] GetPrecalculatedTriangles(int resolution) =>
-            dataGenerator.GetPrecalculatedTriangles(resolution);
+        public void GetChunkChildren(List<TerrainChunk> results) =>
+            GetComponentsInChildren(true, results);
+
+        public ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord)
+        {
+            if (dataGenerator == null)
+            {
+                Debug.LogError("[TerrainGenerator] Data generator is not initialized.", this);
+                return default;
+            }
+            return dataGenerator.GetNeighborGrids(chunkCoord);
+        }
+
+        public int[] GetPrecalculatedTriangles(int resolution)
+        {
+            if (dataGenerator == null)
+            {
+                Debug.LogError("[TerrainGenerator] Data generator is not initialized.", this);
+                return System.Array.Empty<int>();
+            }
+            return dataGenerator.GetPrecalculatedTriangles(resolution);
+        }
+
+        void OnValidate()
+        {
+            NormalizeSettings();
+        }
 
         void Awake()
         {
+            if (!ValidateAndNormalizeSettings())
+            {
+                enabled = false;
+                return;
+            }
             dataGenerator = new TerrainDataGenerator(this);
         }
 
         void OnDestroy()
         {
-            dataGenerator.Destroy();
+            if (dataGenerator != null)
+            {
+                dataGenerator.Destroy();
+            }
         }
 
         void Start()
         {
-            if (cameraConfig.reference == null)
+            if (dataGenerator == null)
             {
-                Debug.LogError(
-                    "[TerrainGenerator] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
-                    this
-                );
                 return;
             }
             dataGenerator.BuildTerrain();
@@ -59,11 +94,16 @@ namespace Assets.Scripts.ProceduralTerrain
 
         void Update()
         {
+            if (dataGenerator == null)
+            {
+                return;
+            }
+
             dataGenerator.UpdateCurrentCameraPosition();
 
 #if UNITY_EDITOR
             // WARNING: This will rebuild the whole terrain. Should only be used during development.
-            if (Keyboard.current.enterKey.wasPressedThisFrame)
+            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
             {
                 HandleDebugRebuild();
             }
@@ -75,6 +115,40 @@ namespace Assets.Scripts.ProceduralTerrain
             Debug.Log("Rebuilding terrain.");
             dataGenerator.ResetGeneratorState();
             dataGenerator.BuildTerrain();
+        }
+
+        private void NormalizeSettings()
+        {
+            terrain?.ClampValues();
+            noise?.ClampValues();
+            cameraConfig?.ClampValues();
+            lod?.ClampValues(terrain != null ? terrain.chunkSize : 1);
+            debug?.ClampValues();
+        }
+
+        private bool ValidateAndNormalizeSettings()
+        {
+            NormalizeSettings();
+
+            if (chunkPrefab == null)
+            {
+                Debug.LogError(
+                    "[TerrainGenerator] Chunk prefab is not assigned. Assign it under Prefabs > Chunk Prefab in the Inspector.",
+                    this
+                );
+                return false;
+            }
+
+            if (cameraConfig == null || cameraConfig.reference == null)
+            {
+                Debug.LogError(
+                    "[TerrainGenerator] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
+                    this
+                );
+                return false;
+            }
+
+            return true;
         }
     }
 }

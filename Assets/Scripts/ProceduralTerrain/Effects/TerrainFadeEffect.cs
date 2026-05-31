@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Effects
+namespace ProceduralTerrain.Effects
 {
     [RequireComponent(typeof(Renderer))]
     public class TerrainFadeEffect : MonoBehaviour

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data
+namespace ProceduralTerrain.Processing.Chunk.Data
 {
     public struct ChunkNeighborStruct
     {

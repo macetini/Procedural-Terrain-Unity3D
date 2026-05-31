@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
-using Assets.Scripts.ProceduralTerrain.Utils;
+using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation.Data
+namespace ProceduralTerrain.Generation.Data
 {
     internal class Sampler
     {

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation
+namespace ProceduralTerrain.Generation
 {
     internal class CleanupState
     {

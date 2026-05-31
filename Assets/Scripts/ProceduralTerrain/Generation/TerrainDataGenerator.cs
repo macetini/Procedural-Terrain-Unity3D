@@ -1,17 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain.Generation.Data;
-using Assets.Scripts.ProceduralTerrain.Processing;
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
-using Assets.Scripts.ProceduralTerrain.Utils;
+using ProceduralTerrain.Generation.Data;
+using ProceduralTerrain.Processing;
+using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Utils;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation
+namespace ProceduralTerrain.Generation
 {
     public class TerrainDataGenerator
     {
         private readonly RuntimeState runtime = new();
-        private readonly ProceduralTerrain generator;
+        private readonly ITerrainHost generator;
         private readonly TerrainNoise terrainNoise;
         private readonly TerrainDataProcessor terrainDataProcessor;
         private readonly TerrainChunkPool chunkPool;
@@ -20,15 +20,8 @@ namespace Assets.Scripts.ProceduralTerrain.Generation
         private readonly ChunkVisibilitySystem visibilitySystem;
         private readonly Dictionary<int, int[]> triangleCache = new();
 
-        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord)
-        {
-            if (coord == null)
-            {
-                Debug.LogError("[TerrainDataGenerator] GetNeighborGrids called with null coord");
-                return default;
-            }
-            return terrainDataProcessor.GetNeighborGrids(coord);
-        }
+        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
+            terrainDataProcessor.GetNeighborGrids(coord);
 
         public void Destroy()
         {
@@ -36,7 +29,7 @@ namespace Assets.Scripts.ProceduralTerrain.Generation
             chunkPool.Clear();
         }
 
-        public TerrainDataGenerator(ProceduralTerrain generator)
+        public TerrainDataGenerator(ITerrainHost generator)
         {
             this.generator = generator;
             terrainNoise = new TerrainNoise(

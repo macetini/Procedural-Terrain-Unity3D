@@ -1,4 +1,4 @@
-namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
+namespace ProceduralTerrain.Processing.Chunk
 {
     public struct ChunkSettings
     {
@@ -14,31 +14,31 @@ namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
         public UnityEngine.Vector3 VisibilityBoundsOffset { get; private set; }
         public UnityEngine.Vector3 VisibilityBoundsSize { get; private set; }
 
-        public static ChunkSettings FromGenerator(ProceduralTerrain generator)
+        public static ChunkSettings FromHost(ITerrainHost host)
         {
-            float chunkBoundSize = generator.terrain.chunkSize * generator.terrain.tileSize;
+            float chunkBoundSize = host.terrain.chunkSize * host.terrain.tileSize;
             float maxHeight =
-                generator.terrain.maxElevationStepsCount * generator.terrain.elevationStepHeight;
+                host.terrain.maxElevationStepsCount * host.terrain.elevationStepHeight;
             float halfSize = chunkBoundSize * 0.5f;
-            float padding = generator.cameraConfig.frustumPadding;
-            float skirtDepth = generator.terrain.skirtDepth;
+            float padding = host.cameraConfig.frustumPadding;
+            float skirtDepth = host.terrain.skirtDepth;
 
             return new ChunkSettings
             {
                 FrustumPadding = padding,
                 SkirtDepth = skirtDepth,
 
-                ChunkSize = generator.terrain.chunkSize,
-                TileSize = generator.terrain.tileSize,
+                ChunkSize = host.terrain.chunkSize,
+                TileSize = host.terrain.tileSize,
 
-                ElevationStepHeight = generator.terrain.elevationStepHeight,
+                ElevationStepHeight = host.terrain.elevationStepHeight,
 
-                MaxElevationStep = generator.terrain.maxElevationStepsCount,
+                MaxElevationStep = host.terrain.maxElevationStepsCount,
 
                 ChunkBoundSize = chunkBoundSize,
 
-                SqrLodDistance1 = generator.lod.distance1 * generator.lod.distance1,
-                SqrLodDistance2 = generator.lod.distance2 * generator.lod.distance2,
+                SqrLodDistance1 = host.lod.distance1 * host.lod.distance1,
+                SqrLodDistance2 = host.lod.distance2 * host.lod.distance2,
 
                 VisibilityBoundsOffset = new UnityEngine.Vector3(
                     halfSize,

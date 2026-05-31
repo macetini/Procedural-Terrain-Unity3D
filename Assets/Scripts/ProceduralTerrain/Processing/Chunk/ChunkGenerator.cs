@@ -1,13 +1,13 @@
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
+namespace ProceduralTerrain.Processing.Chunk
 {
     public class ChunkGenerator
     {
         private const string MESH_IDENTIFIER = "TerrainChunk_";
         private readonly ChunkDataProcessor processor = new();
 
-        private ProceduralTerrain generator;
+        private ITerrainHost generator;
         private Vector2Int chunkCoord;
         private ChunkSettings settings;
         private Transform cameraTransform;
@@ -30,11 +30,11 @@ namespace Assets.Scripts.ProceduralTerrain.Processing.Chunk
             IsMeshReady = false;
         }
 
-        public void Init(ProceduralTerrain generator, Vector2Int chunkCoord)
+        public void Init(ITerrainHost generator, Vector2Int chunkCoord)
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;
-            settings = ChunkSettings.FromGenerator(generator);
+            settings = ChunkSettings.FromHost(generator);
             cameraTransform = generator.cameraConfig.reference.transform;
 
             chunk.RendererReference.enabled = false;

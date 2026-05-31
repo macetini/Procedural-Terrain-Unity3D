@@ -1,6 +1,6 @@
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Chunk.Data;
 
-namespace Assets.Scripts.ProceduralTerrain.Utils
+namespace ProceduralTerrain.Utils
 {
     public static class TerrainMath
     {

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Processing
+namespace ProceduralTerrain.Processing
 {
-    internal class TerrainChunkPool
+    internal class TerrainChunkPool : IChunkPool
     {
         private readonly Stack<TerrainChunk> pool = new();
         private readonly TerrainChunk prefab;

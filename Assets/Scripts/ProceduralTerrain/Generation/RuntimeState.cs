@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation
+namespace ProceduralTerrain.Generation
 {
     internal class RuntimeState
     {

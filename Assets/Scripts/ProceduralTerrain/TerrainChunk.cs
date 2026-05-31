@@ -1,8 +1,8 @@
-using Assets.Scripts.ProceduralTerrain.Effects;
-using Assets.Scripts.ProceduralTerrain.Processing.Chunk;
+using ProceduralTerrain.Effects;
+using ProceduralTerrain.Processing.Chunk;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain
+namespace ProceduralTerrain
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class TerrainChunk : MonoBehaviour
@@ -19,7 +19,7 @@ namespace Assets.Scripts.ProceduralTerrain
         public bool IsVisible { get; private set; } = true;
         public int CurrentStep => chunkGenerator.CurrentStep;
         public Vector2Int ChunkCoord => chunkCoord;
-        public ProceduralTerrain Generator => generator;
+        public ITerrainHost Generator => generator;
 
         internal MeshRenderer RendererReference => rendererReference;
         internal MeshFilter FilterReference => filterReference;
@@ -29,7 +29,7 @@ namespace Assets.Scripts.ProceduralTerrain
         private MeshFilter filterReference;
 
         // Data
-        private ProceduralTerrain generator;
+        private ITerrainHost generator;
         private Vector2Int chunkCoord;
 
         // Calculations
@@ -69,7 +69,7 @@ namespace Assets.Scripts.ProceduralTerrain
             }
         }
 
-        public void InitBuild(ProceduralTerrain generator, Vector2Int chunkCoord)
+        public void InitBuild(ITerrainHost generator, Vector2Int chunkCoord)
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;

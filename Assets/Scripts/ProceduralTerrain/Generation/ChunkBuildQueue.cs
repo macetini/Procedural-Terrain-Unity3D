@@ -1,23 +1,23 @@
 using System.Collections;
-using Assets.Scripts.ProceduralTerrain.Generation.Data;
-using Assets.Scripts.ProceduralTerrain.Processing;
+using ProceduralTerrain.Generation.Data;
+using ProceduralTerrain.Processing;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation
+namespace ProceduralTerrain.Generation
 {
     internal class ChunkBuildQueue
     {
         private readonly BuildQueueState buildState = new();
         private readonly RuntimeState runtime;
-        private readonly TerrainDataProcessor terrainDataProcessor;
-        private readonly TerrainChunkPool chunkPool;
-        private readonly ProceduralTerrain generator;
+        private readonly ITerrainDataProcessor terrainDataProcessor;
+        private readonly IChunkPool chunkPool;
+        private readonly ITerrainHost generator;
 
         public ChunkBuildQueue(
             RuntimeState runtime,
-            TerrainDataProcessor terrainDataProcessor,
-            TerrainChunkPool chunkPool,
-            ProceduralTerrain generator
+            ITerrainDataProcessor terrainDataProcessor,
+            IChunkPool chunkPool,
+            ITerrainHost generator
         )
         {
             this.runtime = runtime;
@@ -95,11 +95,7 @@ namespace Assets.Scripts.ProceduralTerrain.Generation
 
         private bool TryEnqueueChunkBuild(Vector2Int coord)
         {
-            if (
-                coord == null
-                || terrainDataProcessor.HasActiveChunk(coord)
-                || !buildState.QueueHash.Add(coord)
-            )
+            if (terrainDataProcessor.HasActiveChunk(coord) || !buildState.QueueHash.Add(coord))
             {
                 return false;
             }
@@ -266,7 +262,7 @@ namespace Assets.Scripts.ProceduralTerrain.Generation
 
         private void SpawnChunkMesh(Vector2Int coord)
         {
-            if (coord == null || terrainDataProcessor.HasActiveChunk(coord))
+            if (terrainDataProcessor.HasActiveChunk(coord))
                 return;
             var position = new Vector3(
                 coord.x * runtime.ChunkBoundSize,

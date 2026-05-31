@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // Required for the new system
 
-namespace SSHexMap.Development
+namespace ProceduralTerrain.Development
 {
     public class CameraFlightController : MonoBehaviour
     {
@@ -86,4 +86,3 @@ namespace SSHexMap.Development
         }
     }
 }
-

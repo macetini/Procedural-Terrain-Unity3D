@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Utils
+namespace ProceduralTerrain.Utils
 {
     public sealed class TerrainNoise
     {

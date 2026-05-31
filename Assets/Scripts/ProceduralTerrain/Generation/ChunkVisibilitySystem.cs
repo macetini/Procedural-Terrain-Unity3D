@@ -1,21 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
-using Assets.Scripts.ProceduralTerrain.Generation.Data;
+using ProceduralTerrain.Generation.Data;
 using UnityEngine;
 
-namespace Assets.Scripts.ProceduralTerrain.Generation
+namespace ProceduralTerrain.Generation
 {
     internal class ChunkVisibilitySystem
     {
         private readonly RuntimeState runtime;
-        private readonly TerrainDataProcessor terrainDataProcessor;
-        private readonly ProceduralTerrain generator;
+        private readonly ITerrainDataProcessor terrainDataProcessor;
+        private readonly ITerrainHost generator;
         private readonly List<Vector2Int> keysSnapshot = new();
 
         public ChunkVisibilitySystem(
             RuntimeState runtime,
-            TerrainDataProcessor terrainDataProcessor,
-            ProceduralTerrain generator
+            ITerrainDataProcessor terrainDataProcessor,
+            ITerrainHost generator
         )
         {
             this.runtime = runtime;

@@ -1,0 +1,6 @@
+root = true
+
+[*.cs]
+# Allow explicit namespaces that do not mirror folder paths (Unity project layout).
+dotnet_style_namespace_match_folder = false
+dotnet_diagnostic.IDE0130.severity = none
