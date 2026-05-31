@@ -49,7 +49,7 @@ namespace ProceduralTerrain.Generation
                             chunk.UpdateLOD(true);
                         }
                     }
-                    // Time Slicing: Only process after X frames
+                    // Time slicing: process in batches to spread work across frames.
                     if (i > 0 && i % generator.lod.visibilityBatchSize == 0)
                     {
                         yield return null;

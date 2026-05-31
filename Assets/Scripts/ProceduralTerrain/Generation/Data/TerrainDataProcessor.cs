@@ -23,7 +23,7 @@ namespace ProceduralTerrain.Generation.Data
         public void SetChunkDisposeAction(System.Action<TerrainChunk> action) =>
             registry.SetChunkDisposeAction(action);
 
-        public void ClearAll() // WARNING: Expensive. Should only be only used during the development phase.
+        public void ClearAll() // Development-only maintenance path; expensive by design.
         {
             registry.ClearAll();
             sanitizer.ClearAll();
@@ -46,8 +46,6 @@ namespace ProceduralTerrain.Generation.Data
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
             ChunkNeighborStruct.GetNeighborGrids(coord, tileMap);
 
-        //
-
         // Sanitizer
         public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>
             sanitizer.SanitizeCurrentTileMeshData(cameraOrigin, dataRadius);
@@ -57,8 +55,6 @@ namespace ProceduralTerrain.Generation.Data
         public bool IsSanitized(Vector2Int coord) => sanitizer.IsSanitized(coord);
 
         public void SanitizeGlobalChunk(Vector2Int coord) => sanitizer.SanitizeGlobalChunk(coord);
-
-        //
 
         // Registry
         public void RegisterChunk(Vector2Int coord, TerrainChunk chunk) =>
@@ -83,6 +79,5 @@ namespace ProceduralTerrain.Generation.Data
 
         public Dictionary<Vector2Int, TerrainChunk>.KeyCollection ActiveChunkKeys =>
             registry.ActiveChunkKeys;
-        //
     }
 }

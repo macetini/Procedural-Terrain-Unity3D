@@ -102,7 +102,7 @@ namespace ProceduralTerrain
             dataGenerator.UpdateCurrentCameraPosition();
 
 #if UNITY_EDITOR
-            // WARNING: This will rebuild the whole terrain. Should only be used during development.
+            // Dev-only hotkey: rebuilds the full terrain.
             if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
             {
                 HandleDebugRebuild();
@@ -112,7 +112,7 @@ namespace ProceduralTerrain
 
         private void HandleDebugRebuild()
         {
-            Debug.Log("Rebuilding terrain.");
+            Debug.Log("Rebuilding terrain.", this);
             dataGenerator.ResetGeneratorState();
             dataGenerator.BuildTerrain();
         }

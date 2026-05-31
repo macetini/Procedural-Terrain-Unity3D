@@ -51,7 +51,7 @@ namespace ProceduralTerrain.Processing
         {
             if (chunk == null)
             {
-                Debug.LogWarning("Attempted to return a null chunk to the pool.");
+                Debug.LogWarning("Attempted to return a null chunk to the pool.", parent);
                 return;
             }
 

@@ -35,7 +35,19 @@ namespace ProceduralTerrain.Processing.Chunk
             this.generator = generator;
             this.chunkCoord = chunkCoord;
             settings = ChunkSettings.FromHost(generator);
-            cameraTransform = generator.cameraConfig.reference.transform;
+            if (generator.cameraConfig != null && generator.cameraConfig.reference != null)
+            {
+                cameraTransform = generator.cameraConfig.reference.transform;
+            }
+            else
+            {
+                // Defensive fallback to avoid hard null-reference crashes on misconfigured scenes.
+                cameraTransform = chunk.transform;
+                Debug.LogWarning(
+                    "[ChunkGenerator] Camera reference is missing. Falling back to chunk transform for LOD distance.",
+                    chunk
+                );
+            }
 
             chunk.RendererReference.enabled = false;
             IsMeshReady = false;

@@ -44,7 +44,7 @@ namespace ProceduralTerrain
             chunkGenerator = new ChunkGenerator(this);
         }
 
-        public void CallDestroy() // WARNING: Not optimized. Should only be only used during the development phase.
+        public void CallDestroy() // Development fallback path; not pool-optimized.
         {
             Destroy(gameObject);
         }
