@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation.Data
 {
+    /// <summary>
+    /// Coordinates sampler, sanitizer, and registry operations for chunk data.
+    /// </summary>
     internal class TerrainDataProcessor : ITerrainDataProcessor
     {
         private readonly Sampler sampler;

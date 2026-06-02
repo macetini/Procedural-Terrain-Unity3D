@@ -10,19 +10,19 @@ namespace ProceduralTerrain.Generation
         private readonly RuntimeState runtime;
         private readonly ITerrainDataProcessor terrainDataProcessor;
         private readonly IChunkPool chunkPool;
-        private readonly ITerrainHost generator;
+        private readonly ITerrainHost host;
 
         public ChunkCleanupManager(
             RuntimeState runtime,
             ITerrainDataProcessor terrainDataProcessor,
             IChunkPool chunkPool,
-            ITerrainHost generator
+            ITerrainHost host
         )
         {
             this.runtime = runtime;
             this.terrainDataProcessor = terrainDataProcessor;
             this.chunkPool = chunkPool;
-            this.generator = generator;
+            this.host = host;
         }
 
         public void ResetForRebuild()
@@ -43,16 +43,16 @@ namespace ProceduralTerrain.Generation
 
         private bool ShouldRunOrphanSweep()
         {
-            if (generator.debug.orphanSweepPeriod < 0)
+            if (host.debug.orphanSweepPeriod < 0)
             {
                 return false;
             }
-            if (generator.debug.orphanSweepPeriod == 0)
+            if (host.debug.orphanSweepPeriod == 0)
             {
                 return true;
             }
             cleanup.CleanupPassCounter++;
-            if (cleanup.CleanupPassCounter >= generator.debug.orphanSweepPeriod)
+            if (cleanup.CleanupPassCounter >= host.debug.orphanSweepPeriod)
             {
                 cleanup.CleanupPassCounter = 0;
                 return true;
@@ -63,7 +63,7 @@ namespace ProceduralTerrain.Generation
         private void CleanupSceneChunkOrphans()
         {
             cleanup.BeginSceneSweep();
-            generator.GetChunkChildren(cleanup.SceneChunksSnapshot);
+            host.GetChunkChildren(cleanup.SceneChunksSnapshot);
             for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
             {
                 TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
@@ -102,13 +102,13 @@ namespace ProceduralTerrain.Generation
             bool isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
             bool isOutOfBounds = !IsWithinRetentionBounds(coord);
             bool isForeignChunk =
-                sceneChunk.Generator != null && !ReferenceEquals(sceneChunk.Generator, generator);
+                sceneChunk.Generator != null && !ReferenceEquals(sceneChunk.Generator, host);
             return isDuplicateCoord || isOutOfBounds || isForeignChunk;
         }
 
         private void LogCleanupSummary()
         {
-            if (!generator.debug.cleanupLogs)
+            if (!host.debug.cleanupLogs)
             {
                 return;
             }
@@ -135,7 +135,7 @@ namespace ProceduralTerrain.Generation
 
         private void EvictStaleTileData()
         {
-            int dataRetentionRadius = generator.cameraConfig.viewDistanceChunks + 2;
+            int dataRetentionRadius = host.cameraConfig.viewDistanceChunks + 2;
             terrainDataProcessor.GetTileDataKeysNonAlloc(cleanup.TileDataKeysSnapshot);
 
             for (int i = 0; i < cleanup.TileDataKeysSnapshot.Count; i++)
@@ -161,7 +161,7 @@ namespace ProceduralTerrain.Generation
 
         private int GetRetentionRadius()
         {
-            return Mathf.Max(0, generator.cameraConfig.viewDistanceChunks);
+            return Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
         }
     }
 }

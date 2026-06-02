@@ -11,19 +11,19 @@ namespace ProceduralTerrain.Generation
         private readonly RuntimeState runtime;
         private readonly ITerrainDataProcessor terrainDataProcessor;
         private readonly IChunkPool chunkPool;
-        private readonly ITerrainHost generator;
+        private readonly ITerrainHost host;
 
         public ChunkBuildQueue(
             RuntimeState runtime,
             ITerrainDataProcessor terrainDataProcessor,
             IChunkPool chunkPool,
-            ITerrainHost generator
+            ITerrainHost host
         )
         {
             this.runtime = runtime;
             this.terrainDataProcessor = terrainDataProcessor;
             this.chunkPool = chunkPool;
-            this.generator = generator;
+            this.host = host;
         }
 
         public void Clear()
@@ -33,7 +33,7 @@ namespace ProceduralTerrain.Generation
 
         public void EnqueueVisibleChunksAroundCamera()
         {
-            int viewDist = generator.cameraConfig.viewDistanceChunks;
+            int viewDist = host.cameraConfig.viewDistanceChunks;
             for (int x = -viewDist; x <= viewDist; x++)
             {
                 EnqueueVisibleChunksAtColumnOffset(x);
@@ -42,7 +42,7 @@ namespace ProceduralTerrain.Generation
 
         public void EnqueueVisibleChunksAtColumnOffset(int xOffset)
         {
-            int viewDist = generator.cameraConfig.viewDistanceChunks;
+            int viewDist = host.cameraConfig.viewDistanceChunks;
             int baseX = runtime.CurrentCameraPosition.x + xOffset;
             int baseY = runtime.CurrentCameraPosition.y;
             for (int z = -viewDist; z <= viewDist; z++)
@@ -69,14 +69,14 @@ namespace ProceduralTerrain.Generation
 
             if (!buildState.IsProcessing)
             {
-                generator.StartCoroutine(ProcessBuildQueue());
+                host.StartCoroutine(ProcessBuildQueue());
             }
         }
 
         public IEnumerator ProcessLocalChunks()
         {
-            int viewDist = generator.cameraConfig.viewDistanceChunks;
-            int batchSize = Mathf.Max(1, generator.lod.visibilityBatchSize);
+            int viewDist = host.cameraConfig.viewDistanceChunks;
+            int batchSize = Mathf.Max(1, host.lod.visibilityBatchSize);
             int processed = 0;
 
             for (int x = -viewDist; x <= viewDist; x++)
@@ -203,7 +203,7 @@ namespace ProceduralTerrain.Generation
 
         private bool IsWithinRetentionBounds(Vector2Int coord)
         {
-            int retentionRadius = Mathf.Max(0, generator.cameraConfig.viewDistanceChunks);
+            int retentionRadius = Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
             int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
             int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
             return dx <= retentionRadius && dz <= retentionRadius;
@@ -270,7 +270,7 @@ namespace ProceduralTerrain.Generation
                 coord.y * runtime.ChunkBoundSize
             );
             var chunk = chunkPool.Get(position);
-            chunk.InitBuild(generator, coord);
+            chunk.InitBuild(host, coord);
             chunk.UpdateVisibility(runtime.CameraPlanes);
             terrainDataProcessor.RegisterChunk(coord, chunk);
         }

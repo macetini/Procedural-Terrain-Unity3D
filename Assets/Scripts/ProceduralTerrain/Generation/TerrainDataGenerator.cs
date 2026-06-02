@@ -8,10 +8,13 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation
 {
+    /// <summary>
+    /// Coordinates terrain runtime flow: initial data pass, chunk build queue, cleanup, and visibility updates.
+    /// </summary>
     internal class TerrainDataGenerator : ITerrainOrchestrator
     {
         private readonly RuntimeState runtime = new();
-        private readonly ITerrainHost generator;
+        private readonly ITerrainHost host;
         private readonly TerrainNoise terrainNoise;
         private readonly TerrainDataProcessor terrainDataProcessor;
         private readonly TerrainChunkPool chunkPool;
@@ -29,45 +32,21 @@ namespace ProceduralTerrain.Generation
             chunkPool.Clear();
         }
 
-        public TerrainDataGenerator(ITerrainHost generator)
+        public TerrainDataGenerator(ITerrainHost host)
         {
-            this.generator = generator;
-            terrainNoise = new TerrainNoise(
-                generator.noise.seed,
-                generator.noise.scale,
-                generator.noise.octaves,
-                generator.noise.persistence,
-                generator.noise.lacunarity,
-                generator.terrain.maxElevationStepsCount
-            );
-            terrainDataProcessor = new TerrainDataProcessor(
-                generator.terrain.chunkSize,
-                terrainNoise
-            );
-            int poolMaxSize = TerrainChunkPool.CalculateMaxSize(
-                generator.cameraConfig.viewDistanceChunks
-            );
-            chunkPool = new TerrainChunkPool(
-                generator.chunkPrefab,
-                generator.transform,
-                poolMaxSize
-            );
+            this.host = host;
+            terrainNoise = CreateTerrainNoise();
+            terrainDataProcessor = new TerrainDataProcessor(host.terrain.chunkSize, terrainNoise);
+            chunkPool = CreateChunkPool();
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
 
-            buildQueue = new ChunkBuildQueue(runtime, terrainDataProcessor, chunkPool, generator);
-            cleanupManager = new ChunkCleanupManager(
-                runtime,
-                terrainDataProcessor,
-                chunkPool,
-                generator
-            );
-            visibilitySystem = new ChunkVisibilitySystem(runtime, terrainDataProcessor, generator);
+            (buildQueue, cleanupManager, visibilitySystem) = CreateRuntimeSystems();
         }
 
         public void ResetGeneratorState()
         {
             runtime.IsBuildCancelled = true;
-            generator.StopAllCoroutines();
+            host.StopAllCoroutines();
             buildQueue.Clear();
             triangleCache.Clear();
             cleanupManager.ResetForRebuild();
@@ -78,32 +57,83 @@ namespace ProceduralTerrain.Generation
 
         public void BuildTerrain()
         {
-            runtime.ChunkBoundSize = generator.terrain.chunkSize * generator.terrain.tileSize;
-
-            UpdateCurrentCameraPosition();
-            FirstPass();
-            SecondPass();
-
-            generator.StartCoroutine(WorldMonitoringRoutine());
-            generator.StartCoroutine(visibilitySystem.VisibilityCheckRoutine());
+            InitializeRuntimeState();
+            RunInitialGenerationPasses();
+            StartRuntimeCoroutines();
         }
 
         public void UpdateCurrentCameraPosition()
         {
-            var pos = generator.cameraConfig.reference.transform.position;
-            int currentX = Mathf.FloorToInt(pos.x / runtime.ChunkBoundSize);
-            int currentZ = Mathf.FloorToInt(pos.z / runtime.ChunkBoundSize);
-            var newPos = new Vector2Int(currentX, currentZ);
+            var pos = host.cameraConfig.reference.transform.position;
+            var newPos = GetCameraChunkPosition(pos);
             if (newPos == runtime.CurrentCameraPosition)
                 return;
             runtime.CurrentCameraPosition = newPos;
         }
 
-        // --------------- FIRST PASS : GENERATE RAW DATA FOR ALL CHUNKS IN VIEW DISTANCE ---------------
+        private TerrainNoise CreateTerrainNoise()
+        {
+            return new TerrainNoise(
+                host.noise.seed,
+                host.noise.scale,
+                host.noise.octaves,
+                host.noise.persistence,
+                host.noise.lacunarity,
+                host.terrain.maxElevationStepsCount
+            );
+        }
+
+        private TerrainChunkPool CreateChunkPool()
+        {
+            int poolMaxSize = TerrainChunkPool.CalculateMaxSize(
+                host.cameraConfig.viewDistanceChunks
+            );
+
+            return new TerrainChunkPool(host.chunkPrefab, host.transform, poolMaxSize);
+        }
+
+        private (
+            ChunkBuildQueue buildQueue,
+            ChunkCleanupManager cleanupManager,
+            ChunkVisibilitySystem visibilitySystem
+        ) CreateRuntimeSystems()
+        {
+            var queue = new ChunkBuildQueue(runtime, terrainDataProcessor, chunkPool, host);
+            var cleanup = new ChunkCleanupManager(runtime, terrainDataProcessor, chunkPool, host);
+            var visibility = new ChunkVisibilitySystem(runtime, terrainDataProcessor, host);
+            return (queue, cleanup, visibility);
+        }
+
+        private void InitializeRuntimeState()
+        {
+            runtime.ChunkBoundSize = host.terrain.chunkSize * host.terrain.tileSize;
+            UpdateCurrentCameraPosition();
+        }
+
+        private void RunInitialGenerationPasses()
+        {
+            FirstPass();
+            SecondPass();
+        }
+
+        private void StartRuntimeCoroutines()
+        {
+            host.StartCoroutine(WorldMonitoringRoutine());
+            host.StartCoroutine(visibilitySystem.VisibilityCheckRoutine());
+        }
+
+        private Vector2Int GetCameraChunkPosition(Vector3 worldPosition)
+        {
+            int currentX = Mathf.FloorToInt(worldPosition.x / runtime.ChunkBoundSize);
+            int currentZ = Mathf.FloorToInt(worldPosition.z / runtime.ChunkBoundSize);
+            return new Vector2Int(currentX, currentZ);
+        }
+
+        // First pass: generate raw data for all chunks in view distance.
 
         private void FirstPass()
         {
-            int dataRadius = generator.cameraConfig.viewDistanceChunks + 1;
+            int dataRadius = host.cameraConfig.viewDistanceChunks + 1;
 
             double totalMs = MeasureExecution(() =>
             {
@@ -157,7 +187,7 @@ namespace ProceduralTerrain.Generation
             }
         }
 
-        // --------------- SECOND PASS : BUILD MESHES FOR VISIBLE CHUNKS ---------------
+        // Second pass: enqueue visible chunks for mesh build.
 
         private void SecondPass()
         {
@@ -165,25 +195,31 @@ namespace ProceduralTerrain.Generation
             buildQueue.StartBuildQueueIfNeeded();
         }
 
-        // --------------- WORLD MONITORING ---------------
+        // Runtime monitoring: process camera movement and update nearby chunks.
 
         private IEnumerator WorldMonitoringRoutine()
         {
             Vector2Int lastProcessedPos = new(-9999, -9999);
-            while (
-                runtime.WorldMonitoringActive && generator != null && generator.isActiveAndEnabled
-            )
+            while (runtime.WorldMonitoringActive && host != null && host.isActiveAndEnabled)
             {
-                if (runtime.CurrentCameraPosition != lastProcessedPos)
+                if (TryProcessCameraMovement(ref lastProcessedPos))
                 {
-                    lastProcessedPos = runtime.CurrentCameraPosition;
-
-                    cleanupManager.CleanupRemoteChunks();
-
                     yield return buildQueue.ProcessLocalChunks();
                 }
                 yield return null;
             }
+        }
+
+        private bool TryProcessCameraMovement(ref Vector2Int lastProcessedPos)
+        {
+            if (runtime.CurrentCameraPosition == lastProcessedPos)
+            {
+                return false;
+            }
+
+            lastProcessedPos = runtime.CurrentCameraPosition;
+            cleanupManager.CleanupRemoteChunks();
+            return true;
         }
 
         public int[] GetPrecalculatedTriangles(int resolution)

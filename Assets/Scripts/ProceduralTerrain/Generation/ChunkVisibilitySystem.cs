@@ -5,32 +5,33 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation
 {
+    /// <summary>
+    /// Runs frustum-based visibility updates for active chunks.
+    /// </summary>
     internal class ChunkVisibilitySystem
     {
         private readonly RuntimeState runtime;
         private readonly ITerrainDataProcessor terrainDataProcessor;
-        private readonly ITerrainHost generator;
+        private readonly ITerrainHost host;
         private readonly List<Vector2Int> keysSnapshot = new();
 
         public ChunkVisibilitySystem(
             RuntimeState runtime,
             ITerrainDataProcessor terrainDataProcessor,
-            ITerrainHost generator
+            ITerrainHost host
         )
         {
             this.runtime = runtime;
             this.terrainDataProcessor = terrainDataProcessor;
-            this.generator = generator;
+            this.host = host;
         }
 
         public IEnumerator VisibilityCheckRoutine()
         {
-            while (
-                runtime.WorldMonitoringActive && generator != null && generator.isActiveAndEnabled
-            )
+            while (runtime.WorldMonitoringActive && host != null && host.isActiveAndEnabled)
             {
                 GeometryUtility.CalculateFrustumPlanes(
-                    generator.cameraConfig.reference,
+                    host.cameraConfig.reference,
                     runtime.CameraPlanes
                 );
 
@@ -49,13 +50,13 @@ namespace ProceduralTerrain.Generation
                             chunk.UpdateLOD(true);
                         }
                     }
-                    // Time slicing: process in batches to spread work across frames.
-                    if (i > 0 && i % generator.lod.visibilityBatchSize == 0)
+                    // Process in batches to spread work across frames.
+                    if (i > 0 && i % host.lod.visibilityBatchSize == 0)
                     {
                         yield return null;
                     }
                 }
-                // Short rest before the next full world sweep
+                // Yield once before the next full visibility sweep.
                 yield return null;
             }
         }
