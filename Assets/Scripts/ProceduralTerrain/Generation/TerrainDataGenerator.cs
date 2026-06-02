@@ -11,7 +11,7 @@ namespace ProceduralTerrain.Generation
     /// <summary>
     /// Coordinates terrain runtime flow: initial data pass, chunk build queue, cleanup, and visibility updates.
     /// </summary>
-    internal class TerrainDataGenerator : ITerrainOrchestrator
+    internal partial class TerrainDataGenerator : ITerrainOrchestrator
     {
         private readonly RuntimeState runtime = new();
         private readonly ITerrainHost host;
@@ -127,99 +127,6 @@ namespace ProceduralTerrain.Generation
             int currentX = Mathf.FloorToInt(worldPosition.x / runtime.ChunkBoundSize);
             int currentZ = Mathf.FloorToInt(worldPosition.z / runtime.ChunkBoundSize);
             return new Vector2Int(currentX, currentZ);
-        }
-
-        // First pass: generate raw data for all chunks in view distance.
-
-        private void FirstPass()
-        {
-            int dataRadius = host.cameraConfig.viewDistanceChunks + 1;
-
-            double totalMs = MeasureExecution(() =>
-            {
-                LogMeasuredStep(
-                    "GenerateFullMeshData()",
-                    () => GenerateFullMeshData(runtime.CurrentCameraPosition, dataRadius)
-                );
-                LogMeasuredStep(
-                    "SanitizeCurrentTileMeshData()",
-                    () =>
-                        terrainDataProcessor.SanitizeData(runtime.CurrentCameraPosition, dataRadius)
-                );
-            });
-
-            LogExecutionTime("Total", totalMs);
-        }
-
-        private static double MeasureExecution(System.Action action)
-        {
-            long start = System.Diagnostics.Stopwatch.GetTimestamp();
-            action();
-            long end = System.Diagnostics.Stopwatch.GetTimestamp();
-            return (end - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-        }
-
-        private static void LogMeasuredStep(string label, System.Action action)
-        {
-            double elapsedMs = MeasureExecution(action);
-            LogExecutionTime(label, elapsedMs);
-        }
-
-        private static void LogExecutionTime(string label, double elapsedMs)
-        {
-            if (elapsedMs <= 1.0f)
-            {
-                return;
-            }
-
-            Debug.Log($"<color=orange>'{label}' Execution Time: {elapsedMs:F2} ms</color>");
-        }
-
-        private void GenerateFullMeshData(Vector2Int cameraOrigin, int dataRadius)
-        {
-            for (int x = -dataRadius; x <= dataRadius; x++)
-            {
-                for (int z = -dataRadius; z <= dataRadius; z++)
-                {
-                    var coord = new Vector2Int(cameraOrigin.x + x, cameraOrigin.y + z);
-                    terrainDataProcessor.GenerateRawData(coord);
-                }
-            }
-        }
-
-        // Second pass: enqueue visible chunks for mesh build.
-
-        private void SecondPass()
-        {
-            buildQueue.EnqueueVisibleChunksAroundCamera();
-            buildQueue.StartBuildQueueIfNeeded();
-        }
-
-        // Runtime monitoring: process camera movement and update nearby chunks.
-
-        private IEnumerator WorldMonitoringRoutine()
-        {
-            Vector2Int lastProcessedPos = new(-9999, -9999);
-            while (runtime.WorldMonitoringActive && host != null && host.isActiveAndEnabled)
-            {
-                if (TryProcessCameraMovement(ref lastProcessedPos))
-                {
-                    yield return buildQueue.ProcessLocalChunks();
-                }
-                yield return null;
-            }
-        }
-
-        private bool TryProcessCameraMovement(ref Vector2Int lastProcessedPos)
-        {
-            if (runtime.CurrentCameraPosition == lastProcessedPos)
-            {
-                return false;
-            }
-
-            lastProcessedPos = runtime.CurrentCameraPosition;
-            cleanupManager.CleanupRemoteChunks();
-            return true;
         }
 
         public int[] GetPrecalculatedTriangles(int resolution)

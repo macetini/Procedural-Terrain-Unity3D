@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using ProceduralTerrain.Generation.Data;
 using ProceduralTerrain.Processing;
@@ -5,6 +6,9 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation
 {
+    /// <summary>
+    /// Maintains the chunk build queue and schedules coroutine-based processing.
+    /// </summary>
     internal class ChunkBuildQueue
     {
         private readonly BuildQueueState buildState = new();
@@ -12,6 +16,7 @@ namespace ProceduralTerrain.Generation
         private readonly ITerrainDataProcessor terrainDataProcessor;
         private readonly IChunkPool chunkPool;
         private readonly ITerrainHost host;
+        private readonly ChunkBuildWorker buildWorker;
 
         public ChunkBuildQueue(
             RuntimeState runtime,
@@ -24,12 +29,15 @@ namespace ProceduralTerrain.Generation
             this.terrainDataProcessor = terrainDataProcessor;
             this.chunkPool = chunkPool;
             this.host = host;
+            buildWorker = new ChunkBuildWorker(runtime, terrainDataProcessor, chunkPool, host);
         }
 
         public void Clear()
         {
             buildState.Clear();
         }
+
+        // Public queue API
 
         public void EnqueueVisibleChunksAroundCamera()
         {
@@ -69,7 +77,7 @@ namespace ProceduralTerrain.Generation
 
             if (!buildState.IsProcessing)
             {
-                host.StartCoroutine(ProcessBuildQueue());
+                host.StartCoroutine(buildWorker.ProcessBuildQueue(buildState));
             }
         }
 
@@ -93,12 +101,15 @@ namespace ProceduralTerrain.Generation
             StartBuildQueueIfNeeded();
         }
 
+        // Queue scheduling internals
+
         private bool TryEnqueueChunkBuild(Vector2Int coord)
         {
             if (terrainDataProcessor.HasActiveChunk(coord) || !buildState.QueueHash.Add(coord))
             {
                 return false;
             }
+
             buildState.Queue.Enqueue(coord);
             return true;
         }
@@ -126,153 +137,185 @@ namespace ProceduralTerrain.Generation
             }
         }
 
-        private IEnumerator ProcessBuildQueue()
+        /// <summary>
+        /// Encapsulates build coroutine steps for queued chunk coordinates.
+        /// </summary>
+        private sealed class ChunkBuildWorker
         {
-            buildState.IsProcessing = true;
+            private readonly RuntimeState runtime;
+            private readonly ITerrainDataProcessor terrainDataProcessor;
+            private readonly IChunkPool chunkPool;
+            private readonly ITerrainHost host;
 
-            while (buildState.Queue.Count > 0 && !runtime.IsBuildCancelled)
+            public ChunkBuildWorker(
+                RuntimeState runtime,
+                ITerrainDataProcessor terrainDataProcessor,
+                IChunkPool chunkPool,
+                ITerrainHost host
+            )
             {
-                Vector2Int coord = buildState.Queue.Dequeue();
-                yield return SafeBuildChunk(coord);
-
-                buildState.QueueHash.Remove(coord);
+                this.runtime = runtime;
+                this.terrainDataProcessor = terrainDataProcessor;
+                this.chunkPool = chunkPool;
+                this.host = host;
             }
 
-            buildState.IsProcessing = false;
-        }
-
-        private IEnumerator SafeBuildChunk(Vector2Int coord)
-        {
-            IEnumerator buildTask = ProcessQueuedChunk(coord);
-            bool canProcess = true;
-
-            while (canProcess)
+            public IEnumerator ProcessBuildQueue(BuildQueueState buildState)
             {
-                bool hasNextStep;
+                buildState.IsProcessing = true;
 
-                try
+                while (buildState.Queue.Count > 0 && !runtime.IsBuildCancelled)
                 {
-                    hasNextStep = buildTask.MoveNext();
+                    Vector2Int coord = buildState.Queue.Dequeue();
+                    yield return SafeBuildChunk(coord);
+
+                    buildState.QueueHash.Remove(coord);
                 }
-                catch (System.Exception e)
+
+                buildState.IsProcessing = false;
+            }
+
+            // Build pipeline internals
+
+            private IEnumerator SafeBuildChunk(Vector2Int coord)
+            {
+                IEnumerator buildTask = ProcessQueuedChunk(coord);
+                bool canProcess = true;
+
+                while (canProcess)
                 {
-                    Debug.LogError(
-                        $"<color=red>[Terrain] Crash building chunk {coord}:</color> {e.Message}\n{e.StackTrace}"
-                    );
+                    bool hasNextStep;
+
+                    try
+                    {
+                        hasNextStep = buildTask.MoveNext();
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(
+                            $"<color=red>[Terrain] Crash building chunk {coord}:</color> {e.Message}\n{e.StackTrace}"
+                        );
+                        yield break;
+                    }
+
+                    if (hasNextStep)
+                    {
+                        yield return buildTask.Current;
+                    }
+                    else
+                    {
+                        canProcess = false;
+                    }
+                }
+            }
+
+            private IEnumerator ProcessQueuedChunk(Vector2Int coord)
+            {
+                if (!ShouldBuildQueuedChunk(coord))
+                {
                     yield break;
                 }
 
-                if (hasNextStep)
+                yield return GenerateRawDataForChunk(coord);
+                yield return EnsureSanitized(coord);
+
+                if (!ShouldBuildQueuedChunk(coord))
                 {
-                    yield return buildTask.Current;
+                    yield break;
                 }
-                else
+
+                SpawnChunkMesh(coord);
+
+                if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
-                    canProcess = false;
+                    chunk.StartFadeIn();
                 }
             }
-        }
 
-        private IEnumerator ProcessQueuedChunk(Vector2Int coord)
-        {
-            if (!ShouldBuildQueuedChunk(coord))
+            private bool ShouldBuildQueuedChunk(Vector2Int coord)
             {
-                yield break;
+                return !terrainDataProcessor.HasActiveChunk(coord)
+                    && IsWithinRetentionBounds(coord);
             }
 
-            yield return GenerateRawDataForChunk(coord);
-            yield return EnsureSanitized(coord);
-
-            if (!ShouldBuildQueuedChunk(coord))
+            private bool IsWithinRetentionBounds(Vector2Int coord)
             {
-                yield break;
+                int retentionRadius = Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
+                int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
+                int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
+                return dx <= retentionRadius && dz <= retentionRadius;
             }
 
-            SpawnChunkMesh(coord);
-
-            if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+            private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
             {
-                chunk.StartFadeIn();
-            }
-        }
-
-        private bool ShouldBuildQueuedChunk(Vector2Int coord)
-        {
-            return !terrainDataProcessor.HasActiveChunk(coord) && IsWithinRetentionBounds(coord);
-        }
-
-        private bool IsWithinRetentionBounds(Vector2Int coord)
-        {
-            int retentionRadius = Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
-            int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
-            int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
-            return dx <= retentionRadius && dz <= retentionRadius;
-        }
-
-        private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
-        {
-            yield return IterateNeighbors3x3(
-                coord,
-                n =>
-                {
-                    if (!terrainDataProcessor.HasTileData(n))
+                yield return IterateNeighbors3x3(
+                    coord,
+                    n =>
                     {
-                        terrainDataProcessor.GenerateRawData(n);
-                        return true;
+                        if (!terrainDataProcessor.HasTileData(n))
+                        {
+                            terrainDataProcessor.GenerateRawData(n);
+                            return true;
+                        }
+
+                        return false;
                     }
-                    return false;
-                }
-            );
-        }
+                );
+            }
 
-        private IEnumerator EnsureSanitized(Vector2Int coord)
-        {
-            yield return IterateNeighbors3x3(
-                coord,
-                n =>
-                {
-                    if (!terrainDataProcessor.IsSanitized(n))
-                    {
-                        terrainDataProcessor.SanitizeGlobalChunk(n);
-                        terrainDataProcessor.MarkSanitized(n);
-                        return true;
-                    }
-                    return false;
-                }
-            );
-        }
-
-        private IEnumerator IterateNeighbors3x3(
-            Vector2Int center,
-            System.Func<Vector2Int, bool> action
-        )
-        {
-            for (int x = -1; x <= 1; x++)
+            private IEnumerator EnsureSanitized(Vector2Int coord)
             {
-                for (int z = -1; z <= 1; z++)
-                {
-                    Vector2Int neighbor = center + new Vector2Int(x, z);
-                    if (action(neighbor))
+                yield return IterateNeighbors3x3(
+                    coord,
+                    n =>
                     {
-                        yield return null;
+                        if (!terrainDataProcessor.IsSanitized(n))
+                        {
+                            terrainDataProcessor.SanitizeGlobalChunk(n);
+                            terrainDataProcessor.MarkSanitized(n);
+                            return true;
+                        }
+
+                        return false;
+                    }
+                );
+            }
+
+            private IEnumerator IterateNeighbors3x3(
+                Vector2Int center,
+                Func<Vector2Int, bool> action
+            )
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    for (int z = -1; z <= 1; z++)
+                    {
+                        Vector2Int neighbor = center + new Vector2Int(x, z);
+                        if (action(neighbor))
+                        {
+                            yield return null;
+                        }
                     }
                 }
             }
-        }
 
-        private void SpawnChunkMesh(Vector2Int coord)
-        {
-            if (terrainDataProcessor.HasActiveChunk(coord))
-                return;
-            var position = new Vector3(
-                coord.x * runtime.ChunkBoundSize,
-                0,
-                coord.y * runtime.ChunkBoundSize
-            );
-            var chunk = chunkPool.Get(position);
-            chunk.InitBuild(host, coord);
-            chunk.UpdateVisibility(runtime.CameraPlanes);
-            terrainDataProcessor.RegisterChunk(coord, chunk);
+            private void SpawnChunkMesh(Vector2Int coord)
+            {
+                if (terrainDataProcessor.HasActiveChunk(coord))
+                {
+                    return;
+                }
+
+                var position = new Vector3(
+                    coord.x * runtime.ChunkBoundSize,
+                    0,
+                    coord.y * runtime.ChunkBoundSize
+                );
+                var chunk = chunkPool.Get(position);
+                chunk.InitBuild(host, coord);
+                chunk.UpdateVisibility(runtime.CameraPlanes);
+                terrainDataProcessor.RegisterChunk(coord, chunk);
+            }
         }
     }
 }
