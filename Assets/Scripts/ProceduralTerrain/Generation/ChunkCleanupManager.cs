@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation
 {
+    /// <summary>
+    /// Removes stale chunks and tile data outside retention bounds.
+    /// </summary>
     internal class ChunkCleanupManager
     {
         private readonly CleanupState cleanup = new();
@@ -30,6 +33,8 @@ namespace ProceduralTerrain.Generation
             cleanup.ResetForRebuild();
         }
 
+        // Public cleanup API
+
         public void CleanupRemoteChunks()
         {
             if (ShouldRunOrphanSweep())
@@ -40,6 +45,8 @@ namespace ProceduralTerrain.Generation
             EvictStaleTileData();
             LogCleanupSummary();
         }
+
+        // Cleanup policy
 
         private bool ShouldRunOrphanSweep()
         {
@@ -59,6 +66,8 @@ namespace ProceduralTerrain.Generation
             }
             return false;
         }
+
+        // Scene and registry cleanup
 
         private void CleanupSceneChunkOrphans()
         {
@@ -105,6 +114,8 @@ namespace ProceduralTerrain.Generation
                 sceneChunk.Generator != null && !ReferenceEquals(sceneChunk.Generator, host);
             return isDuplicateCoord || isOutOfBounds || isForeignChunk;
         }
+
+        // Tile-data eviction and bounds helpers
 
         private void LogCleanupSummary()
         {
@@ -163,5 +174,7 @@ namespace ProceduralTerrain.Generation
         {
             return Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
         }
+
+        // Diagnostics
     }
 }

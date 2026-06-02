@@ -26,15 +26,19 @@ namespace ProceduralTerrain.Generation
             this.host = host;
         }
 
+        // Public visibility loop
+
         public IEnumerator VisibilityCheckRoutine()
         {
             while (runtime.WorldMonitoringActive && host != null && host.isActiveAndEnabled)
             {
+                // Update camera frustum planes for this sweep.
                 GeometryUtility.CalculateFrustumPlanes(
                     host.cameraConfig.reference,
                     runtime.CameraPlanes
                 );
 
+                // Snapshot active keys to avoid mutation during iteration.
                 terrainDataProcessor.GetActiveKeysNonAlloc(keysSnapshot);
 
                 for (int i = 0; i < keysSnapshot.Count; i++)
