@@ -27,7 +27,7 @@ namespace ProceduralTerrain
         [Header("Prefabs")]
         public TerrainChunk chunkPrefab;
 
-        private ITerrainOrchestrator dataGenerator;
+        private ITerrainOrchestrator orchestrator;
 
         // ITerrainHost explicit implementations (Unity serializes fields, not auto-properties)
         TerrainSettings ITerrainHost.terrain => terrain;
@@ -42,22 +42,28 @@ namespace ProceduralTerrain
 
         public ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord)
         {
-            if (dataGenerator == null)
+            if (orchestrator == null)
             {
-                Debug.LogError("[TerrainGenerator] Data generator is not initialized.", this);
+                Debug.LogError(
+                    "[ProceduralTerrain] Runtime orchestrator is not initialized.",
+                    this
+                );
                 return default;
             }
-            return dataGenerator.GetNeighborGrids(chunkCoord);
+            return orchestrator.GetNeighborGrids(chunkCoord);
         }
 
         public int[] GetPrecalculatedTriangles(int resolution)
         {
-            if (dataGenerator == null)
+            if (orchestrator == null)
             {
-                Debug.LogError("[TerrainGenerator] Data generator is not initialized.", this);
+                Debug.LogError(
+                    "[ProceduralTerrain] Runtime orchestrator is not initialized.",
+                    this
+                );
                 return System.Array.Empty<int>();
             }
-            return dataGenerator.GetPrecalculatedTriangles(resolution);
+            return orchestrator.GetPrecalculatedTriangles(resolution);
         }
 
         void OnValidate()
@@ -72,34 +78,34 @@ namespace ProceduralTerrain
                 enabled = false;
                 return;
             }
-            dataGenerator = new TerrainDataGenerator(this);
+            orchestrator = new TerrainDataGenerator(this);
         }
 
         void OnDestroy()
         {
-            if (dataGenerator != null)
+            if (orchestrator != null)
             {
-                dataGenerator.Destroy();
+                orchestrator.Destroy();
             }
         }
 
         void Start()
         {
-            if (dataGenerator == null)
+            if (orchestrator == null)
             {
                 return;
             }
-            dataGenerator.BuildTerrain();
+            orchestrator.BuildTerrain();
         }
 
         void Update()
         {
-            if (dataGenerator == null)
+            if (orchestrator == null)
             {
                 return;
             }
 
-            dataGenerator.UpdateCurrentCameraPosition();
+            orchestrator.UpdateCurrentCameraPosition();
 
 #if UNITY_EDITOR
             // Dev-only hotkey: rebuilds the full terrain.
@@ -113,8 +119,8 @@ namespace ProceduralTerrain
         private void HandleDebugRebuild()
         {
             Debug.Log("Rebuilding terrain.", this);
-            dataGenerator.ResetGeneratorState();
-            dataGenerator.BuildTerrain();
+            orchestrator.ResetGeneratorState();
+            orchestrator.BuildTerrain();
         }
 
         private void NormalizeSettings()
@@ -133,7 +139,7 @@ namespace ProceduralTerrain
             if (chunkPrefab == null)
             {
                 Debug.LogError(
-                    "[TerrainGenerator] Chunk prefab is not assigned. Assign it under Prefabs > Chunk Prefab in the Inspector.",
+                    "[ProceduralTerrain] Chunk prefab is not assigned. Assign it under Prefabs > Chunk Prefab in the Inspector.",
                     this
                 );
                 return false;
@@ -142,7 +148,7 @@ namespace ProceduralTerrain
             if (cameraConfig == null || cameraConfig.reference == null)
             {
                 Debug.LogError(
-                    "[TerrainGenerator] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
+                    "[ProceduralTerrain] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
                     this
                 );
                 return false;
