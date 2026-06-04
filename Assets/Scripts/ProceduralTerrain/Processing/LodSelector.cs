@@ -22,9 +22,15 @@ namespace ProceduralTerrain.Processing
             float sqrDist = (center - cameraTransform.position).sqrMagnitude;
 
             if (sqrDist > settings.SqrLodDistance2)
-                return step2; // LOD 2 (low)
+            {
+                return step2; // LOD 2 (low detail)
+            }
+
             if (sqrDist > settings.SqrLodDistance1)
-                return step1; // LOD 1 (medium)
+            {
+                return step1; // LOD 1 (medium detail)
+            }
+
             return step0; // LOD 0 (full detail)
         }
     }

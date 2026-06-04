@@ -263,6 +263,7 @@ namespace ProceduralTerrain.Processing
                 Vector3 dir = (
                     vertices[n] - new Vector3(centerX, vertices[n].y, centerX)
                 ).normalized;
+
                 normals[n] = new Vector3(dir.x, 0, dir.z);
             }
         }

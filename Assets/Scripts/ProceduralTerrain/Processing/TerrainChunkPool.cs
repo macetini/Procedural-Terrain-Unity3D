@@ -73,7 +73,9 @@ namespace ProceduralTerrain.Processing
             {
                 var chunk = pool.Pop();
                 if (chunk != null)
+                {
                     Object.Destroy(chunk.gameObject);
+                }
             }
         }
     }

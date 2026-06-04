@@ -10,6 +10,7 @@ namespace ProceduralTerrain.Processing.Data
         {
             X = x;
             Z = z;
+
             Elevation = elevation;
         }
     }

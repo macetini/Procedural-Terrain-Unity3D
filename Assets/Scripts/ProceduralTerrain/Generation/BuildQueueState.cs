@@ -19,6 +19,7 @@ namespace ProceduralTerrain.Generation
             {
                 int distA = Mathf.Abs(a.x - SortOrigin.x) + Mathf.Abs(a.y - SortOrigin.y);
                 int distB = Mathf.Abs(b.x - SortOrigin.x) + Mathf.Abs(b.y - SortOrigin.y);
+
                 return distA.CompareTo(distB);
             };
         }

@@ -38,7 +38,6 @@ namespace ProceduralTerrain.Generation
         }
 
         // Public queue API
-
         public void EnqueueVisibleChunksAroundCamera()
         {
             int viewDist = host.CameraConfig.viewDistanceChunks;

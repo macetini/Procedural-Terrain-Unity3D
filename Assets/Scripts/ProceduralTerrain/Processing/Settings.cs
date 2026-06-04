@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace ProceduralTerrain.Processing
 {
     public struct Settings
@@ -11,16 +13,20 @@ namespace ProceduralTerrain.Processing
         public float ChunkBoundSize { get; private set; }
         public float SqrLodDistance1 { get; private set; }
         public float SqrLodDistance2 { get; private set; }
-        public UnityEngine.Vector3 VisibilityBoundsOffset { get; private set; }
-        public UnityEngine.Vector3 VisibilityBoundsSize { get; private set; }
+        public Vector3 VisibilityBoundsOffset { get; private set; }
+        public Vector3 VisibilityBoundsSize { get; private set; }
 
         public static Settings FromHost(ITerrainHost host)
         {
             float chunkBoundSize = host.Terrain.chunkSize * host.Terrain.tileSize;
+
             float maxHeight =
                 host.Terrain.maxElevationStepsCount * host.Terrain.elevationStepHeight;
+
             float halfSize = chunkBoundSize * 0.5f;
+
             float padding = host.CameraConfig.frustumPadding;
+
             float skirtDepth = host.Terrain.skirtDepth;
 
             return new Settings
@@ -40,13 +46,9 @@ namespace ProceduralTerrain.Processing
                 SqrLodDistance1 = host.LOD.distance1 * host.LOD.distance1,
                 SqrLodDistance2 = host.LOD.distance2 * host.LOD.distance2,
 
-                VisibilityBoundsOffset = new UnityEngine.Vector3(
-                    halfSize,
-                    maxHeight * 0.5f,
-                    halfSize
-                ),
+                VisibilityBoundsOffset = new Vector3(halfSize, maxHeight * 0.5f, halfSize),
 
-                VisibilityBoundsSize = new UnityEngine.Vector3(
+                VisibilityBoundsSize = new Vector3(
                     chunkBoundSize + padding,
                     maxHeight + skirtDepth + padding,
                     chunkBoundSize + padding

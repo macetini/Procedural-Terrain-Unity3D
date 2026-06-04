@@ -128,15 +128,19 @@ namespace ProceduralTerrain.Processing
                 maxHeight * 0.5f,
                 settings.ChunkBoundSize * 0.5f
             );
+
             Vector3 size = new(
                 settings.ChunkBoundSize + settings.FrustumPadding,
                 maxHeight + settings.SkirtDepth + settings.FrustumPadding,
                 settings.ChunkBoundSize + settings.FrustumPadding
             );
+
             mesh.bounds = new Bounds(center, size);
 
             if (!chunk.RendererReference.enabled)
+            {
                 chunk.RendererReference.enabled = true;
+            }
         }
     }
 }
