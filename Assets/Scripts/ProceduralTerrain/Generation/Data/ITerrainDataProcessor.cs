@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Generation.Data
 {
-    public interface ITerrainDataProcessor
+    internal interface ITerrainDataProcessor
     {
         void SetChunkDisposeAction(Action<TerrainChunk> action);
         void ClearAll();

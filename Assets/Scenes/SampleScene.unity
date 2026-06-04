@@ -463,7 +463,7 @@ MonoBehaviour:
     viewDistanceChunks: 6
   lod:
     lod1Distance: 2
-    lod2Distance: 3
+    lod2Distance: 4
     visibilityBatchSize: 10
     lod0Step: 1
     lod1Step: 2

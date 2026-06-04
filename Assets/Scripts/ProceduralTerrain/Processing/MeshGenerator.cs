@@ -9,7 +9,7 @@ namespace ProceduralTerrain.Processing
 
         private ITerrainHost host;
         private Vector2Int chunkCoord;
-        private Settings settings;
+        private RuntimeSettings settings;
         private Transform cameraTransform;
         private string meshName;
 
@@ -17,7 +17,7 @@ namespace ProceduralTerrain.Processing
 
         public int CurrentStep { get; private set; } = -1;
         public bool IsMeshReady { get; private set; } = false;
-        public Settings Settings => settings;
+        public RuntimeSettings Settings => settings;
 
         public MeshGenerator(TerrainChunk chunk)
         {
@@ -34,7 +34,7 @@ namespace ProceduralTerrain.Processing
         {
             this.host = host;
             this.chunkCoord = chunkCoord;
-            settings = Settings.FromHost(host);
+            settings = RuntimeSettings.FromHost(host);
             if (host.CameraConfig != null && host.CameraConfig.reference != null)
             {
                 cameraTransform = host.CameraConfig.reference.transform;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Processing
 {
-    public struct Settings
+    public struct RuntimeSettings
     {
         public float FrustumPadding { get; private set; }
         public float SkirtDepth { get; private set; }
@@ -16,7 +16,7 @@ namespace ProceduralTerrain.Processing
         public Vector3 VisibilityBoundsOffset { get; private set; }
         public Vector3 VisibilityBoundsSize { get; private set; }
 
-        public static Settings FromHost(ITerrainHost host)
+        public static RuntimeSettings FromHost(ITerrainHost host)
         {
             float chunkBoundSize = host.Terrain.chunkSize * host.Terrain.tileSize;
             float lodDistance1 = host.LOD.lod1Distance * chunkBoundSize;
@@ -31,7 +31,7 @@ namespace ProceduralTerrain.Processing
 
             float skirtDepth = host.Terrain.skirtDepth;
 
-            return new Settings
+            return new RuntimeSettings
             {
                 FrustumPadding = padding,
                 SkirtDepth = skirtDepth,

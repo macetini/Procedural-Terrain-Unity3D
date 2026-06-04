@@ -32,7 +32,7 @@ namespace ProceduralTerrain.Processing
         private int lastTriangleCount = -1;
 
         public void Init(
-            Settings settings,
+            RuntimeSettings settings,
             Func<Vector2Int, NeighborStruct> neighborProvider,
             Func<int, int[]> triangleProvider
         )

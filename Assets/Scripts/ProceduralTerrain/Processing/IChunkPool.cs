@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Processing
 {
-    public interface IChunkPool
+    internal interface IChunkPool
     {
         TerrainChunk Get(Vector3 position);
 

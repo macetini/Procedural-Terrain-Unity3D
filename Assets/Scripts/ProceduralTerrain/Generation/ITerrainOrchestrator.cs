@@ -6,7 +6,7 @@ namespace ProceduralTerrain.Generation
     /// <summary>
     /// Coordinates terrain runtime lifecycle and chunk generation flow.
     /// </summary>
-    public interface ITerrainOrchestrator
+    internal interface ITerrainOrchestrator
     {
         /// <summary>Builds initial terrain around the current camera chunk.</summary>
         void BuildTerrain();

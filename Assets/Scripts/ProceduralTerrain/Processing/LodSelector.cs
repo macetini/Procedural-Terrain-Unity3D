@@ -9,7 +9,7 @@ namespace ProceduralTerrain.Processing
     internal static class LodSelector
     {
         public static int GetStep(
-            in Settings settings,
+            in RuntimeSettings settings,
             Vector3 chunkPosition,
             Transform cameraTransform,
             int step0,
