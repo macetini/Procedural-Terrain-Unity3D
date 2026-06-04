@@ -1,8 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using ProceduralTerrain.Generation.Data;
 using ProceduralTerrain.Processing;
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 using ProceduralTerrain.Utils;
 using UnityEngine;
 
@@ -36,7 +35,7 @@ namespace ProceduralTerrain.Generation
         {
             this.host = host;
             terrainNoise = CreateTerrainNoise();
-            terrainDataProcessor = new TerrainDataProcessor(host.terrain.chunkSize, terrainNoise);
+            terrainDataProcessor = new TerrainDataProcessor(host.Terrain.chunkSize, terrainNoise);
             chunkPool = CreateChunkPool();
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
 
@@ -64,7 +63,7 @@ namespace ProceduralTerrain.Generation
 
         public void UpdateCurrentCameraPosition()
         {
-            var pos = host.cameraConfig.reference.transform.position;
+            var pos = host.CameraConfig.reference.transform.position;
             var newPos = GetCameraChunkPosition(pos);
             if (newPos == runtime.CurrentCameraPosition)
                 return;
@@ -74,22 +73,22 @@ namespace ProceduralTerrain.Generation
         private TerrainNoise CreateTerrainNoise()
         {
             return new TerrainNoise(
-                host.noise.seed,
-                host.noise.scale,
-                host.noise.octaves,
-                host.noise.persistence,
-                host.noise.lacunarity,
-                host.terrain.maxElevationStepsCount
+                host.Noise.seed,
+                host.Noise.scale,
+                host.Noise.octaves,
+                host.Noise.persistence,
+                host.Noise.lacunarity,
+                host.Terrain.maxElevationStepsCount
             );
         }
 
         private TerrainChunkPool CreateChunkPool()
         {
             int poolMaxSize = TerrainChunkPool.CalculateMaxSize(
-                host.cameraConfig.viewDistanceChunks
+                host.CameraConfig.viewDistanceChunks
             );
 
-            return new TerrainChunkPool(host.chunkPrefab, host.transform, poolMaxSize);
+            return new TerrainChunkPool(host.ChunkPrefab, host.Transform, poolMaxSize);
         }
 
         private (
@@ -106,7 +105,7 @@ namespace ProceduralTerrain.Generation
 
         private void InitializeRuntimeState()
         {
-            runtime.ChunkBoundSize = host.terrain.chunkSize * host.terrain.tileSize;
+            runtime.ChunkBoundSize = host.Terrain.chunkSize * host.Terrain.tileSize;
             UpdateCurrentCameraPosition();
         }
 

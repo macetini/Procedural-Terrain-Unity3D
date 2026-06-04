@@ -1,5 +1,5 @@
 using ProceduralTerrain.Effects;
-using ProceduralTerrain.Processing.Chunk;
+using ProceduralTerrain.Processing;
 using UnityEngine;
 
 namespace ProceduralTerrain

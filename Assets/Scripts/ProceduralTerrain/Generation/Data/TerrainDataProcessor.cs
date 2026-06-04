@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 using ProceduralTerrain.Utils;
 using UnityEngine;
 

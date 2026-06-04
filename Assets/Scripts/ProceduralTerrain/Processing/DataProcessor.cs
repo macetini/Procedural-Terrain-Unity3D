@@ -1,6 +1,5 @@
 using System;
-using ProceduralTerrain.Processing.Chunk;
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 using UnityEngine;
 
 namespace ProceduralTerrain.Processing
@@ -33,7 +32,7 @@ namespace ProceduralTerrain.Processing
         private int lastTriangleCount = -1;
 
         public void Init(
-            Chunk.Settings settings,
+            Settings settings,
             Func<Vector2Int, NeighborStruct> neighborProvider,
             Func<int, int[]> triangleProvider
         )

@@ -1,4 +1,4 @@
-namespace ProceduralTerrain.Processing.Chunk.Data
+namespace ProceduralTerrain.Processing.Data
 {
     public struct TileSample
     {

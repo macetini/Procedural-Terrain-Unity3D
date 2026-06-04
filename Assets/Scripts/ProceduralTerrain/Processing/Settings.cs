@@ -1,4 +1,4 @@
-namespace ProceduralTerrain.Processing.Chunk
+namespace ProceduralTerrain.Processing
 {
     public struct Settings
     {
@@ -16,29 +16,29 @@ namespace ProceduralTerrain.Processing.Chunk
 
         public static Settings FromHost(ITerrainHost host)
         {
-            float chunkBoundSize = host.terrain.chunkSize * host.terrain.tileSize;
+            float chunkBoundSize = host.Terrain.chunkSize * host.Terrain.tileSize;
             float maxHeight =
-                host.terrain.maxElevationStepsCount * host.terrain.elevationStepHeight;
+                host.Terrain.maxElevationStepsCount * host.Terrain.elevationStepHeight;
             float halfSize = chunkBoundSize * 0.5f;
-            float padding = host.cameraConfig.frustumPadding;
-            float skirtDepth = host.terrain.skirtDepth;
+            float padding = host.CameraConfig.frustumPadding;
+            float skirtDepth = host.Terrain.skirtDepth;
 
             return new Settings
             {
                 FrustumPadding = padding,
                 SkirtDepth = skirtDepth,
 
-                ChunkSize = host.terrain.chunkSize,
-                TileSize = host.terrain.tileSize,
+                ChunkSize = host.Terrain.chunkSize,
+                TileSize = host.Terrain.tileSize,
 
-                ElevationStepHeight = host.terrain.elevationStepHeight,
+                ElevationStepHeight = host.Terrain.elevationStepHeight,
 
-                MaxElevationStep = host.terrain.maxElevationStepsCount,
+                MaxElevationStep = host.Terrain.maxElevationStepsCount,
 
                 ChunkBoundSize = chunkBoundSize,
 
-                SqrLodDistance1 = host.lod.distance1 * host.lod.distance1,
-                SqrLodDistance2 = host.lod.distance2 * host.lod.distance2,
+                SqrLodDistance1 = host.LOD.distance1 * host.LOD.distance1,
+                SqrLodDistance2 = host.LOD.distance2 * host.LOD.distance2,
 
                 VisibilityBoundsOffset = new UnityEngine.Vector3(
                     halfSize,

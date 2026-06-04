@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using ProceduralTerrain.Generation;
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 using ProceduralTerrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -30,12 +30,14 @@ namespace ProceduralTerrain
         private ITerrainOrchestrator orchestrator;
 
         // ITerrainHost explicit implementations (Unity serializes fields, not auto-properties)
-        TerrainSettings ITerrainHost.terrain => terrain;
-        NoiseSettings ITerrainHost.noise => noise;
-        CameraSettings ITerrainHost.cameraConfig => cameraConfig;
-        LODSettings ITerrainHost.lod => lod;
-        DebugSettings ITerrainHost.debug => debug;
-        TerrainChunk ITerrainHost.chunkPrefab => chunkPrefab;
+        TerrainSettings ITerrainHost.Terrain => terrain;
+        NoiseSettings ITerrainHost.Noise => noise;
+        CameraSettings ITerrainHost.CameraConfig => cameraConfig;
+        LODSettings ITerrainHost.LOD => lod;
+        DebugSettings ITerrainHost.Debug => debug;
+        TerrainChunk ITerrainHost.ChunkPrefab => chunkPrefab;
+        Transform ITerrainHost.Transform => transform;
+        bool ITerrainHost.IsActiveAndEnabled => isActiveAndEnabled;
 
         public void GetChunkChildren(List<TerrainChunk> results) =>
             GetComponentsInChildren(true, results);

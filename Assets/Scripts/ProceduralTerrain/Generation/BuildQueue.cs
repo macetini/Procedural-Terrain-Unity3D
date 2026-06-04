@@ -41,7 +41,7 @@ namespace ProceduralTerrain.Generation
 
         public void EnqueueVisibleChunksAroundCamera()
         {
-            int viewDist = host.cameraConfig.viewDistanceChunks;
+            int viewDist = host.CameraConfig.viewDistanceChunks;
             for (int x = -viewDist; x <= viewDist; x++)
             {
                 EnqueueVisibleChunksAtColumnOffset(x);
@@ -50,7 +50,7 @@ namespace ProceduralTerrain.Generation
 
         public void EnqueueVisibleChunksAtColumnOffset(int xOffset)
         {
-            int viewDist = host.cameraConfig.viewDistanceChunks;
+            int viewDist = host.CameraConfig.viewDistanceChunks;
             int baseX = runtime.CurrentCameraPosition.x + xOffset;
             int baseY = runtime.CurrentCameraPosition.y;
             for (int z = -viewDist; z <= viewDist; z++)
@@ -83,8 +83,8 @@ namespace ProceduralTerrain.Generation
 
         public IEnumerator ProcessLocalChunks()
         {
-            int viewDist = host.cameraConfig.viewDistanceChunks;
-            int batchSize = Mathf.Max(1, host.lod.visibilityBatchSize);
+            int viewDist = host.CameraConfig.viewDistanceChunks;
+            int batchSize = Mathf.Max(1, host.LOD.visibilityBatchSize);
             int processed = 0;
 
             for (int x = -viewDist; x <= viewDist; x++)
@@ -275,7 +275,7 @@ namespace ProceduralTerrain.Generation
 
             private bool IsWithinRetentionBounds(Vector2Int coord)
             {
-                int retentionRadius = Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
+                int retentionRadius = Mathf.Max(0, host.CameraConfig.viewDistanceChunks);
                 int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
                 int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
                 return dx <= retentionRadius && dz <= retentionRadius;

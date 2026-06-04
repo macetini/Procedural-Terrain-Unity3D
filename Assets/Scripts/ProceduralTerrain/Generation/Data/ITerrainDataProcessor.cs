@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 using UnityEngine;
 
 namespace ProceduralTerrain.Generation.Data

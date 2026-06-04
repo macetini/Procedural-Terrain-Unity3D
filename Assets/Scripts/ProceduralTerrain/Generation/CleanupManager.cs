@@ -50,16 +50,16 @@ namespace ProceduralTerrain.Generation
 
         private bool ShouldRunOrphanSweep()
         {
-            if (host.debug.orphanSweepPeriod < 0)
+            if (host.Debug.orphanSweepPeriod < 0)
             {
                 return false;
             }
-            if (host.debug.orphanSweepPeriod == 0)
+            if (host.Debug.orphanSweepPeriod == 0)
             {
                 return true;
             }
             cleanup.CleanupPassCounter++;
-            if (cleanup.CleanupPassCounter >= host.debug.orphanSweepPeriod)
+            if (cleanup.CleanupPassCounter >= host.Debug.orphanSweepPeriod)
             {
                 cleanup.CleanupPassCounter = 0;
                 return true;
@@ -119,7 +119,7 @@ namespace ProceduralTerrain.Generation
 
         private void LogCleanupSummary()
         {
-            if (!host.debug.cleanupLogs)
+            if (!host.Debug.cleanupLogs)
             {
                 return;
             }
@@ -146,7 +146,7 @@ namespace ProceduralTerrain.Generation
 
         private void EvictStaleTileData()
         {
-            int dataRetentionRadius = host.cameraConfig.viewDistanceChunks + 2;
+            int dataRetentionRadius = host.CameraConfig.viewDistanceChunks + 2;
             terrainDataProcessor.GetTileDataKeysNonAlloc(cleanup.TileDataKeysSnapshot);
 
             for (int i = 0; i < cleanup.TileDataKeysSnapshot.Count; i++)
@@ -172,7 +172,7 @@ namespace ProceduralTerrain.Generation
 
         private int GetRetentionRadius()
         {
-            return Mathf.Max(0, host.cameraConfig.viewDistanceChunks);
+            return Mathf.Max(0, host.CameraConfig.viewDistanceChunks);
         }
 
         // Diagnostics

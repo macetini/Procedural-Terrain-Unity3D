@@ -30,11 +30,11 @@ namespace ProceduralTerrain.Generation
 
         public IEnumerator VisibilityCheckRoutine()
         {
-            while (runtime.WorldMonitoringActive && host != null && host.isActiveAndEnabled)
+            while (runtime.WorldMonitoringActive && host != null && host.IsActiveAndEnabled)
             {
                 // Update camera frustum planes for this sweep.
                 GeometryUtility.CalculateFrustumPlanes(
-                    host.cameraConfig.reference,
+                    host.CameraConfig.reference,
                     runtime.CameraPlanes
                 );
 
@@ -55,7 +55,7 @@ namespace ProceduralTerrain.Generation
                         }
                     }
                     // Process in batches to spread work across frames.
-                    if (i > 0 && i % host.lod.visibilityBatchSize == 0)
+                    if (i > 0 && i % host.LOD.visibilityBatchSize == 0)
                     {
                         yield return null;
                     }

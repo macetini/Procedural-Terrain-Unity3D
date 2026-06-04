@@ -15,7 +15,7 @@ namespace ProceduralTerrain.Generation
 
         private int GetInitialDataRadius()
         {
-            return host.cameraConfig.viewDistanceChunks + 1;
+            return host.CameraConfig.viewDistanceChunks + 1;
         }
 
         private void GenerateAndSanitizeInitialData(int dataRadius)

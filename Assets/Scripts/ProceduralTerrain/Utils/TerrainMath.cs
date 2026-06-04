@@ -1,4 +1,4 @@
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 
 namespace ProceduralTerrain.Utils
 {

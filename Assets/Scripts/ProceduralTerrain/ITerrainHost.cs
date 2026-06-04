@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using ProceduralTerrain.Processing.Chunk.Data;
+using ProceduralTerrain.Processing.Data;
 using ProceduralTerrain.Settings;
 using UnityEngine;
 
@@ -9,18 +9,18 @@ namespace ProceduralTerrain
     public interface ITerrainHost
     {
         // Settings
-        TerrainSettings terrain { get; }
-        NoiseSettings noise { get; }
-        CameraSettings cameraConfig { get; }
-        LODSettings lod { get; }
-        DebugSettings debug { get; }
+        TerrainSettings Terrain { get; }
+        NoiseSettings Noise { get; }
+        CameraSettings CameraConfig { get; }
+        LODSettings LOD { get; }
+        DebugSettings Debug { get; }
 
         // Refs
-        TerrainChunk chunkPrefab { get; }
-        Transform transform { get; }
+        TerrainChunk ChunkPrefab { get; }
+        Transform Transform { get; }
 
         // Unity lifecycle
-        bool isActiveAndEnabled { get; }
+        bool IsActiveAndEnabled { get; }
         Coroutine StartCoroutine(IEnumerator routine);
         void StopAllCoroutines();
 

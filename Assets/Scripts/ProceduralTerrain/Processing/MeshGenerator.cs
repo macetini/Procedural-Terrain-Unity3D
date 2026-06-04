@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ProceduralTerrain.Processing.Chunk
+namespace ProceduralTerrain.Processing
 {
     public class MeshGenerator
     {
@@ -35,9 +35,9 @@ namespace ProceduralTerrain.Processing.Chunk
             this.host = host;
             this.chunkCoord = chunkCoord;
             settings = Settings.FromHost(host);
-            if (host.cameraConfig != null && host.cameraConfig.reference != null)
+            if (host.CameraConfig != null && host.CameraConfig.reference != null)
             {
-                cameraTransform = host.cameraConfig.reference.transform;
+                cameraTransform = host.CameraConfig.reference.transform;
             }
             else
             {
@@ -85,9 +85,9 @@ namespace ProceduralTerrain.Processing.Chunk
                 settings,
                 chunk.transform.position,
                 cameraTransform,
-                host.lod.step0,
-                host.lod.step1,
-                host.lod.step2
+                host.LOD.step0,
+                host.LOD.step1,
+                host.LOD.step2
             );
 
         private void BuildProceduralMesh()

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ProceduralTerrain.Processing.Chunk
+namespace ProceduralTerrain.Processing
 {
     /// <summary>
     /// Pure LOD step selection, decoupled from mesh construction.
