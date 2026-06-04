@@ -9,16 +9,16 @@ namespace ProceduralTerrain.Generation
     /// <summary>
     /// Maintains the chunk build queue and schedules coroutine-based processing.
     /// </summary>
-    internal class ChunkBuildQueue
+    internal class BuildQueue
     {
         private readonly BuildQueueState buildState = new();
         private readonly RuntimeState runtime;
         private readonly ITerrainDataProcessor terrainDataProcessor;
         private readonly IChunkPool chunkPool;
         private readonly ITerrainHost host;
-        private readonly ChunkBuildWorker buildWorker;
+        private readonly BuildWorker buildWorker;
 
-        public ChunkBuildQueue(
+        public BuildQueue(
             RuntimeState runtime,
             ITerrainDataProcessor terrainDataProcessor,
             IChunkPool chunkPool,
@@ -29,7 +29,7 @@ namespace ProceduralTerrain.Generation
             this.terrainDataProcessor = terrainDataProcessor;
             this.chunkPool = chunkPool;
             this.host = host;
-            buildWorker = new ChunkBuildWorker(runtime, terrainDataProcessor, chunkPool, host);
+            buildWorker = new BuildWorker(runtime, terrainDataProcessor, chunkPool, host);
         }
 
         public void Clear()
@@ -140,14 +140,14 @@ namespace ProceduralTerrain.Generation
         /// <summary>
         /// Encapsulates build coroutine steps for queued chunk coordinates.
         /// </summary>
-        private sealed class ChunkBuildWorker
+        private sealed class BuildWorker
         {
             private readonly RuntimeState runtime;
             private readonly ITerrainDataProcessor terrainDataProcessor;
             private readonly IChunkPool chunkPool;
             private readonly ITerrainHost host;
 
-            public ChunkBuildWorker(
+            public BuildWorker(
                 RuntimeState runtime,
                 ITerrainDataProcessor terrainDataProcessor,
                 IChunkPool chunkPool,

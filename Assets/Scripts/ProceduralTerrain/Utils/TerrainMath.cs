@@ -5,7 +5,7 @@ namespace ProceduralTerrain.Utils
     public static class TerrainMath
     {
         // Moves the logic out of the manager to keep it pure
-        public static void ClampNeighbor(ref TileMeshStruct a, ref TileMeshStruct b)
+        public static void ClampNeighbor(ref TileSample a, ref TileSample b)
         {
             int diff = a.Elevation - b.Elevation;
             if (diff > 1)

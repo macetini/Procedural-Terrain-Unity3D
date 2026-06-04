@@ -2,14 +2,14 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Processing.Chunk
 {
-    public class ChunkGenerator
+    public class MeshGenerator
     {
         private const string MESH_IDENTIFIER = "TerrainChunk_";
-        private readonly ChunkDataProcessor processor = new();
+        private readonly DataProcessor processor = new();
 
-        private ITerrainHost generator;
+        private ITerrainHost host;
         private Vector2Int chunkCoord;
-        private ChunkSettings settings;
+        private Settings settings;
         private Transform cameraTransform;
         private string meshName;
 
@@ -17,9 +17,9 @@ namespace ProceduralTerrain.Processing.Chunk
 
         public int CurrentStep { get; private set; } = -1;
         public bool IsMeshReady { get; private set; } = false;
-        public ChunkSettings Settings => settings;
+        public Settings Settings => settings;
 
-        public ChunkGenerator(TerrainChunk chunk)
+        public MeshGenerator(TerrainChunk chunk)
         {
             this.chunk = chunk;
         }
@@ -30,14 +30,14 @@ namespace ProceduralTerrain.Processing.Chunk
             IsMeshReady = false;
         }
 
-        public void Init(ITerrainHost generator, Vector2Int chunkCoord)
+        public void Init(ITerrainHost host, Vector2Int chunkCoord)
         {
-            this.generator = generator;
+            this.host = host;
             this.chunkCoord = chunkCoord;
-            settings = ChunkSettings.FromHost(generator);
-            if (generator.cameraConfig != null && generator.cameraConfig.reference != null)
+            settings = Settings.FromHost(host);
+            if (host.cameraConfig != null && host.cameraConfig.reference != null)
             {
-                cameraTransform = generator.cameraConfig.reference.transform;
+                cameraTransform = host.cameraConfig.reference.transform;
             }
             else
             {
@@ -62,8 +62,8 @@ namespace ProceduralTerrain.Processing.Chunk
 
             processor.Init(
                 settings,
-                coord => generator.GetNeighborGrids(coord),
-                resolution => generator.GetPrecalculatedTriangles(resolution)
+                coord => host.GetNeighborGrids(coord),
+                resolution => host.GetPrecalculatedTriangles(resolution)
             );
             UpdateLOD(true);
         }
@@ -81,13 +81,13 @@ namespace ProceduralTerrain.Processing.Chunk
         }
 
         private int GetTargetStep() =>
-            ChunkLodSelector.GetStep(
+            LodSelector.GetStep(
                 settings,
                 chunk.transform.position,
                 cameraTransform,
-                generator.lod.step0,
-                generator.lod.step1,
-                generator.lod.step2
+                host.lod.step0,
+                host.lod.step1,
+                host.lod.step2
             );
 
         private void BuildProceduralMesh()

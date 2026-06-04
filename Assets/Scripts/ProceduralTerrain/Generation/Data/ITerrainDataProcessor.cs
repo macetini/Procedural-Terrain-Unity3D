@@ -14,7 +14,7 @@ namespace ProceduralTerrain.Generation.Data
         // Sampler
         void GenerateRawData(Vector2Int coord);
         bool HasTileData(Vector2Int coord);
-        ChunkNeighborStruct GetNeighborGrids(Vector2Int coord);
+        NeighborStruct GetNeighborGrids(Vector2Int coord);
 
         // Sanitizer
         void SanitizeData(Vector2Int cameraOrigin, int dataRadius);

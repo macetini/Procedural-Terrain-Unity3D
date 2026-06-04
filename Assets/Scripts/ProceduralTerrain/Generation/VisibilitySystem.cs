@@ -8,14 +8,14 @@ namespace ProceduralTerrain.Generation
     /// <summary>
     /// Runs frustum-based visibility updates for active chunks.
     /// </summary>
-    internal class ChunkVisibilitySystem
+    internal class VisibilitySystem
     {
         private readonly RuntimeState runtime;
         private readonly ITerrainDataProcessor terrainDataProcessor;
         private readonly ITerrainHost host;
         private readonly List<Vector2Int> keysSnapshot = new();
 
-        public ChunkVisibilitySystem(
+        public VisibilitySystem(
             RuntimeState runtime,
             ITerrainDataProcessor terrainDataProcessor,
             ITerrainHost host

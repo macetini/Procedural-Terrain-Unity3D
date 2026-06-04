@@ -1,12 +1,12 @@
 namespace ProceduralTerrain.Processing.Chunk.Data
 {
-    public struct TileMeshStruct
+    public struct TileSample
     {
         public int X;
         public int Z;
         public int Elevation;
 
-        public TileMeshStruct(int x, int z, int elevation)
+        public TileSample(int x, int z, int elevation)
         {
             X = x;
             Z = z;

@@ -1,6 +1,6 @@
 namespace ProceduralTerrain.Processing.Chunk
 {
-    public struct ChunkSettings
+    public struct Settings
     {
         public float FrustumPadding { get; private set; }
         public float SkirtDepth { get; private set; }
@@ -14,7 +14,7 @@ namespace ProceduralTerrain.Processing.Chunk
         public UnityEngine.Vector3 VisibilityBoundsOffset { get; private set; }
         public UnityEngine.Vector3 VisibilityBoundsSize { get; private set; }
 
-        public static ChunkSettings FromHost(ITerrainHost host)
+        public static Settings FromHost(ITerrainHost host)
         {
             float chunkBoundSize = host.terrain.chunkSize * host.terrain.tileSize;
             float maxHeight =
@@ -23,7 +23,7 @@ namespace ProceduralTerrain.Processing.Chunk
             float padding = host.cameraConfig.frustumPadding;
             float skirtDepth = host.terrain.skirtDepth;
 
-            return new ChunkSettings
+            return new Settings
             {
                 FrustumPadding = padding,
                 SkirtDepth = skirtDepth,

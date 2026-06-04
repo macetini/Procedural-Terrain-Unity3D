@@ -21,7 +21,7 @@ namespace ProceduralTerrain.Generation
         void Destroy();
 
         /// <summary>Returns neighboring sampled data for a chunk coordinate.</summary>
-        ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord);
+        NeighborStruct GetNeighborGrids(Vector2Int chunkCoord);
 
         /// <summary>Gets cached or generated triangle indices for the given mesh resolution.</summary>
         int[] GetPrecalculatedTriangles(int resolution);

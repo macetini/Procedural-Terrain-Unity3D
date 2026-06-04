@@ -8,7 +8,7 @@ namespace ProceduralTerrain.Generation.Data
     internal class Sanitizer
     {
         // Data
-        private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
+        private readonly Dictionary<Vector2Int, TileSample[,]> tileMap;
         private readonly int chunkSize;
         private readonly HashSet<Vector2Int> sanitizedSet = new();
 
@@ -21,7 +21,7 @@ namespace ProceduralTerrain.Generation.Data
 
         public void ClearAll() => sanitizedSet.Clear();
 
-        public Sanitizer(Dictionary<Vector2Int, TileMeshStruct[,]> tileMap, int chunkSize) =>
+        public Sanitizer(Dictionary<Vector2Int, TileSample[,]> tileMap, int chunkSize) =>
             (this.tileMap, this.chunkSize) = (tileMap, chunkSize);
 
         public void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)
@@ -42,11 +42,11 @@ namespace ProceduralTerrain.Generation.Data
 
         public void SanitizeGlobalChunk(Vector2Int coord)
         {
-            if (!tileMap.TryGetValue(coord, out TileMeshStruct[,] currentData))
+            if (!tileMap.TryGetValue(coord, out TileSample[,] currentData))
                 return;
 
-            tileMap.TryGetValue(coord + Vector2Int.right, out TileMeshStruct[,] eastData);
-            tileMap.TryGetValue(coord + Vector2Int.up, out TileMeshStruct[,] northData);
+            tileMap.TryGetValue(coord + Vector2Int.right, out TileSample[,] eastData);
+            tileMap.TryGetValue(coord + Vector2Int.up, out TileSample[,] northData);
 
             int edge = chunkSize - 1;
 
@@ -54,7 +54,7 @@ namespace ProceduralTerrain.Generation.Data
             {
                 for (int z = 0; z < chunkSize; z++)
                 {
-                    ref TileMeshStruct current = ref currentData[x, z];
+                    ref TileSample current = ref currentData[x, z];
 
                     // East neighbor clamping
                     if (x < edge)

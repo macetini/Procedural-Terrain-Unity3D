@@ -28,7 +28,7 @@ namespace ProceduralTerrain
         void GetChunkChildren(List<TerrainChunk> results);
 
         // Data delegation
-        ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord);
+        NeighborStruct GetNeighborGrids(Vector2Int chunkCoord);
         int[] GetPrecalculatedTriangles(int resolution);
     }
 }

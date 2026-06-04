@@ -7,13 +7,13 @@ namespace ProceduralTerrain.Generation.Data
 {
     internal class Sampler
     {
-        private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap;
+        private readonly Dictionary<Vector2Int, TileSample[,]> tileMap;
         private readonly int chunkSize;
         private readonly TerrainNoise noise;
-        private readonly Stack<TileMeshStruct[,]> arrayPool = new();
+        private readonly Stack<TileSample[,]> arrayPool = new();
 
         public Sampler(
-            Dictionary<Vector2Int, TileMeshStruct[,]> tileMap,
+            Dictionary<Vector2Int, TileSample[,]> tileMap,
             int chunkSize,
             TerrainNoise noise
         ) => (this.tileMap, this.chunkSize, this.noise) = (tileMap, chunkSize, noise);
@@ -49,7 +49,7 @@ namespace ProceduralTerrain.Generation.Data
                 return;
             }
 
-            TileMeshStruct[,] data = RentArray();
+            TileSample[,] data = RentArray();
             int offsetX = coord.x * chunkSize;
             int offsetZ = coord.y * chunkSize;
 
@@ -58,15 +58,15 @@ namespace ProceduralTerrain.Generation.Data
                 for (int z = 0; z < chunkSize; z++)
                 {
                     int elevation = noise.GetElevation(offsetX + x, offsetZ + z);
-                    data[x, z] = new TileMeshStruct(x, z, elevation);
+                    data[x, z] = new TileSample(x, z, elevation);
                 }
             }
             tileMap[coord] = data;
         }
 
-        private TileMeshStruct[,] RentArray()
+        private TileSample[,] RentArray()
         {
-            return arrayPool.Count > 0 ? arrayPool.Pop() : new TileMeshStruct[chunkSize, chunkSize];
+            return arrayPool.Count > 0 ? arrayPool.Pop() : new TileSample[chunkSize, chunkSize];
         }
     }
 }

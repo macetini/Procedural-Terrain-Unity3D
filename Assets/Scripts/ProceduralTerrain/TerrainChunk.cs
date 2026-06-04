@@ -35,13 +35,13 @@ namespace ProceduralTerrain
         // Calculations
         private bool wasVisibleLastCheck = false; // Track state change
 
-        private ChunkGenerator chunkGenerator;
+        private MeshGenerator chunkGenerator;
 
         void Awake()
         {
             rendererReference = GetComponent<MeshRenderer>();
             filterReference = GetComponent<MeshFilter>();
-            chunkGenerator = new ChunkGenerator(this);
+            chunkGenerator = new MeshGenerator(this);
         }
 
         public void CallDestroy() // Development fallback path; not pool-optimized.

@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Processing.Chunk.Data
 {
-    public struct ChunkNeighborStruct
+    public struct NeighborStruct
     {
-        public TileMeshStruct[,] Center,
+        public TileSample[,] Center,
             W, // West
             S, // South
             SW, // Southwest
@@ -15,12 +15,12 @@ namespace ProceduralTerrain.Processing.Chunk.Data
             NE, // Northeast
             SE; // Southeast
 
-        public static ChunkNeighborStruct GetNeighborGrids(
+        public static NeighborStruct GetNeighborGrids(
             Vector2Int coord,
-            Dictionary<Vector2Int, TileMeshStruct[,]> tileMap
+            Dictionary<Vector2Int, TileSample[,]> tileMap
         )
         {
-            ChunkNeighborStruct neighbors = new();
+            NeighborStruct neighbors = new();
 
             // Cardinal
             tileMap.TryGetValue(coord, out neighbors.Center);
@@ -40,6 +40,11 @@ namespace ProceduralTerrain.Processing.Chunk.Data
 
         public readonly float GetElevation(int x, int z, int chunkSize)
         {
+            if (Center == null)
+            {
+                return 0f;
+            }
+
             if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
             {
                 return Center[x, z].Elevation;
@@ -54,7 +59,7 @@ namespace ProceduralTerrain.Processing.Chunk.Data
             int nz = MapCoordinate(z, chunkSize);
 
             // Retrieve Neighbor Grid
-            TileMeshStruct[,] targetGrid = GetNeighborByDir(dirX, dirZ);
+            TileSample[,] targetGrid = GetNeighborByDir(dirX, dirZ);
 
             if (targetGrid != null)
             {
@@ -85,7 +90,7 @@ namespace ProceduralTerrain.Processing.Chunk.Data
             return val;
         }
 
-        private readonly TileMeshStruct[,] GetNeighborByDir(int dx, int dz)
+        private readonly TileSample[,] GetNeighborByDir(int dx, int dz)
         {
             // Switch expressions are much cleaner than nested ternaries
             return (dx, dz) switch

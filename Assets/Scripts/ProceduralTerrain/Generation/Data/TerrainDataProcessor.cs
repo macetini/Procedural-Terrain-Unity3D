@@ -14,7 +14,7 @@ namespace ProceduralTerrain.Generation.Data
         private readonly Sanitizer sanitizer;
         private readonly Registry registry;
 
-        private readonly Dictionary<Vector2Int, TileMeshStruct[,]> tileMap = new();
+        private readonly Dictionary<Vector2Int, TileSample[,]> tileMap = new();
 
         public TerrainDataProcessor(int chunkSize, TerrainNoise noise)
         {
@@ -46,8 +46,8 @@ namespace ProceduralTerrain.Generation.Data
 
         public bool HasTileData(Vector2Int coord) => sampler.HasTile(coord);
 
-        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
-            ChunkNeighborStruct.GetNeighborGrids(coord, tileMap);
+        public NeighborStruct GetNeighborGrids(Vector2Int coord) =>
+            NeighborStruct.GetNeighborGrids(coord, tileMap);
 
         // Sanitizer
         public void SanitizeData(Vector2Int cameraOrigin, int dataRadius) =>

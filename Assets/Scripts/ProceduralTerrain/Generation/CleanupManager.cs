@@ -7,7 +7,7 @@ namespace ProceduralTerrain.Generation
     /// <summary>
     /// Removes stale chunks and tile data outside retention bounds.
     /// </summary>
-    internal class ChunkCleanupManager
+    internal class CleanupManager
     {
         private readonly CleanupState cleanup = new();
         private readonly RuntimeState runtime;
@@ -15,7 +15,7 @@ namespace ProceduralTerrain.Generation
         private readonly IChunkPool chunkPool;
         private readonly ITerrainHost host;
 
-        public ChunkCleanupManager(
+        public CleanupManager(
             RuntimeState runtime,
             ITerrainDataProcessor terrainDataProcessor,
             IChunkPool chunkPool,

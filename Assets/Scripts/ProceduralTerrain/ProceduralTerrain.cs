@@ -40,7 +40,7 @@ namespace ProceduralTerrain
         public void GetChunkChildren(List<TerrainChunk> results) =>
             GetComponentsInChildren(true, results);
 
-        public ChunkNeighborStruct GetNeighborGrids(Vector2Int chunkCoord)
+        public NeighborStruct GetNeighborGrids(Vector2Int chunkCoord)
         {
             if (orchestrator == null)
             {

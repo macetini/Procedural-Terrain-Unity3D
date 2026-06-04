@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Processing
 {
-    internal class ChunkDataProcessor
+    internal class DataProcessor
     {
         // Terrain data
-        private Func<Vector2Int, ChunkNeighborStruct> neighborProvider;
+        private Func<Vector2Int, NeighborStruct> neighborProvider;
         private Func<int, int[]> triangleProvider;
-        private ChunkNeighborStruct neighbors;
+        private NeighborStruct neighbors;
 
         // Terrain settings
         private int chunkSize;
@@ -22,7 +22,7 @@ namespace ProceduralTerrain.Processing
         private Vector3[] vertices;
         private Vector2[] uvs;
         private Vector3[] normals;
-        private float[] heightCache1D; // Added: Reuse the height cache array
+        private float[] heightCache1D; // Reused height cache array
 
         // Calculations
         private int resolution;
@@ -33,8 +33,8 @@ namespace ProceduralTerrain.Processing
         private int lastTriangleCount = -1;
 
         public void Init(
-            ChunkSettings settings,
-            Func<Vector2Int, ChunkNeighborStruct> neighborProvider,
+            Chunk.Settings settings,
+            Func<Vector2Int, NeighborStruct> neighborProvider,
             Func<int, int[]> triangleProvider
         )
         {

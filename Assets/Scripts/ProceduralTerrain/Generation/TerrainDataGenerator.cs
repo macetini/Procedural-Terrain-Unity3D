@@ -18,12 +18,12 @@ namespace ProceduralTerrain.Generation
         private readonly TerrainNoise terrainNoise;
         private readonly TerrainDataProcessor terrainDataProcessor;
         private readonly TerrainChunkPool chunkPool;
-        private readonly ChunkBuildQueue buildQueue;
-        private readonly ChunkCleanupManager cleanupManager;
-        private readonly ChunkVisibilitySystem visibilitySystem;
+        private readonly BuildQueue buildQueue;
+        private readonly CleanupManager cleanupManager;
+        private readonly VisibilitySystem visibilitySystem;
         private readonly Dictionary<int, int[]> triangleCache = new();
 
-        public ChunkNeighborStruct GetNeighborGrids(Vector2Int coord) =>
+        public NeighborStruct GetNeighborGrids(Vector2Int coord) =>
             terrainDataProcessor.GetNeighborGrids(coord);
 
         public void Destroy()
@@ -93,14 +93,14 @@ namespace ProceduralTerrain.Generation
         }
 
         private (
-            ChunkBuildQueue buildQueue,
-            ChunkCleanupManager cleanupManager,
-            ChunkVisibilitySystem visibilitySystem
+            BuildQueue buildQueue,
+            CleanupManager cleanupManager,
+            VisibilitySystem visibilitySystem
         ) CreateRuntimeSystems()
         {
-            var queue = new ChunkBuildQueue(runtime, terrainDataProcessor, chunkPool, host);
-            var cleanup = new ChunkCleanupManager(runtime, terrainDataProcessor, chunkPool, host);
-            var visibility = new ChunkVisibilitySystem(runtime, terrainDataProcessor, host);
+            var queue = new BuildQueue(runtime, terrainDataProcessor, chunkPool, host);
+            var cleanup = new CleanupManager(runtime, terrainDataProcessor, chunkPool, host);
+            var visibility = new VisibilitySystem(runtime, terrainDataProcessor, host);
             return (queue, cleanup, visibility);
         }
 

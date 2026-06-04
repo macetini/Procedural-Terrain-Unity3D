@@ -6,10 +6,10 @@ namespace ProceduralTerrain.Processing.Chunk
     /// Pure LOD step selection, decoupled from mesh construction.
     /// Takes only value-type settings and positional data — no MonoBehaviour references.
     /// </summary>
-    internal static class ChunkLodSelector
+    internal static class LodSelector
     {
         public static int GetStep(
-            in ChunkSettings settings,
+            in Settings settings,
             Vector3 chunkPosition,
             Transform cameraTransform,
             int step0,
