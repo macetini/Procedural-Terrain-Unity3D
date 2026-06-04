@@ -447,9 +447,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TerrainGenerator
   terrain:
     chunkSize: 64
-    tileSize: 8
-    elevationStepHeight: 12
-    maxElevationStepsCount: 12
+    tileSize: 16
+    elevationStepHeight: 16
+    maxElevationStepsCount: 16
     skirtDepth: 16
   noise:
     seed: 1337
@@ -460,16 +460,18 @@ MonoBehaviour:
   cameraConfig:
     reference: {fileID: 330585545}
     frustumPadding: 4
-    viewDistanceChunks: 12
+    viewDistanceChunks: 6
   lod:
-    distance1: 640
-    distance2: 960
+    lod1Distance: 2
+    lod2Distance: 3
     visibilityBatchSize: 10
-    step0: 1
-    step1: 2
-    step2: 4
+    lod0Step: 1
+    lod1Step: 2
+    lod2Step: 4
   debug:
     cleanupLogs: 0
+    showLodRanges: 0
+    showChunkLodBounds: 0
     orphanSweepPeriod: 3
   chunkPrefab: {fileID: 581305705177285490, guid: 04a504a699d7be644bd04fba85286ca9, type: 3}
 --- !u!1 &832575517

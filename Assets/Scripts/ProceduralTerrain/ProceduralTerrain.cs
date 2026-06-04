@@ -89,6 +89,22 @@ namespace ProceduralTerrain
             orchestrator = null;
         }
 
+        void OnDrawGizmosSelected()
+        {
+            if (debug == null || !debug.showLodRanges)
+            {
+                return;
+            }
+
+            if (cameraConfig == null || cameraConfig.reference == null || terrain == null)
+            {
+                return;
+            }
+
+            DrawLodRangeGizmo(lod.lod1Distance, new Color(1f, 0.84f, 0.2f, 1f));
+            DrawLodRangeGizmo(lod.lod2Distance, new Color(1f, 0.45f, 0.1f, 1f));
+        }
+
         void Start()
         {
             if (orchestrator == null)
@@ -121,6 +137,21 @@ namespace ProceduralTerrain
             Debug.Log("Rebuilding terrain.", this);
             orchestrator.ResetGeneratorState();
             orchestrator.BuildTerrain();
+        }
+
+        private void DrawLodRangeGizmo(float chunkDistance, Color color)
+        {
+            float chunkWorldSize = terrain.chunkSize * terrain.tileSize;
+            float worldDistance = chunkDistance * chunkWorldSize;
+            float maxHeight = terrain.maxElevationStepsCount * terrain.elevationStepHeight;
+
+            Vector3 center = cameraConfig.reference.transform.position;
+            center.y += maxHeight * 0.5f;
+
+            Vector3 size = new(worldDistance * 2f, maxHeight, worldDistance * 2f);
+
+            Gizmos.color = color;
+            Gizmos.DrawWireCube(center, size);
         }
 
         private void NormalizeSettings()

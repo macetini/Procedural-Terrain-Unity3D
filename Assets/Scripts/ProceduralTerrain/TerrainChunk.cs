@@ -1,5 +1,6 @@
 using ProceduralTerrain.Effects;
 using ProceduralTerrain.Processing;
+using ProceduralTerrain.Settings;
 using UnityEngine;
 
 namespace ProceduralTerrain
@@ -120,6 +121,25 @@ namespace ProceduralTerrain
         // -------------------------------------------- [Gizmos] ------------------------------------------
         // ------------------------------------------------------------------------------------------------
 
+        void OnDrawGizmos()
+        {
+            if (generator == null || generator.Debug == null || !generator.Debug.showChunkLodBounds)
+            {
+                return;
+            }
+
+            if (chunkGenerator == null || chunkGenerator.CurrentStep < 0)
+            {
+                return;
+            }
+
+            var settings = chunkGenerator.Settings;
+            Vector3 center = transform.position + settings.VisibilityBoundsOffset;
+
+            Gizmos.color = GetLodGizmoColor(chunkGenerator.CurrentStep, generator.LOD);
+            Gizmos.DrawWireCube(center, settings.VisibilityBoundsSize);
+        }
+
         void OnDrawGizmosSelected()
         {
             if (!DebugNormals || generator == null)
@@ -149,6 +169,26 @@ namespace ProceduralTerrain
                     Gizmos.DrawLine(worldV, worldV + worldN * 0.5f);
                 }
             }
+        }
+
+        private static Color GetLodGizmoColor(int currentStep, LODSettings lod)
+        {
+            if (currentStep == lod.lod0Step)
+            {
+                return Color.green;
+            }
+
+            if (currentStep == lod.lod1Step)
+            {
+                return Color.yellow;
+            }
+
+            if (currentStep == lod.lod2Step)
+            {
+                return new Color(1f, 0.45f, 0.1f, 1f);
+            }
+
+            return Color.gray;
         }
     }
 }

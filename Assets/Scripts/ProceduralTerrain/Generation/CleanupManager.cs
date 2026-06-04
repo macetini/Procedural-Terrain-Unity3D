@@ -112,6 +112,7 @@ namespace ProceduralTerrain.Generation
             bool isOutOfBounds = !IsWithinRetentionBounds(coord);
             bool isForeignChunk =
                 sceneChunk.Generator != null && !ReferenceEquals(sceneChunk.Generator, host);
+
             return isDuplicateCoord || isOutOfBounds || isForeignChunk;
         }
 

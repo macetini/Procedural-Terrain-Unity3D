@@ -19,6 +19,8 @@ namespace ProceduralTerrain.Processing
         public static Settings FromHost(ITerrainHost host)
         {
             float chunkBoundSize = host.Terrain.chunkSize * host.Terrain.tileSize;
+            float lodDistance1 = host.LOD.lod1Distance * chunkBoundSize;
+            float lodDistance2 = host.LOD.lod2Distance * chunkBoundSize;
 
             float maxHeight =
                 host.Terrain.maxElevationStepsCount * host.Terrain.elevationStepHeight;
@@ -43,8 +45,8 @@ namespace ProceduralTerrain.Processing
 
                 ChunkBoundSize = chunkBoundSize,
 
-                SqrLodDistance1 = host.LOD.distance1 * host.LOD.distance1,
-                SqrLodDistance2 = host.LOD.distance2 * host.LOD.distance2,
+                SqrLodDistance1 = lodDistance1 * lodDistance1,
+                SqrLodDistance2 = lodDistance2 * lodDistance2,
 
                 VisibilityBoundsOffset = new Vector3(halfSize, maxHeight * 0.5f, halfSize),
 

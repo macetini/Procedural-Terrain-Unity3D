@@ -85,9 +85,9 @@ namespace ProceduralTerrain.Processing
                 settings,
                 chunk.transform.position,
                 cameraTransform,
-                host.LOD.step0,
-                host.LOD.step1,
-                host.LOD.step2
+                host.LOD.lod0Step,
+                host.LOD.lod1Step,
+                host.LOD.lod2Step
             );
 
         private void BuildProceduralMesh()

@@ -1,27 +1,29 @@
+using UnityEngine;
+
 namespace ProceduralTerrain.Settings
 {
     [System.Serializable]
     public class LODSettings
     {
-        public float distance1 = 640f; // Distance to switch to MEDIUM detail
-        public float distance2 = 960f; // Distance to switch to LOW detail
-        public int visibilityBatchSize = 10; // Formerly visibilityCheckFrameCount
-        public int step0 = 1; // LOD 0 (full detail)
-        public int step1 = 2; // LOD 1 (medium)
-        public int step2 = 4; // LOD 2 (low)
+        public float lod1Distance = 3f; // Chunks from camera to switch to MEDIUM detail
+        public float lod2Distance = 6f; // Chunks from camera to switch to LOW detail
+        public int visibilityBatchSize = 10; //
+        public int lod0Step = 1; // LOD 0 (full detail)
+        public int lod1Step = 2; // LOD 1 (medium)
+        public int lod2Step = 4; // LOD 2 (low)
 
         public void ClampValues(int chunkSize)
         {
-            int safeChunkSize = UnityEngine.Mathf.Max(1, chunkSize);
+            int safeChunkSize = Mathf.Max(1, chunkSize);
 
-            distance1 = UnityEngine.Mathf.Max(0f, distance1);
-            distance2 = UnityEngine.Mathf.Max(distance1, distance2);
+            lod1Distance = Mathf.Max(0f, lod1Distance);
+            lod2Distance = Mathf.Max(lod1Distance, lod2Distance);
 
-            visibilityBatchSize = UnityEngine.Mathf.Max(1, visibilityBatchSize);
+            visibilityBatchSize = Mathf.Max(1, visibilityBatchSize);
 
-            step0 = UnityEngine.Mathf.Clamp(step0, 1, safeChunkSize);
-            step1 = UnityEngine.Mathf.Clamp(step1, 1, safeChunkSize);
-            step2 = UnityEngine.Mathf.Clamp(step2, 1, safeChunkSize);
+            lod0Step = Mathf.Clamp(lod0Step, 1, safeChunkSize);
+            lod1Step = Mathf.Clamp(lod1Step, 1, safeChunkSize);
+            lod2Step = Mathf.Clamp(lod2Step, 1, safeChunkSize);
         }
     }
 }

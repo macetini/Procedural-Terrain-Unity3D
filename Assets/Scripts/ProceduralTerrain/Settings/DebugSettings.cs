@@ -4,6 +4,8 @@ namespace ProceduralTerrain.Settings
     public class DebugSettings
     {
         public bool cleanupLogs = false;
+        public bool showLodRanges = false;
+        public bool showChunkLodBounds = false;
         public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
 
         public void ClampValues()
