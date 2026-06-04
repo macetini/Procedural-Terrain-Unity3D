@@ -7,22 +7,27 @@ namespace ProceduralTerrain.Generation
         // First pass: generate raw data for all chunks in view distance.
         private void FirstPass()
         {
-            int dataRadius = host.cameraConfig.viewDistanceChunks + 1;
-
-            double totalMs = MeasureExecution(() =>
-            {
-                LogMeasuredStep(
-                    "GenerateFullMeshData()",
-                    () => GenerateFullMeshData(runtime.CurrentCameraPosition, dataRadius)
-                );
-                LogMeasuredStep(
-                    "SanitizeCurrentTileMeshData()",
-                    () =>
-                        terrainDataProcessor.SanitizeData(runtime.CurrentCameraPosition, dataRadius)
-                );
-            });
+            int dataRadius = GetInitialDataRadius();
+            double totalMs = MeasureExecution(() => GenerateAndSanitizeInitialData(dataRadius));
 
             LogExecutionTime("Total", totalMs);
+        }
+
+        private int GetInitialDataRadius()
+        {
+            return host.cameraConfig.viewDistanceChunks + 1;
+        }
+
+        private void GenerateAndSanitizeInitialData(int dataRadius)
+        {
+            LogMeasuredStep(
+                "GenerateFullMeshData()",
+                () => GenerateFullMeshData(runtime.CurrentCameraPosition, dataRadius)
+            );
+            LogMeasuredStep(
+                "SanitizeCurrentTileMeshData()",
+                () => terrainDataProcessor.SanitizeData(runtime.CurrentCameraPosition, dataRadius)
+            );
         }
 
         private static double MeasureExecution(System.Action action)
@@ -51,12 +56,20 @@ namespace ProceduralTerrain.Generation
 
         private void GenerateFullMeshData(Vector2Int cameraOrigin, int dataRadius)
         {
-            for (int x = -dataRadius; x <= dataRadius; x++)
+            ForEachCoordInRadius(cameraOrigin, dataRadius, terrainDataProcessor.GenerateRawData);
+        }
+
+        private static void ForEachCoordInRadius(
+            Vector2Int center,
+            int radius,
+            System.Action<Vector2Int> action
+        )
+        {
+            for (int x = -radius; x <= radius; x++)
             {
-                for (int z = -dataRadius; z <= dataRadius; z++)
+                for (int z = -radius; z <= radius; z++)
                 {
-                    var coord = new Vector2Int(cameraOrigin.x + x, cameraOrigin.y + z);
-                    terrainDataProcessor.GenerateRawData(coord);
+                    action(new Vector2Int(center.x + x, center.y + z));
                 }
             }
         }

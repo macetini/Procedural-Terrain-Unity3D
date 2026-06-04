@@ -211,31 +211,66 @@ namespace ProceduralTerrain.Generation
 
             private IEnumerator ProcessQueuedChunk(Vector2Int coord)
             {
-                if (!ShouldBuildQueuedChunk(coord))
+                if (!ShouldContinueQueuedChunkBuild(coord))
                 {
                     yield break;
                 }
 
-                yield return GenerateRawDataForChunk(coord);
-                yield return EnsureSanitized(coord);
+                yield return ProcessNeighborData(coord);
 
-                if (!ShouldBuildQueuedChunk(coord))
+                if (!ShouldContinueQueuedChunkBuild(coord))
                 {
                     yield break;
                 }
 
                 SpawnChunkMesh(coord);
+                StartChunkFadeIn(coord);
+            }
 
+            private bool ShouldContinueQueuedChunkBuild(Vector2Int coord)
+            {
+                return !terrainDataProcessor.HasActiveChunk(coord)
+                    && IsWithinRetentionBounds(coord);
+            }
+
+            private IEnumerator ProcessNeighborData(Vector2Int coord)
+            {
+                yield return RunNeighborPass(
+                    coord,
+                    neighbor =>
+                    {
+                        if (terrainDataProcessor.HasTileData(neighbor))
+                        {
+                            return false;
+                        }
+
+                        terrainDataProcessor.GenerateRawData(neighbor);
+                        return true;
+                    }
+                );
+
+                yield return RunNeighborPass(
+                    coord,
+                    neighbor =>
+                    {
+                        if (terrainDataProcessor.IsSanitized(neighbor))
+                        {
+                            return false;
+                        }
+
+                        terrainDataProcessor.SanitizeGlobalChunk(neighbor);
+                        terrainDataProcessor.MarkSanitized(neighbor);
+                        return true;
+                    }
+                );
+            }
+
+            private void StartChunkFadeIn(Vector2Int coord)
+            {
                 if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     chunk.StartFadeIn();
                 }
-            }
-
-            private bool ShouldBuildQueuedChunk(Vector2Int coord)
-            {
-                return !terrainDataProcessor.HasActiveChunk(coord)
-                    && IsWithinRetentionBounds(coord);
             }
 
             private bool IsWithinRetentionBounds(Vector2Int coord)
@@ -246,39 +281,9 @@ namespace ProceduralTerrain.Generation
                 return dx <= retentionRadius && dz <= retentionRadius;
             }
 
-            private IEnumerator GenerateRawDataForChunk(Vector2Int coord)
+            private IEnumerator RunNeighborPass(Vector2Int coord, Func<Vector2Int, bool> action)
             {
-                yield return IterateNeighbors3x3(
-                    coord,
-                    n =>
-                    {
-                        if (!terrainDataProcessor.HasTileData(n))
-                        {
-                            terrainDataProcessor.GenerateRawData(n);
-                            return true;
-                        }
-
-                        return false;
-                    }
-                );
-            }
-
-            private IEnumerator EnsureSanitized(Vector2Int coord)
-            {
-                yield return IterateNeighbors3x3(
-                    coord,
-                    n =>
-                    {
-                        if (!terrainDataProcessor.IsSanitized(n))
-                        {
-                            terrainDataProcessor.SanitizeGlobalChunk(n);
-                            terrainDataProcessor.MarkSanitized(n);
-                            return true;
-                        }
-
-                        return false;
-                    }
-                );
+                yield return IterateNeighbors3x3(coord, action);
             }
 
             private IEnumerator IterateNeighbors3x3(

@@ -83,10 +83,8 @@ namespace ProceduralTerrain
 
         void OnDestroy()
         {
-            if (orchestrator != null)
-            {
-                orchestrator.Destroy();
-            }
+            orchestrator?.Destroy();
+            orchestrator = null;
         }
 
         void Start()
