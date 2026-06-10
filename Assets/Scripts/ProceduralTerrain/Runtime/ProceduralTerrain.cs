@@ -5,7 +5,7 @@ using ProceduralTerrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ProceduralTerrain
+namespace ProceduralTerrain.Runtime
 {
     public class ProceduralTerrain : MonoBehaviour, ITerrainHost
     {

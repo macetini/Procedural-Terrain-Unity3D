@@ -1,0 +1,6 @@
+﻿<Solution>
+  <Project Path="Macetini.ProceduralTerrain.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Macetini.Development.csproj" />
+</Solution>

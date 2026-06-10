@@ -3,7 +3,7 @@ using ProceduralTerrain.Processing;
 using ProceduralTerrain.Settings;
 using UnityEngine;
 
-namespace ProceduralTerrain
+namespace ProceduralTerrain.Runtime
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class TerrainChunk : MonoBehaviour
