@@ -12,13 +12,13 @@ namespace ProceduralTerrain.Generation
     {
         private readonly CleanupState cleanup = new();
         private readonly RuntimeState runtime;
-        private readonly ITerrainDataProcessor terrainDataProcessor;
+        private readonly ITerrainDataCoordinator terrainDataProcessor;
         private readonly IChunkPool chunkPool;
         private readonly ITerrainHost host;
 
         public CleanupManager(
             RuntimeState runtime,
-            ITerrainDataProcessor terrainDataProcessor,
+            ITerrainDataCoordinator terrainDataProcessor,
             IChunkPool chunkPool,
             ITerrainHost host
         )

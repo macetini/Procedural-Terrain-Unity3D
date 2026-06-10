@@ -9,7 +9,7 @@ namespace ProceduralTerrain.Generation.Data
     /// <summary>
     /// Coordinates sampler, sanitizer, and registry operations for chunk data.
     /// </summary>
-    internal class TerrainDataProcessor : ITerrainDataProcessor
+    internal class TerrainDataCoordinator : ITerrainDataCoordinator
     {
         private readonly Sampler sampler;
         private readonly Sanitizer sanitizer;
@@ -17,7 +17,7 @@ namespace ProceduralTerrain.Generation.Data
 
         private readonly Dictionary<Vector2Int, TileSample[,]> tileMap = new();
 
-        public TerrainDataProcessor(int chunkSize, TerrainNoise noise)
+        public TerrainDataCoordinator(int chunkSize, TerrainNoise noise)
         {
             sampler = new Sampler(tileMap, chunkSize, noise);
             sanitizer = new Sanitizer(tileMap, chunkSize);

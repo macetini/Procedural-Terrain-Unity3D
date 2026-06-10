@@ -16,7 +16,7 @@ namespace ProceduralTerrain.Generation
         private readonly RuntimeState runtime = new();
         private readonly ITerrainHost host;
         private readonly TerrainNoise terrainNoise;
-        private readonly TerrainDataProcessor terrainDataProcessor;
+        private readonly TerrainDataCoordinator terrainDataProcessor;
         private readonly TerrainChunkPool chunkPool;
         private readonly BuildQueue buildQueue;
         private readonly CleanupManager cleanupManager;
@@ -36,7 +36,7 @@ namespace ProceduralTerrain.Generation
         {
             this.host = host;
             terrainNoise = CreateTerrainNoise();
-            terrainDataProcessor = new TerrainDataProcessor(host.Terrain.chunkSize, terrainNoise);
+            terrainDataProcessor = new TerrainDataCoordinator(host.Terrain.chunkSize, terrainNoise);
             chunkPool = CreateChunkPool();
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
 

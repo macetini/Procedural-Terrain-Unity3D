@@ -12,13 +12,13 @@ namespace ProceduralTerrain.Generation
     internal class VisibilitySystem
     {
         private readonly RuntimeState runtime;
-        private readonly ITerrainDataProcessor terrainDataProcessor;
+        private readonly ITerrainDataCoordinator terrainDataProcessor;
         private readonly ITerrainHost host;
         private readonly List<Vector2Int> keysSnapshot = new();
 
         public VisibilitySystem(
             RuntimeState runtime,
-            ITerrainDataProcessor terrainDataProcessor,
+            ITerrainDataCoordinator terrainDataProcessor,
             ITerrainHost host
         )
         {

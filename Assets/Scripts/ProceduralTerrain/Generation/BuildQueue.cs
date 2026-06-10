@@ -14,14 +14,14 @@ namespace ProceduralTerrain.Generation
     {
         private readonly BuildQueueState buildState = new();
         private readonly RuntimeState runtime;
-        private readonly ITerrainDataProcessor terrainDataProcessor;
+        private readonly ITerrainDataCoordinator terrainDataProcessor;
         private readonly IChunkPool chunkPool;
         private readonly ITerrainHost host;
         private readonly BuildWorker buildWorker;
 
         public BuildQueue(
             RuntimeState runtime,
-            ITerrainDataProcessor terrainDataProcessor,
+            ITerrainDataCoordinator terrainDataProcessor,
             IChunkPool chunkPool,
             ITerrainHost host
         )
@@ -143,13 +143,13 @@ namespace ProceduralTerrain.Generation
         private sealed class BuildWorker
         {
             private readonly RuntimeState runtime;
-            private readonly ITerrainDataProcessor terrainDataProcessor;
+            private readonly ITerrainDataCoordinator terrainDataProcessor;
             private readonly IChunkPool chunkPool;
             private readonly ITerrainHost host;
 
             public BuildWorker(
                 RuntimeState runtime,
-                ITerrainDataProcessor terrainDataProcessor,
+                ITerrainDataCoordinator terrainDataProcessor,
                 IChunkPool chunkPool,
                 ITerrainHost host
             )
