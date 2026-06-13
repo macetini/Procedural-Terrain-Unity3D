@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ProceduralTerrain.Runtime;
 using UnityEngine;
@@ -7,10 +8,9 @@ namespace ProceduralTerrain.Generation.Data
     internal class Registry
     {
         private readonly Dictionary<Vector2Int, TerrainChunk> activeChunks = new();
-        private System.Action<TerrainChunk> onChunkDispose;
+        private Action<TerrainChunk> onChunkDispose;
 
-        public void SetChunkDisposeAction(System.Action<TerrainChunk> action) =>
-            onChunkDispose = action;
+        public void SetChunkDisposeAction(Action<TerrainChunk> action) => onChunkDispose = action;
 
         // Registry Helpers
         public bool HasActiveChunk(Vector2Int coord) => activeChunks.ContainsKey(coord);
@@ -56,10 +56,14 @@ namespace ProceduralTerrain.Generation.Data
 
         private void DisposeChunk(TerrainChunk chunk)
         {
-            if (onChunkDispose != null)
-                onChunkDispose(chunk);
-            else
+            if (onChunkDispose == null)
+            {
                 chunk.CallDestroy();
+            }
+            else
+            {
+                onChunkDispose(chunk);
+            }
         }
 
         public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)

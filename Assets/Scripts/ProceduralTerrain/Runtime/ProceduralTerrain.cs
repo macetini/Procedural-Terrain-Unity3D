@@ -9,6 +9,10 @@ namespace ProceduralTerrain.Runtime
 {
     public class ProceduralTerrain : MonoBehaviour, ITerrainHost
     {
+        [Header("References")]
+        public TerrainChunk chunkPrefab;
+        public ChunksContainer chunksContainer;
+
         [Header("Terrain Settings")]
         public TerrainSettings terrain = new();
 
@@ -21,11 +25,8 @@ namespace ProceduralTerrain.Runtime
         [Header("LOD Settings")]
         public LODSettings lod = new();
 
-        [Header("Debug")]
+        [Header("Debug Settings")]
         public DebugSettings debug = new();
-
-        [Header("Prefabs")]
-        public TerrainChunk chunkPrefab;
 
         private ITerrainOrchestrator orchestrator;
 
@@ -37,10 +38,12 @@ namespace ProceduralTerrain.Runtime
         DebugSettings ITerrainHost.Debug => debug;
         TerrainChunk ITerrainHost.ChunkPrefab => chunkPrefab;
         Transform ITerrainHost.Transform => transform;
+        Transform ITerrainHost.ChunkParent => chunksContainer.transform;
+
         bool ITerrainHost.IsActiveAndEnabled => isActiveAndEnabled;
 
         public void GetChunkChildren(List<TerrainChunk> results) =>
-            GetComponentsInChildren(true, results);
+            chunksContainer.GetChunks(results);
 
         public NeighborStruct GetNeighborGrids(Vector2Int chunkCoord)
         {
@@ -80,6 +83,8 @@ namespace ProceduralTerrain.Runtime
                 enabled = false;
                 return;
             }
+
+            EnsureChunksContainer();
             orchestrator = new TerrainDataGenerator(this);
         }
 
@@ -121,6 +126,7 @@ namespace ProceduralTerrain.Runtime
                 return;
             }
 
+            chunksContainer.SyncDebugNormals(debug != null && debug.debugNormals);
             orchestrator.UpdateCurrentCameraPosition();
 
 #if UNITY_EDITOR
@@ -132,12 +138,14 @@ namespace ProceduralTerrain.Runtime
 #endif
         }
 
+#if UNITY_EDITOR
         private void HandleDebugRebuild()
         {
             Debug.Log("Rebuilding terrain.", this);
             orchestrator.ResetGeneratorState();
             orchestrator.BuildTerrain();
         }
+#endif
 
         private void DrawLodRangeGizmo(float chunkDistance, Color color)
         {
@@ -152,6 +160,27 @@ namespace ProceduralTerrain.Runtime
 
             Gizmos.color = color;
             Gizmos.DrawWireCube(center, size);
+        }
+
+        private void EnsureChunksContainer()
+        {
+            if (chunksContainer != null)
+            {
+                return;
+            }
+
+            chunksContainer = GetComponentInChildren<ChunksContainer>(true);
+            if (chunksContainer != null)
+            {
+                return;
+            }
+
+            var containerObject = new GameObject(
+                ChunksContainer.GameObjectName,
+                typeof(ChunksContainer)
+            );
+            containerObject.transform.SetParent(transform, false);
+            chunksContainer = containerObject.GetComponent<ChunksContainer>();
         }
 
         private void NormalizeSettings()

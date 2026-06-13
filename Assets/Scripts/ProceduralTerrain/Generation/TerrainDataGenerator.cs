@@ -89,7 +89,7 @@ namespace ProceduralTerrain.Generation
                 host.CameraConfig.viewDistanceChunks
             );
 
-            return new TerrainChunkPool(host.ChunkPrefab, host.Transform, poolMaxSize);
+            return new TerrainChunkPool(host.ChunkPrefab, host.ChunkParent, poolMaxSize);
         }
 
         private (

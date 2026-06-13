@@ -18,6 +18,7 @@ namespace ProceduralTerrain.Runtime
         // Refs
         TerrainChunk ChunkPrefab { get; }
         Transform Transform { get; }
+        Transform ChunkParent { get; }
 
         // Unity lifecycle
         bool IsActiveAndEnabled { get; }

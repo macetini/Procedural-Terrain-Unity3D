@@ -13,6 +13,7 @@ namespace ProceduralTerrain.Runtime
 
         [Header("Debug Settings")]
         public bool DebugNormals = false;
+        public int DebugNormalLength = 5;
 
         [Header("Effects")]
         public TerrainFadeEffect fadeEffect;
@@ -74,6 +75,8 @@ namespace ProceduralTerrain.Runtime
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;
+            DebugNormals =
+                generator != null && generator.Debug != null && generator.Debug.debugNormals;
             chunkGenerator.Init(generator, chunkCoord);
         }
 
@@ -114,7 +117,9 @@ namespace ProceduralTerrain.Runtime
         public void StartFadeIn()
         {
             if (fadeEffect != null)
+            {
                 fadeEffect.Play();
+            }
         }
 
         // ------------------------------------------------------------------------------------------------
@@ -165,8 +170,8 @@ namespace ProceduralTerrain.Runtime
                     Vector3 worldV = transform.TransformPoint(verts[i]);
                     // Transform the normal to world space
                     Vector3 worldN = transform.TransformDirection(norms[i]);
-                    // Draw the normal line (0.5f is the length of the line)
-                    Gizmos.DrawLine(worldV, worldV + worldN * 0.5f);
+                    // Draw the normal line (DebugNormalLength is the length of the line)
+                    Gizmos.DrawLine(worldV, worldV + worldN * DebugNormalLength);
                 }
             }
         }
