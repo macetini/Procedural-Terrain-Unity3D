@@ -5,15 +5,21 @@ using UnityEngine;
 
 namespace ProceduralTerrain.Runtime
 {
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class TerrainChunk : MonoBehaviour
     {
+        public const string NAME = "TerrainChunk:";
+
         [Header("Settings")]
         public Material terrainMaterial;
 
         [Header("Debug Settings")]
-        public bool DebugNormals = false;
-        public int DebugNormalLength = 5;
+        public bool showChunkLodBounds = false;
+
+        public bool showNormals = false;
+        public int debugNormalLength = 5;
+
+        public bool showCollider = false;
 
         [Header("Effects")]
         public TerrainFadeEffect fadeEffect;
@@ -29,6 +35,7 @@ namespace ProceduralTerrain.Runtime
         // References
         private MeshRenderer rendererReference;
         private MeshFilter filterReference;
+        private MeshCollider colliderReference;
 
         // Data
         private ITerrainHost generator;
@@ -41,9 +48,28 @@ namespace ProceduralTerrain.Runtime
 
         void Awake()
         {
-            rendererReference = GetComponent<MeshRenderer>();
-            filterReference = GetComponent<MeshFilter>();
+            EnsureReferences();
+            colliderReference.convex = false;
+
             chunkGenerator = new MeshGenerator(this);
+        }
+
+        private void EnsureReferences()
+        {
+            if (rendererReference == null)
+            {
+                rendererReference = GetComponent<MeshRenderer>();
+            }
+
+            if (filterReference == null)
+            {
+                filterReference = GetComponent<MeshFilter>();
+            }
+
+            if (colliderReference == null)
+            {
+                colliderReference = GetComponent<MeshCollider>();
+            }
         }
 
         public void CallDestroy() // Development fallback path; not pool-optimized.
@@ -56,6 +82,11 @@ namespace ProceduralTerrain.Runtime
             chunkGenerator.Reset();
             wasVisibleLastCheck = false;
             IsVisible = true;
+
+            if (colliderReference != null)
+            {
+                colliderReference.enabled = true;
+            }
 
             if (fadeEffect != null)
             {
@@ -75,9 +106,33 @@ namespace ProceduralTerrain.Runtime
         {
             this.generator = generator;
             this.chunkCoord = chunkCoord;
-            DebugNormals =
-                generator != null && generator.Debug != null && generator.Debug.debugNormals;
+
+#if UNITY_EDITOR
+            string local = $"{NAME} ({chunkCoord.x:D3}, {chunkCoord.y:D3})";
+            gameObject.name = local;
+#endif
+
+            if (terrainMaterial != null && rendererReference != null)
+            {
+                rendererReference.material = terrainMaterial;
+                showNormals = generator.Debug.showNormals;
+                showCollider = generator.Debug.showColliders;
+            }
+
             chunkGenerator.Init(generator, chunkCoord);
+        }
+
+        public void SyncColliderMesh()
+        {
+            if (
+                colliderReference != null
+                && filterReference != null
+                && filterReference.sharedMesh != null
+            )
+            {
+                colliderReference.sharedMesh = null; // Clear old mesh first
+                colliderReference.sharedMesh = filterReference.sharedMesh; // Assign new mesh
+            }
         }
 
         public void UpdateLOD(bool force = false)
@@ -107,6 +162,11 @@ namespace ProceduralTerrain.Runtime
                 rendererReference.enabled = finalShowState;
             }
 
+            if (colliderReference != null && colliderReference.enabled != finalShowState)
+            {
+                colliderReference.enabled = finalShowState;
+            }
+
             wasVisibleLastCheck = finalShowState;
         }
 
@@ -128,51 +188,29 @@ namespace ProceduralTerrain.Runtime
 
         void OnDrawGizmos()
         {
-            if (generator == null || generator.Debug == null || !generator.Debug.showChunkLodBounds)
+            if (generator != null && generator.Debug != null)
             {
-                return;
+                EnsureReferences();
+
+                DrawChunkBoundsGizmos();
+                DrawColliderBoundsGizmos();
+                DrawNormalGizmos();
             }
-
-            if (chunkGenerator == null || chunkGenerator.CurrentStep < 0)
-            {
-                return;
-            }
-
-            var settings = chunkGenerator.Settings;
-            Vector3 center = transform.position + settings.VisibilityBoundsOffset;
-
-            Gizmos.color = GetLodGizmoColor(chunkGenerator.CurrentStep, generator.LOD);
-            Gizmos.DrawWireCube(center, settings.VisibilityBoundsSize);
         }
 
-        void OnDrawGizmosSelected()
+        private void DrawChunkBoundsGizmos()
         {
-            if (!DebugNormals || generator == null)
+            if (
+                (generator.Debug.showChunkLodBounds || showChunkLodBounds)
+                && chunkGenerator != null
+                && chunkGenerator.CurrentStep >= 0
+            )
             {
-                return;
-            }
+                var settings = chunkGenerator.Settings;
+                Vector3 center = transform.position + settings.VisibilityBoundsOffset;
 
-            Mesh mesh = filterReference.sharedMesh;
-            if (mesh != null)
-            {
-                Vector3[] verts = filterReference.sharedMesh.vertices;
-                Vector3[] norms = mesh.normals;
-
-                Gizmos.color = Color.blue;
-                // We only loop through the grid vertices (ignore the skirt for clarity)
-                int resolution =
-                    (chunkGenerator.Settings.ChunkSize / chunkGenerator.CurrentStep) + 1;
-                int gridCount = resolution * resolution;
-
-                for (int i = 0; i < gridCount; i++)
-                {
-                    // Transform the local vertex position to world space
-                    Vector3 worldV = transform.TransformPoint(verts[i]);
-                    // Transform the normal to world space
-                    Vector3 worldN = transform.TransformDirection(norms[i]);
-                    // Draw the normal line (DebugNormalLength is the length of the line)
-                    Gizmos.DrawLine(worldV, worldV + worldN * DebugNormalLength);
-                }
+                Gizmos.color = GetLodGizmoColor(chunkGenerator.CurrentStep, generator.LOD);
+                Gizmos.DrawWireCube(center, settings.VisibilityBoundsSize);
             }
         }
 
@@ -194,6 +232,49 @@ namespace ProceduralTerrain.Runtime
             }
 
             return Color.gray;
+        }
+
+        private void DrawColliderBoundsGizmos()
+        {
+            if ((generator.Debug.showColliders || showCollider) && colliderReference != null)
+            {
+                Gizmos.color = Color.red;
+                Bounds colliderBounds = colliderReference.bounds;
+                Gizmos.DrawWireCube(colliderBounds.center, colliderBounds.size);
+            }
+        }
+
+        private void DrawNormalGizmos()
+        {
+            if (
+                (generator.Debug.showNormals || showNormals)
+                && filterReference != null
+                && filterReference.sharedMesh != null
+            )
+            {
+                Mesh mesh = filterReference.sharedMesh;
+                if (mesh != null)
+                {
+                    Vector3[] verts = filterReference.sharedMesh.vertices;
+                    Vector3[] norms = mesh.normals;
+
+                    Gizmos.color = Color.blue;
+                    // We only loop through the grid vertices (ignore the skirt for clarity)
+                    int resolution =
+                        (chunkGenerator.Settings.ChunkSize / chunkGenerator.CurrentStep) + 1;
+                    int gridCount = resolution * resolution;
+
+                    for (int i = 0; i < gridCount; i++)
+                    {
+                        // Transform the local vertex position to world space
+                        Vector3 worldV = transform.TransformPoint(verts[i]);
+                        // Transform the normal to world space
+                        Vector3 worldN = transform.TransformDirection(norms[i]);
+                        // Draw the normal line (DebugNormalLength is the length of the line)
+                        Gizmos.DrawLine(worldV, worldV + worldN * debugNormalLength);
+                    }
+                }
+            }
         }
     }
 }

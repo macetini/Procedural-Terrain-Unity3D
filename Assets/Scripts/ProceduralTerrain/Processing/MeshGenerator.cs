@@ -100,8 +100,10 @@ namespace ProceduralTerrain.Processing
             Mesh mesh = CreateRawMesh();
             processor.PopulateMesh(mesh);
 
-            IsMeshReady = true;
             FinalizeMesh(mesh);
+            SyncChunkPresentation();
+
+            IsMeshReady = true;
         }
 
         private Mesh CreateRawMesh()
@@ -116,6 +118,7 @@ namespace ProceduralTerrain.Processing
             {
                 filter.sharedMesh.name = meshName;
             }
+
             return filter.sharedMesh;
         }
 
@@ -137,11 +140,16 @@ namespace ProceduralTerrain.Processing
             );
 
             mesh.bounds = new Bounds(center, size);
+        }
 
+        private void SyncChunkPresentation()
+        {
             if (!chunk.RendererReference.enabled)
             {
                 chunk.RendererReference.enabled = true;
             }
+
+            chunk.SyncColliderMesh();
         }
     }
 }

@@ -126,7 +126,6 @@ namespace ProceduralTerrain.Runtime
                 return;
             }
 
-            chunksContainer.SyncDebugNormals(debug != null && debug.debugNormals);
             orchestrator.UpdateCurrentCameraPosition();
 
 #if UNITY_EDITOR

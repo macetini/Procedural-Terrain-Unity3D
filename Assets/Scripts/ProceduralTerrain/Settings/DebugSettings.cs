@@ -6,7 +6,8 @@ namespace ProceduralTerrain.Settings
         public bool cleanupLogs = false;
         public bool showLodRanges = false;
         public bool showChunkLodBounds = false;
-        public bool debugNormals = false;
+        public bool showNormals = false;
+        public bool showColliders = false;
         public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
 
         public void ClampValues()
