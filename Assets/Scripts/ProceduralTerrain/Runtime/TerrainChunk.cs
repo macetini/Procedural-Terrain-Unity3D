@@ -17,7 +17,7 @@ namespace ProceduralTerrain.Runtime
         public bool showChunkLodBounds = false;
 
         public bool showNormals = false;
-        public int debugNormalLength = 5;
+        public int debugNormalLength = 10;
 
         public bool showColliderBounds = false;
 
@@ -221,32 +221,6 @@ namespace ProceduralTerrain.Runtime
             }
         }
 
-        private void DrawColliderGizmo()
-        {
-            if (!generator.Debug.showColliderBounds && !showColliderBounds)
-            {
-                return;
-            }
-
-            if (colliderReference == null || !colliderReference.enabled)
-            {
-                return;
-            }
-
-            Mesh colliderMesh = colliderReference.sharedMesh;
-            if (colliderMesh == null)
-            {
-                return;
-            }
-
-            Bounds bounds = colliderMesh.bounds;
-            Matrix4x4 previousMatrix = Gizmos.matrix;
-            Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawWireCube(bounds.center, bounds.size);
-            Gizmos.matrix = previousMatrix;
-        }
-
         private void DrawChunkBoundsGizmos()
         {
             if (
@@ -281,6 +255,32 @@ namespace ProceduralTerrain.Runtime
             }
 
             return Color.gray;
+        }
+
+        private void DrawColliderGizmo()
+        {
+            if (!generator.Debug.showColliderBounds && !showColliderBounds)
+            {
+                return;
+            }
+
+            if (colliderReference == null || !colliderReference.enabled)
+            {
+                return;
+            }
+
+            Mesh colliderMesh = colliderReference.sharedMesh;
+            if (colliderMesh == null)
+            {
+                return;
+            }
+
+            Bounds bounds = colliderMesh.bounds;
+            Matrix4x4 previousMatrix = Gizmos.matrix;
+            Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireCube(bounds.center, bounds.size);
+            Gizmos.matrix = previousMatrix;
         }
 
         private void DrawNormalGizmos()
