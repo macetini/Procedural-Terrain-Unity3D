@@ -26,7 +26,9 @@ namespace ProceduralTerrain.Effects
         public void Play()
         {
             if (_fadeCoroutine != null)
+            {
                 StopCoroutine(_fadeCoroutine);
+            }
             _fadeCoroutine = StartCoroutine(FadeRoutine());
         }
 

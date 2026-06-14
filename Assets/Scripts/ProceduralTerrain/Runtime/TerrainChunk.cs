@@ -19,6 +19,8 @@ namespace ProceduralTerrain.Runtime
         public bool showNormals = false;
         public int debugNormalLength = 5;
 
+        public bool showColliderBounds = false;
+
         [Header("Effects")]
         public TerrainFadeEffect fadeEffect;
 
@@ -148,8 +150,9 @@ namespace ProceduralTerrain.Runtime
             IsVisible = frustumVisible;
 
             bool finalShowState = frustumVisible && chunkGenerator.IsMeshReady;
+            bool becameVisible = finalShowState && !wasVisibleLastCheck;
 
-            if (fadeEffect != null && finalShowState && !wasVisibleLastCheck)
+            if (fadeEffect != null && becameVisible)
             {
                 fadeEffect.Play();
             }
@@ -159,11 +162,25 @@ namespace ProceduralTerrain.Runtime
                 rendererReference.enabled = finalShowState;
             }
 
-            // Keep collision available once chunk mesh exists, regardless of renderer frustum culling.
-            bool colliderShouldBeEnabled = chunkGenerator.IsMeshReady;
-            if (colliderReference != null && colliderReference.enabled != colliderShouldBeEnabled)
+            if (colliderReference != null)
             {
-                colliderReference.enabled = colliderShouldBeEnabled;
+                bool colliderMeshMissingOrStale =
+                    finalShowState
+                    && (
+                        colliderReference.sharedMesh == null
+                        || filterReference == null
+                        || colliderReference.sharedMesh != filterReference.sharedMesh
+                    );
+
+                if (becameVisible || colliderMeshMissingOrStale)
+                {
+                    SyncColliderMesh();
+                }
+
+                if (colliderReference.enabled != finalShowState)
+                {
+                    colliderReference.enabled = finalShowState;
+                }
             }
 
             wasVisibleLastCheck = finalShowState;
@@ -192,8 +209,35 @@ namespace ProceduralTerrain.Runtime
                 EnsureReferences();
 
                 DrawChunkBoundsGizmos();
+                DrawColliderGizmo();
                 DrawNormalGizmos();
             }
+        }
+
+        private void DrawColliderGizmo()
+        {
+            if (!generator.Debug.showColliderBounds && !showColliderBounds)
+            {
+                return;
+            }
+
+            if (colliderReference == null || !colliderReference.enabled)
+            {
+                return;
+            }
+
+            Mesh colliderMesh = colliderReference.sharedMesh;
+            if (colliderMesh == null)
+            {
+                return;
+            }
+
+            Bounds bounds = colliderMesh.bounds;
+            Matrix4x4 previousMatrix = Gizmos.matrix;
+            Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireCube(bounds.center, bounds.size);
+            Gizmos.matrix = previousMatrix;
         }
 
         private void DrawChunkBoundsGizmos()
