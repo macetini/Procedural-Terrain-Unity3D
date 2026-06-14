@@ -19,8 +19,6 @@ namespace ProceduralTerrain.Runtime
         public bool showNormals = false;
         public int debugNormalLength = 5;
 
-        public bool showCollider = false;
-
         [Header("Effects")]
         public TerrainFadeEffect fadeEffect;
 
@@ -116,7 +114,6 @@ namespace ProceduralTerrain.Runtime
             {
                 rendererReference.material = terrainMaterial;
                 showNormals = generator.Debug.showNormals;
-                showCollider = generator.Debug.showColliders;
             }
 
             chunkGenerator.Init(generator, chunkCoord);
@@ -130,7 +127,7 @@ namespace ProceduralTerrain.Runtime
                 && filterReference.sharedMesh != null
             )
             {
-                colliderReference.sharedMesh = null; // Clear old mesh first
+                colliderReference.sharedMesh = null; // Force recook when reusing same mesh instance.
                 colliderReference.sharedMesh = filterReference.sharedMesh; // Assign new mesh
             }
         }
@@ -162,9 +159,11 @@ namespace ProceduralTerrain.Runtime
                 rendererReference.enabled = finalShowState;
             }
 
-            if (colliderReference != null && colliderReference.enabled != finalShowState)
+            // Keep collision available once chunk mesh exists, regardless of renderer frustum culling.
+            bool colliderShouldBeEnabled = chunkGenerator.IsMeshReady;
+            if (colliderReference != null && colliderReference.enabled != colliderShouldBeEnabled)
             {
-                colliderReference.enabled = finalShowState;
+                colliderReference.enabled = colliderShouldBeEnabled;
             }
 
             wasVisibleLastCheck = finalShowState;
@@ -193,7 +192,6 @@ namespace ProceduralTerrain.Runtime
                 EnsureReferences();
 
                 DrawChunkBoundsGizmos();
-                DrawColliderBoundsGizmos();
                 DrawNormalGizmos();
             }
         }
@@ -232,16 +230,6 @@ namespace ProceduralTerrain.Runtime
             }
 
             return Color.gray;
-        }
-
-        private void DrawColliderBoundsGizmos()
-        {
-            if ((generator.Debug.showColliders || showCollider) && colliderReference != null)
-            {
-                Gizmos.color = Color.red;
-                Bounds colliderBounds = colliderReference.bounds;
-                Gizmos.DrawWireCube(colliderBounds.center, colliderBounds.size);
-            }
         }
 
         private void DrawNormalGizmos()
