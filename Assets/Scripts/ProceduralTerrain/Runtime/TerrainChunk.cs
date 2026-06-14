@@ -162,28 +162,35 @@ namespace ProceduralTerrain.Runtime
                 rendererReference.enabled = finalShowState;
             }
 
-            if (colliderReference != null)
-            {
-                bool colliderMeshMissingOrStale =
-                    finalShowState
-                    && (
-                        colliderReference.sharedMesh == null
-                        || filterReference == null
-                        || colliderReference.sharedMesh != filterReference.sharedMesh
-                    );
-
-                if (becameVisible || colliderMeshMissingOrStale)
-                {
-                    SyncColliderMesh();
-                }
-
-                if (colliderReference.enabled != finalShowState)
-                {
-                    colliderReference.enabled = finalShowState;
-                }
-            }
+            UpdateColliderVisibility(finalShowState, becameVisible);
 
             wasVisibleLastCheck = finalShowState;
+        }
+
+        private void UpdateColliderVisibility(bool finalShowState, bool becameVisible)
+        {
+            if (colliderReference == null)
+            {
+                return;
+            }
+
+            bool colliderMeshMissingOrStale =
+                finalShowState
+                && (
+                    colliderReference.sharedMesh == null
+                    || filterReference == null
+                    || colliderReference.sharedMesh != filterReference.sharedMesh
+                );
+
+            if (becameVisible || colliderMeshMissingOrStale)
+            {
+                SyncColliderMesh();
+            }
+
+            if (colliderReference.enabled != finalShowState)
+            {
+                colliderReference.enabled = finalShowState;
+            }
         }
 
         // ------------------------------------------------------------------------------------------------
