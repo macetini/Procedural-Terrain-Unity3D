@@ -14,6 +14,7 @@ namespace ProceduralTerrain.Runtime
         CameraSettings CameraConfig { get; }
         LODSettings LOD { get; }
         DebugSettings Debug { get; }
+        int ChunkLayer { get; }
 
         // Refs
         TerrainChunk ChunkPrefab { get; }

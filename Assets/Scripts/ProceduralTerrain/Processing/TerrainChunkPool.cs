@@ -10,6 +10,7 @@ namespace ProceduralTerrain.Processing
         private readonly TerrainChunk prefab;
         private readonly Transform parent;
         private readonly int maxSize;
+        private readonly int chunkLayerMask;
 
         public int Count => pool.Count;
 
@@ -23,11 +24,17 @@ namespace ProceduralTerrain.Processing
             return side * side;
         }
 
-        public TerrainChunkPool(TerrainChunk prefab, Transform parent, int maxSize)
+        public TerrainChunkPool(
+            TerrainChunk prefab,
+            Transform parent,
+            int maxSize,
+            int chunkLayerMask = 0
+        )
         {
             this.prefab = prefab;
             this.parent = parent;
             this.maxSize = maxSize;
+            this.chunkLayerMask = chunkLayerMask;
         }
 
         public TerrainChunk Get(Vector3 position)
@@ -41,11 +48,14 @@ namespace ProceduralTerrain.Processing
                 }
 
                 chunk.transform.SetPositionAndRotation(position, Quaternion.identity);
+                chunk.gameObject.layer = chunkLayerMask;
                 chunk.gameObject.SetActive(true);
                 return chunk;
             }
 
-            return Object.Instantiate(prefab, position, Quaternion.identity, parent);
+            var newChunk = Object.Instantiate(prefab, position, Quaternion.identity, parent);
+            newChunk.gameObject.layer = chunkLayerMask;
+            return newChunk;
         }
 
         public void Return(TerrainChunk chunk)

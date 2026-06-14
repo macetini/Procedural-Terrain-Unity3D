@@ -39,6 +39,7 @@ namespace ProceduralTerrain.Runtime
         TerrainChunk ITerrainHost.ChunkPrefab => chunkPrefab;
         Transform ITerrainHost.Transform => transform;
         Transform ITerrainHost.ChunkParent => chunksContainer.transform;
+        int ITerrainHost.ChunkLayer => gameObject.layer;
 
         bool ITerrainHost.IsActiveAndEnabled => isActiveAndEnabled;
 

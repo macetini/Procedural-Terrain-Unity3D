@@ -475,8 +475,8 @@ MonoBehaviour:
     cleanupLogs: 0
     showLodRanges: 0
     showChunkLodBounds: 0
-    debugColliders: 0
-    debugNormals: 0
+    showNormals: 0
+    showColliders: 1
     orphanSweepPeriod: 3
 --- !u!1 &832575517
 GameObject:
