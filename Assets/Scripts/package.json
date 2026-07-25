@@ -1,6 +1,6 @@
 {
   "name": "com.macetini.terrain",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "displayName": "Procedural Terrain",
   "description": "Procedural terrain generation with noise-based height-maps, LOD, and runtime mesh generation.",
   "unity": "6000.0",
