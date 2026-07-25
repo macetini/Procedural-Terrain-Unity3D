@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   - component: {fileID: 330585548}
+  - component: {fileID: 330585549}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -264,7 +265,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fce7be76ca48dac499837efcbca40382, type: 3}
   m_Name: 
@@ -274,6 +275,23 @@ MonoBehaviour:
   warpSpeed: 500
   mouseLookEnabled: 0
   sensitivity: 1
+--- !u!114 &330585549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b546d97bffc3c1d4baef64a33c0bddc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Macetini.Development::ProceduralTerrain.Development.Camera.CameraStressTest
+  speedX: 200
+  speedZ: 200
+  travelRadius: 100000
+  rotationSpeedY: 20
+  runOnStart: 1
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -463,17 +481,20 @@ MonoBehaviour:
     lacunarity: 2.2
   cameraConfig:
     reference: {fileID: 330585545}
-    frustumPadding: 5
-    viewDistanceChunks: 6
+    frustumPadding: 3
+    viewDistanceChunks: 5
   lod:
-    lod1Distance: 2
-    lod2Distance: 4
+    lod1Distance: 3
+    lod2Distance: 5
     visibilityBatchSize: 10
     lod0Step: 1
     lod1Step: 2
     lod2Step: 4
+  worldBounds:
+    maxChunkRadius: 0
   debug:
     cleanupLogs: 0
+    showViewDistance: 0
     showLodRanges: 0
     showChunkLodBounds: 0
     showNormals: 0

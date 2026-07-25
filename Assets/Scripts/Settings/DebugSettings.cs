@@ -4,6 +4,7 @@ namespace ProceduralTerrain.Settings
     public class DebugSettings
     {
         public bool cleanupLogs = false;
+        public bool showViewDistance = false;
         public bool showLodRanges = false;
         public bool showChunkLodBounds = false;
         public bool showNormals = false;

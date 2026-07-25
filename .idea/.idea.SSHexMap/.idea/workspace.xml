@@ -11,11 +11,39 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a070136a-d4fe-4e9c-88c5-4c7f1ea55fbe" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Assets/Resources.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraStressTest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraStressTest.cs.meta" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Builder/ITerrainHost.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Builder/ITerrainHost.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Generation/TerrainDataGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Generation/TerrainDataGenerator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Generation/Data/TerrainDataCoordinator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Generation/Data/TerrainDataCoordinator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Settings/DebugSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Settings/DebugSettings.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Settings/DefaultVolumeProfile.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/DefaultVolumeProfile.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Settings/Mobile_RPAsset.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/Mobile_RPAsset.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Settings/PC_RPAsset.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/PC_RPAsset.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/Build/Build.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/Build/Build.framework.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/Build/Build.loader.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/Build/Build.wasm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/MemoryProfiler.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/diagnostics.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/diagnostics.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/fullscreen-button.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-empty-dark.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-empty-light.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-full-dark.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-full-light.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/style.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/unity-logo-dark.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/unity-logo-light.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/unity-logo-title-footer.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/TemplateData/webmemd-icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Build/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,7 +57,10 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Assets/Resources.meta" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraFlightController.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraStressTest.cs.meta" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Settings/DefaultVolumeProfile.asset" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/.jetbrains/acp.json" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
@@ -39,61 +70,61 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="8.220223041298173E-227" />
-      <entry key="S5" value="3.680895180184244E-91" />
-      <entry key="S10" value="6.069440442539478E-46" />
-      <entry key="S30" value="1.0741382671831424E-15" />
-      <entry key="S60" value="6.997918727599005E-8" />
-      <entry key="M2" value="8.039616103103517E-4" />
-      <entry key="M5" value="0.6087088101500425" />
-      <entry key="M10" value="14.780688254937013" />
-      <entry key="M15" value="49.64002931619583" />
-      <entry key="M30" value="195.84964314376396" />
-      <entry key="H1" value="501.72829355703175" />
-      <entry key="H2" value="996.6743038906092" />
-      <entry key="H4" value="1539.2562986141957" />
-      <entry key="D1" value="2332.7585471730813" />
-      <entry key="W1" value="2517.46998129949" />
+      <entry key="MS100" value="1.0259230541229634" />
+      <entry key="MS500" value="1.755667427374419" />
+      <entry key="S2" value="3.4072358062029053" />
+      <entry key="S5" value="5.484749267617207" />
+      <entry key="S10" value="7.9062702536740055" />
+      <entry key="S30" value="11.282605770515103" />
+      <entry key="S60" value="12.52804146420202" />
+      <entry key="M2" value="13.233079583353058" />
+      <entry key="M5" value="13.685440708816676" />
+      <entry key="M10" value="13.841436270555105" />
+      <entry key="M15" value="13.904570864454385" />
+      <entry key="M30" value="16.809956033981067" />
+      <entry key="H1" value="74.63685900645774" />
+      <entry key="H2" value="360.55002593381215" />
+      <entry key="H4" value="921.6584077806431" />
+      <entry key="D1" value="2150.1840961552853" />
+      <entry key="W1" value="2500.0091214436648" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0000258621226403" />
-      <entry key="S5" value="1.0211103472973748" />
-      <entry key="S10" value="1.203657202272728" />
-      <entry key="S30" value="1.9320669781510142" />
-      <entry key="S60" value="2.3649886694870013" />
-      <entry key="M2" value="2.652160104588628" />
-      <entry key="M5" value="2.852815953388551" />
-      <entry key="M10" value="2.9251587850218117" />
-      <entry key="M15" value="2.9526543900268036" />
-      <entry key="M30" value="3.031520913738871" />
-      <entry key="H1" value="3.269175517265244" />
-      <entry key="H2" value="3.696872482223541" />
-      <entry key="H4" value="4.161033253176436" />
-      <entry key="D1" value="4.822135238095232" />
-      <entry key="W1" value="4.973441929257751" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="1.5172956350792494E-110" />
+      <entry key="S60" value="2.0958156533007963E-55" />
+      <entry key="M2" value="7.895174722271916E-28" />
+      <entry key="M5" value="2.784700915133513E-11" />
+      <entry key="M10" value="9.139066704755899E-6" />
+      <entry key="M15" value="6.3102643027143E-4" />
+      <entry key="M30" value="0.04431778393864202" />
+      <entry key="H1" value="0.3952728375609705" />
+      <entry key="H2" value="1.2854755992333027" />
+      <entry key="H4" value="2.453668400501359" />
+      <entry key="D1" value="4.4157908986190355" />
+      <entry key="W1" value="4.911289064879554" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.6060275755711672E-7" />
-      <entry key="MS500" value="0.04376738502772514" />
-      <entry key="S2" value="0.4574087545620981" />
-      <entry key="S5" value="0.749768711779898" />
-      <entry key="S10" value="1.046083434773718" />
-      <entry key="S30" value="1.8620162681058923" />
-      <entry key="S60" value="2.3252094588888435" />
-      <entry key="M2" value="2.6315259752332367" />
-      <entry key="M5" value="3.4522886423037202" />
-      <entry key="M10" value="17.700025968133538" />
-      <entry key="M15" value="52.58762443599194" />
-      <entry key="M30" value="198.87700069317927" />
-      <entry key="H1" value="504.9941666831724" />
-      <entry key="H2" value="1000.3686341375259" />
-      <entry key="H4" value="1543.4155760538986" />
-      <entry key="D1" value="2337.5802711445635" />
-      <entry key="W1" value="2522.443360521225" />
+      <entry key="MS100" value="0.9844734528985349" />
+      <entry key="MS500" value="1.7426408443427261" />
+      <entry key="S2" value="3.3963662073711363" />
+      <entry key="S5" value="5.450020019749333" />
+      <entry key="S10" value="7.864592306429366" />
+      <entry key="S30" value="11.257229082259277" />
+      <entry key="S60" value="12.513266859112873" />
+      <entry key="M2" value="13.225106429673648" />
+      <entry key="M5" value="13.682101806309154" />
+      <entry key="M10" value="13.839750210634772" />
+      <entry key="M15" value="13.904064911621704" />
+      <entry key="M30" value="16.853642100885118" />
+      <entry key="H1" value="75.03144639989655" />
+      <entry key="H2" value="361.83447428743904" />
+      <entry key="H4" value="924.1109691413778" />
+      <entry key="D1" value="2154.5994984909707" />
+      <entry key="W1" value="2504.920346877047" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -108,36 +139,37 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.ml.llm.agents.skills.settings&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.intellij.ml.llm.agents.skills.settings",
+    "to.speed.mode.migration.done": "true",
+    "unity.profiler.toolWindow.autoShown": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe" />
@@ -186,8 +218,17 @@
       <workItem from="1784968628128" duration="4101000" />
       <workItem from="1784973145176" duration="1947000" />
       <workItem from="1784975157466" duration="9387000" />
-      <workItem from="1784987032100" duration="3321000" />
+      <workItem from="1784987032100" duration="5587000" />
     </task>
+    <task id="LOCAL-00001" summary="feat: Removed Build and BuildDev from version control">
+      <option name="closed" value="true" />
+      <created>1785001290500</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1785001290500</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -214,6 +255,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="feat: Removed Build and BuildDev from version control" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: Removed Build and BuildDev from version control" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

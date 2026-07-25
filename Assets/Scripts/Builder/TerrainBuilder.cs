@@ -265,6 +265,8 @@ namespace ProceduralTerrain.Builder
 
         private void OnDrawGizmosSelected()
         {
+            DrawViewDistanceGizmo();
+
             if (debug is not { showLodRanges: true })
             {
                 return;
@@ -277,6 +279,37 @@ namespace ProceduralTerrain.Builder
 
             DrawLodRangeGizmo(lod.lod1Distance, new Color(1f, 0.84f, 0.2f, 1f));
             DrawLodRangeGizmo(lod.lod2Distance, new Color(1f, 0.45f, 0.1f, 1f));
+        }
+
+        private void DrawViewDistanceGizmo()
+        {
+            if (debug is not { showViewDistance: true })
+            {
+                return;
+            }
+
+            if (cameraConfig == null || !cameraConfig.reference || terrain == null)
+            {
+                return;
+            }
+
+            var chunkWorldSize = terrain.chunkSize * terrain.tileSize;
+            var viewWorldRadius = (cameraConfig.viewDistanceChunks + 0.5f) * chunkWorldSize;
+            var center = cameraConfig.reference.transform.position;
+
+            Gizmos.color = new Color(0f, 0.8f, 1f, 1f);
+            Gizmos.DrawWireCube(
+                center,
+                new Vector3(viewWorldRadius * 2f, 1f, viewWorldRadius * 2f)
+            );
+
+#if UNITY_EDITOR
+            UnityEditor.Handles.color = new Color(0f, 0.8f, 1f, 1f);
+            UnityEditor.Handles.Label(
+                center + Vector3.right * viewWorldRadius,
+                $"View: {cameraConfig.viewDistanceChunks} chunks\n({viewWorldRadius * 2f:F0} wu wide)"
+            );
+#endif
         }
     }
 }

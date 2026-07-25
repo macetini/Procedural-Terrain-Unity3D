@@ -40,6 +40,14 @@ namespace ProceduralTerrain.Generation.Data
             registry.UnregisterChunk(coord);
             sanitizer.Invalidate(coord);
             sampler.RemoveTile(coord);
+
+            // Invalidate neighbors so they get re-sanitized against any newly
+            // rebuilt chunk at this coord; without this, border seams appear
+            // because neighbors stay marked sanitized with stale edge data.
+            sanitizer.Invalidate(coord + Vector2Int.right);
+            sanitizer.Invalidate(coord + Vector2Int.left);
+            sanitizer.Invalidate(coord + Vector2Int.up);
+            sanitizer.Invalidate(coord + Vector2Int.down);
         }
 
         // Sampler
