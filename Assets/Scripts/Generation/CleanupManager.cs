@@ -61,12 +61,14 @@ namespace ProceduralTerrain.Generation
                 return true;
             }
             cleanup.CleanupPassCounter++;
-            if (cleanup.CleanupPassCounter >= host.Debug.orphanSweepPeriod)
+            
+            if (cleanup.CleanupPassCounter < host.Debug.orphanSweepPeriod)
             {
-                cleanup.CleanupPassCounter = 0;
-                return true;
+                return false;
             }
-            return false;
+            
+            cleanup.CleanupPassCounter = 0;
+            return true;
         }
 
         // Scene and registry cleanup
@@ -166,7 +168,5 @@ namespace ProceduralTerrain.Generation
         {
             return Mathf.Max(0, host.CameraConfig.viewDistanceChunks);
         }
-
-        // Diagnostics
     }
 }

@@ -6,6 +6,7 @@ namespace ProceduralTerrain.Processing
     public class MeshGenerator
     {
         private const string MESH_IDENTIFIER = "TerrainChunk_";
+        
         private readonly DataProcessor processor = new();
 
         private ITerrainHost host;
@@ -97,7 +98,7 @@ namespace ProceduralTerrain.Processing
             processor.GenerateGeometryData();
             processor.CalculateNormals();
 
-            Mesh mesh = CreateRawMesh();
+            var mesh = CreateRawMesh();
             processor.PopulateMesh(mesh);
 
             FinalizeMesh(mesh);
@@ -109,7 +110,7 @@ namespace ProceduralTerrain.Processing
         private Mesh CreateRawMesh()
         {
             var filter = chunk.FilterReference;
-            if (filter.sharedMesh == null)
+            if (!filter.sharedMesh)
             {
                 filter.sharedMesh = new Mesh { name = meshName };
                 filter.sharedMesh.MarkDynamic();
@@ -124,7 +125,7 @@ namespace ProceduralTerrain.Processing
 
         private void FinalizeMesh(Mesh mesh)
         {
-            float maxHeight = settings.MaxElevationStep * settings.ElevationStepHeight;
+            var maxHeight = settings.MaxElevationStep * settings.ElevationStepHeight;
 
             // We center the bounds and apply the public frustumPadding
             Vector3 center = new(

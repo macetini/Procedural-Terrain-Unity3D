@@ -11,39 +11,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a070136a-d4fe-4e9c-88c5-4c7f1ea55fbe" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Assets/Resources.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraStressTest.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraStressTest.cs.meta" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Generation/Data/TerrainDataCoordinator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Generation/Data/TerrainDataCoordinator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Settings/DebugSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Settings/DebugSettings.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Settings/DefaultVolumeProfile.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/DefaultVolumeProfile.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Settings/Mobile_RPAsset.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/Mobile_RPAsset.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Settings/PC_RPAsset.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/PC_RPAsset.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/Build/Build.data" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/Build/Build.framework.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/Build/Build.loader.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/Build/Build.wasm" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/MemoryProfiler.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/diagnostics.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/diagnostics.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/favicon.ico" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/fullscreen-button.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-empty-dark.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-empty-light.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-full-dark.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/progress-bar-full-light.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/unity-logo-dark.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/unity-logo-light.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/unity-logo-title-footer.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/TemplateData/webmemd-icon.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Build/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Generation/CleanupManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Generation/CleanupManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/DataProcessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/DataProcessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/LodSelector.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/LodSelector.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/MeshGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/MeshGenerator.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +22,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="24" />
+    <option name="cachedIndexableFilesCount" value="23" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -139,37 +110,37 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.intellij.ml.llm.agents.skills.settings",
-    "to.speed.mode.migration.done": "true",
-    "unity.profiler.toolWindow.autoShown": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.ml.llm.agents.skills.settings&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;unity.profiler.toolWindow.autoShown&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "postgresql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe" />
@@ -219,6 +190,7 @@
       <workItem from="1784973145176" duration="1947000" />
       <workItem from="1784975157466" duration="9387000" />
       <workItem from="1784987032100" duration="5587000" />
+      <workItem from="1785010306874" duration="488000" />
     </task>
     <task id="LOCAL-00001" summary="feat: Removed Build and BuildDev from version control">
       <option name="closed" value="true" />

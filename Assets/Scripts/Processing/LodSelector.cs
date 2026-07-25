@@ -17,21 +17,17 @@ namespace ProceduralTerrain.Processing
             int step2
         )
         {
-            float halfSize = settings.ChunkBoundSize * 0.5f;
-            Vector3 center = chunkPosition + new Vector3(halfSize, 0, halfSize);
-            float sqrDist = (center - cameraTransform.position).sqrMagnitude;
+            var halfSize = settings.ChunkBoundSize * 0.5f;
+            var center = chunkPosition + new Vector3(halfSize, 0, halfSize);
+            var sqrDist = (center - cameraTransform.position).sqrMagnitude;
 
             if (sqrDist > settings.SqrLodDistance2)
             {
                 return step2; // LOD 2 (low detail)
             }
 
-            if (sqrDist > settings.SqrLodDistance1)
-            {
-                return step1; // LOD 1 (medium detail)
-            }
-
-            return step0; // LOD 0 (full detail)
+            return sqrDist > settings.SqrLodDistance1 ? step1 : // LOD 1 (medium detail)
+                step0; // LOD 0 (full detail)
         }
     }
 }

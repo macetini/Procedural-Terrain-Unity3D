@@ -50,10 +50,10 @@ namespace ProceduralTerrain.Processing
             lastTriangleCount = -1;
         }
 
-        public void BuildMeshData(int resolutionStep, Vector2Int chunkCoord)
+        public void BuildMeshData(int resolutionStepLocal, Vector2Int chunkCoord)
         {
             InitializeNeighbors(chunkCoord);
-            InitializeResolution(resolutionStep);
+            InitializeResolution(resolutionStepLocal);
             InitializeMeshData();
             InitializeHeightCache();
             FillHeightCache();
@@ -67,26 +67,28 @@ namespace ProceduralTerrain.Processing
         private void InitializeResolution(int resolutionStep)
         {
             this.resolutionStep = resolutionStep;
-            resolution = (chunkSize / resolutionStep) + 1;
+            resolution = chunkSize / resolutionStep + 1;
         }
 
         private void InitializeMeshData()
         {
-            int gridVertCount = resolution * resolution;
-            int totalVerts = gridVertCount + (resolution * 4);
+            var gridVertCount = resolution * resolution;
+            var totalVerts = gridVertCount + (resolution * 4);
 
-            if (vertices == null || vertices.Length != totalVerts)
+            if (vertices != null && vertices.Length == totalVerts)
             {
-                vertices = new Vector3[totalVerts];
-                uvs = new Vector2[totalVerts];
-                normals = new Vector3[totalVerts];
+                return;
             }
+            
+            vertices = new Vector3[totalVerts];
+            uvs = new Vector2[totalVerts];
+            normals = new Vector3[totalVerts];
         }
 
         private void InitializeHeightCache()
         {
-            int cacheRes = resolution + 2;
-            int totalCacheSize = cacheRes * cacheRes;
+            var cacheRes = resolution + 2;
+            var totalCacheSize = cacheRes * cacheRes;
             if (heightCache1D == null || heightCache1D.Length != totalCacheSize)
             {
                 heightCache1D = new float[totalCacheSize];
@@ -95,11 +97,11 @@ namespace ProceduralTerrain.Processing
 
         private void FillHeightCache()
         {
-            int cacheStride = resolution + 2;
-            for (int x = -1; x <= resolution; x++)
+            var cacheStride = resolution + 2;
+            for (var x = -1; x <= resolution; x++)
             {
-                int rowOffset = (x + 1) * cacheStride;
-                for (int z = -1; z <= resolution; z++)
+                var rowOffset = (x + 1) * cacheStride;
+                for (var z = -1; z <= resolution; z++)
                 {
                     heightCache1D[rowOffset + z + 1] = GetBlendedElevation(
                         x * resolutionStep,
@@ -132,18 +134,18 @@ namespace ProceduralTerrain.Processing
 
         private void GenerateMainGridVertices()
         {
-            int i = 0;
-            float invSize = 1f / chunkSize;
-            int cacheStride = resolution + 2;
+            var i = 0;
+            var invSize = 1f / chunkSize;
+            var cacheStride = resolution + 2;
 
-            for (int x = 0; x < resolution; x++)
+            for (var x = 0; x < resolution; x++)
             {
-                int gx = x * resolutionStep;
-                for (int z = 0; z < resolution; z++)
+                var gx = x * resolutionStep;
+                for (var z = 0; z < resolution; z++)
                 {
-                    int gz = z * resolutionStep;
+                    var gz = z * resolutionStep;
 
-                    float h = heightCache1D[(x + 1) * cacheStride + (z + 1)] * elevationStepHeight;
+                    var h = heightCache1D[(x + 1) * cacheStride + z + 1] * elevationStepHeight;
 
                     vertices[i] = new Vector3(gx * tileSize, h, gz * tileSize);
                     uvs[i] = new Vector2(gx * invSize, gz * invSize);
@@ -154,7 +156,7 @@ namespace ProceduralTerrain.Processing
 
         private void GenerateSkirtVertices()
         {
-            int skirtIdx = resolution * resolution;
+            var skirtIdx = resolution * resolution;
 
             GenerateSkirtVerticesSouth(skirtIdx);
             skirtIdx += resolution;
@@ -170,9 +172,9 @@ namespace ProceduralTerrain.Processing
 
         private void GenerateSkirtVerticesSouth(int skirtIdx)
         {
-            for (int x = 0; x < resolution; x++)
+            for (var x = 0; x < resolution; x++)
             {
-                float h = heightCache1D[(x + 1) * (resolution + 2) + 1] * elevationStepHeight;
+                var h = heightCache1D[(x + 1) * (resolution + 2) + 1] * elevationStepHeight;
                 vertices[skirtIdx++] = new Vector3(
                     x * resolutionStep * tileSize,
                     h - skirtDepth,
@@ -183,9 +185,9 @@ namespace ProceduralTerrain.Processing
 
         private void GenerateSkirtVerticesNorth(int skirtIdx)
         {
-            for (int x = 0; x < resolution; x++)
+            for (var x = 0; x < resolution; x++)
             {
-                float h =
+                var h =
                     heightCache1D[(x + 1) * (resolution + 2) + resolution] * elevationStepHeight;
                 vertices[skirtIdx++] = new Vector3(
                     x * resolutionStep * tileSize,
@@ -197,9 +199,9 @@ namespace ProceduralTerrain.Processing
 
         private void GenerateSkirtVerticesWest(int skirtIdx)
         {
-            for (int z = 0; z < resolution; z++)
+            for (var z = 0; z < resolution; z++)
             {
-                float h = heightCache1D[1 * (resolution + 2) + z + 1] * elevationStepHeight;
+                var h = heightCache1D[1 * (resolution + 2) + z + 1] * elevationStepHeight;
                 vertices[skirtIdx++] = new Vector3(
                     0,
                     h - skirtDepth,
@@ -210,9 +212,9 @@ namespace ProceduralTerrain.Processing
 
         private void GenerateSkirtVerticesEast(int skirtIdx)
         {
-            for (int z = 0; z < resolution; z++)
+            for (var z = 0; z < resolution; z++)
             {
-                float h =
+                var h =
                     heightCache1D[resolution * (resolution + 2) + z + 1] * elevationStepHeight;
                 vertices[skirtIdx++] = new Vector3(
                     chunkBoundSize,
@@ -230,23 +232,23 @@ namespace ProceduralTerrain.Processing
 
         private void CalculateNormalsBody()
         {
-            float vScale = elevationStepHeight;
-            float hDist = 2.0f * tileSize * resolutionStep;
-            int stride = resolution + 2;
+            var vScale = elevationStepHeight;
+            var hDist = 2.0f * tileSize * resolutionStep;
+            var stride = resolution + 2;
 
-            for (int x = 0; x < resolution; x++)
+            for (var x = 0; x < resolution; x++)
             {
-                int row = (x + 1) * stride;
-                for (int z = 0; z < resolution; z++)
+                var row = (x + 1) * stride;
+                for (var z = 0; z < resolution; z++)
                 {
-                    int idx = x * resolution + z;
-                    int cz = z + 1;
+                    var idx = x * resolution + z;
+                    var cz = z + 1;
 
                     // Sample 4 directions from the padded height cache
-                    float hL = heightCache1D[row - stride + cz];
-                    float hR = heightCache1D[row + stride + cz];
-                    float hB = heightCache1D[row + cz - 1];
-                    float hF = heightCache1D[row + cz + 1];
+                    var hL = heightCache1D[row - stride + cz];
+                    var hR = heightCache1D[row + stride + cz];
+                    var hB = heightCache1D[row + cz - 1];
+                    var hF = heightCache1D[row + cz + 1];
 
                     // Standard Sobel-filter style normal generation
                     Vector3 normal = new(hL - hR, 2.0f * (hDist / vScale), hB - hF);
@@ -257,10 +259,10 @@ namespace ProceduralTerrain.Processing
 
         private void CalculateNormalsSkirt()
         {
-            float centerX = chunkBoundSize * 0.5f;
-            for (int n = resolution * resolution; n < vertices.Length; n++)
+            var centerX = chunkBoundSize * 0.5f;
+            for (var n = resolution * resolution; n < vertices.Length; n++)
             {
-                Vector3 dir = (
+                var dir = (
                     vertices[n] - new Vector3(centerX, vertices[n].y, centerX)
                 ).normalized;
 
@@ -275,7 +277,7 @@ namespace ProceduralTerrain.Processing
             targetMesh.SetUVs(0, uvs);
             targetMesh.SetNormals(normals);
 
-            int[] tris = triangleProvider(resolution);
+            var tris = triangleProvider(resolution);
             if (lastTriangleCount != tris.Length)
             {
                 targetMesh.SetTriangles(tris, 0);

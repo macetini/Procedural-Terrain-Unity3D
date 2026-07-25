@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 2265
+  controlID: 2411
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -152,10 +152,10 @@ MonoBehaviour:
     y: 0
     width: 350
     height: 941
-  m_MinSize: {x: 100, y: 100}
+  m_MinSize: {x: 100, y: 112}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 2201
+  controlID: 2477
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -225,9 +225,9 @@ MonoBehaviour:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs:
-      - m_Data: 65542
+      - m_Data: 55570
       m_LastClickedID:
-        m_Data: 65542
+        m_Data: 0
       m_ExpandedIDs:
       - m_Data: -1424
       - m_Data: 65542
@@ -333,7 +333,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scenes
+    - Assets/Scripts/Builder
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -410,11 +410,11 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_AssetTreeState:
-    scrollPos: {x: 0, y: 480}
+    scrollPos: {x: 0, y: 0}
     m_SelectedIDs:
-    - m_Data: 65542
+    - m_Data: 55570
     m_LastClickedID:
-      m_Data: 0
+      m_Data: 55570
     m_ExpandedIDs:
     - m_Data: 0
     - m_Data: 61812
@@ -472,9 +472,9 @@ MonoBehaviour:
       m_ResourceFile: 
   m_ListAreaState:
     m_SelectedInstanceIDs:
-    - m_Data: 65542
+    - m_Data: 55570
     m_LastClickedEntityId:
-      m_Data: 65542
+      m_Data: 55570
     m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: []
     m_RenameOverlay:
@@ -531,7 +531,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 112}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 0
-  controlID: 2266
+  controlID: 2412
   draggingID: 0
 --- !u!114 &9
 MonoBehaviour:
@@ -552,8 +552,8 @@ MonoBehaviour:
     y: 0
     width: 303
     height: 941
-  m_MinSize: {x: 276, y: 76}
-  m_MaxSize: {x: 4001, y: 4026}
+  m_MinSize: {x: 277, y: 76}
+  m_MaxSize: {x: 4002, y: 4026}
   m_ActualView: {fileID: 10}
   m_Panes:
   - {fileID: 10}
@@ -635,7 +635,7 @@ MonoBehaviour:
   m_MinSize: {x: 100, y: 112}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 2267
+  controlID: 2413
   draggingID: 0
 --- !u!114 &12
 MonoBehaviour:
@@ -665,7 +665,7 @@ MonoBehaviour:
   - {fileID: 14}
   - {fileID: 15}
   m_Selected: 0
-  m_LastSelected: 1
+  m_LastSelected: 3
 --- !u!114 &13
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -1263,7 +1263,7 @@ MonoBehaviour:
   m_Position:
     m_Target: {x: 2560, y: 128, z: 2560}
     speed: 2
-    m_Value: {x: 29184, y: 128, z: 29184}
+    m_Value: {x: 2560, y: 128, z: 2560}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 2
