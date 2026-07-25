@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // Required for the new system
 
-namespace ProceduralTerrain.Development
+namespace ProceduralTerrain.Development.Camera
 {
     public class CameraFlightController : MonoBehaviour
     {

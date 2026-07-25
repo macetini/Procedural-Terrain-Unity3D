@@ -15,7 +15,6 @@ namespace ProceduralTerrain.Generation
     {
         private readonly RuntimeState runtime = new();
         private readonly ITerrainHost host;
-        private readonly TerrainNoise terrainNoise;
         private readonly TerrainDataCoordinator terrainDataProcessor;
         private readonly TerrainChunkPool chunkPool;
         private readonly BuildQueue buildQueue;
@@ -35,8 +34,8 @@ namespace ProceduralTerrain.Generation
         public TerrainDataGenerator(ITerrainHost host)
         {
             this.host = host;
-            terrainNoise = CreateTerrainNoise();
-            terrainDataProcessor = new TerrainDataCoordinator(host.Terrain.chunkSize, terrainNoise);
+            var terrainNoise1 = CreateTerrainNoise();
+            terrainDataProcessor = new TerrainDataCoordinator(host.Terrain.chunkSize, terrainNoise1);
             chunkPool = CreateChunkPool();
             terrainDataProcessor.SetChunkDisposeAction(chunk => chunkPool.Return(chunk));
 
@@ -85,7 +84,7 @@ namespace ProceduralTerrain.Generation
 
         private TerrainChunkPool CreateChunkPool()
         {
-            int poolMaxSize = TerrainChunkPool.CalculateMaxSize(
+            var poolMaxSize = TerrainChunkPool.CalculateMaxSize(
                 host.CameraConfig.viewDistanceChunks
             );
 
@@ -129,8 +128,9 @@ namespace ProceduralTerrain.Generation
 
         private Vector2Int GetCameraChunkPosition(Vector3 worldPosition)
         {
-            int currentX = Mathf.FloorToInt(worldPosition.x / runtime.ChunkBoundSize);
-            int currentZ = Mathf.FloorToInt(worldPosition.z / runtime.ChunkBoundSize);
+            var currentX = Mathf.FloorToInt(worldPosition.x / runtime.ChunkBoundSize);
+            var currentZ = Mathf.FloorToInt(worldPosition.z / runtime.ChunkBoundSize);
+            
             return new Vector2Int(currentX, currentZ);
         }
 

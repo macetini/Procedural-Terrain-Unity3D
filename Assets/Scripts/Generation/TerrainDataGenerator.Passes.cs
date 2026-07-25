@@ -7,8 +7,8 @@ namespace ProceduralTerrain.Generation
         // First pass: generate raw data for all chunks in view distance.
         private void FirstPass()
         {
-            int dataRadius = GetInitialDataRadius();
-            double totalMs = MeasureExecution(() => GenerateAndSanitizeInitialData(dataRadius));
+            var dataRadius = GetInitialDataRadius();
+            var totalMs = MeasureExecution(() => GenerateAndSanitizeInitialData(dataRadius));
 
             LogExecutionTime("Total", totalMs);
         }
@@ -32,15 +32,17 @@ namespace ProceduralTerrain.Generation
 
         private static double MeasureExecution(System.Action action)
         {
-            long start = System.Diagnostics.Stopwatch.GetTimestamp();
+            var start = System.Diagnostics.Stopwatch.GetTimestamp();
+            
             action();
-            long end = System.Diagnostics.Stopwatch.GetTimestamp();
+            
+            var end = System.Diagnostics.Stopwatch.GetTimestamp();
             return (end - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
         }
 
         private static void LogMeasuredStep(string label, System.Action action)
         {
-            double elapsedMs = MeasureExecution(action);
+            var elapsedMs = MeasureExecution(action);
             LogExecutionTime(label, elapsedMs);
         }
 
@@ -65,9 +67,9 @@ namespace ProceduralTerrain.Generation
             System.Action<Vector2Int> action
         )
         {
-            for (int x = -radius; x <= radius; x++)
+            for (var x = -radius; x <= radius; x++)
             {
-                for (int z = -radius; z <= radius; z++)
+                for (var z = -radius; z <= radius; z++)
                 {
                     action(new Vector2Int(center.x + x, center.y + z));
                 }

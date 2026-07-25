@@ -1,3 +1,4 @@
+using System.Linq;
 using ProceduralTerrain.Generation.Data;
 using ProceduralTerrain.Processing;
 using ProceduralTerrain.Builder;
@@ -74,14 +75,10 @@ namespace ProceduralTerrain.Generation
         {
             cleanup.BeginSceneSweep();
             host.GetChunkChildren(cleanup.SceneChunksSnapshot);
-            for (int i = 0; i < cleanup.SceneChunksSnapshot.Count; i++)
+            foreach (var sceneChunk in 
+                     cleanup.SceneChunksSnapshot.Where(sceneChunk => sceneChunk && sceneChunk.gameObject.activeSelf))
             {
-                TerrainChunk sceneChunk = cleanup.SceneChunksSnapshot[i];
-                if (sceneChunk == null || !sceneChunk.gameObject.activeSelf)
-                {
-                    continue;
-                }
-                if (ShouldRemoveSceneChunk(sceneChunk, out Vector2Int coord))
+                if (ShouldRemoveSceneChunk(sceneChunk, out var coord))
                 {
                     RemoveChunk(coord, sceneChunk);
                 }
@@ -92,12 +89,9 @@ namespace ProceduralTerrain.Generation
         {
             cleanup.BeginCleanupPass();
             terrainDataProcessor.GetActiveKeysNonAlloc(cleanup.VisibilityKeysSnapshot);
-            foreach (var coord in cleanup.VisibilityKeysSnapshot)
+            foreach (var coord in cleanup.VisibilityKeysSnapshot.Where(
+                         coord => !IsWithinRetentionBounds(coord)))
             {
-                if (IsWithinRetentionBounds(coord))
-                {
-                    continue;
-                }
                 if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
                 {
                     RemoveChunk(coord, chunk);
@@ -109,9 +103,9 @@ namespace ProceduralTerrain.Generation
         {
             coord = sceneChunk.ChunkCoord;
 
-            bool isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
-            bool isOutOfBounds = !IsWithinRetentionBounds(coord);
-            bool isForeignChunk =
+            var isDuplicateCoord = !cleanup.SeenCoords.Add(coord);
+            var isOutOfBounds = !IsWithinRetentionBounds(coord);
+            var isForeignChunk =
                 sceneChunk.Generator != null && !ReferenceEquals(sceneChunk.Generator, host);
 
             return isDuplicateCoord || isOutOfBounds || isForeignChunk;
@@ -140,7 +134,7 @@ namespace ProceduralTerrain.Generation
             {
                 terrainDataProcessor.Clear(coord);
             }
-            if (chunk != null)
+            if (chunk)
             {
                 chunkPool.Return(chunk);
             }
@@ -148,27 +142,23 @@ namespace ProceduralTerrain.Generation
 
         private void EvictStaleTileData()
         {
-            int dataRetentionRadius = host.CameraConfig.viewDistanceChunks + 2;
+            var dataRetentionRadius = host.CameraConfig.viewDistanceChunks + 2;
             terrainDataProcessor.GetTileDataKeysNonAlloc(cleanup.TileDataKeysSnapshot);
 
-            for (int i = 0; i < cleanup.TileDataKeysSnapshot.Count; i++)
+            foreach (var coord in from coord in 
+                         cleanup.TileDataKeysSnapshot let dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x) 
+                     let dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y) 
+                     where dx > dataRetentionRadius || dz > dataRetentionRadius select coord)
             {
-                Vector2Int coord = cleanup.TileDataKeysSnapshot[i];
-                int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
-                int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
-
-                if (dx > dataRetentionRadius || dz > dataRetentionRadius)
-                {
-                    terrainDataProcessor.EvictTileData(coord);
-                }
+                terrainDataProcessor.EvictTileData(coord);
             }
         }
 
         private bool IsWithinRetentionBounds(Vector2Int coord)
         {
-            int retentionRadius = GetRetentionRadius();
-            int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
-            int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
+            var retentionRadius = GetRetentionRadius();
+            var dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
+            var dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
             return dx <= retentionRadius && dz <= retentionRadius;
         }
 

@@ -41,19 +41,19 @@ namespace ProceduralTerrain.Generation
         // Public queue API
         public void EnqueueVisibleChunksAroundCamera()
         {
-            int viewDist = host.CameraConfig.viewDistanceChunks;
-            for (int x = -viewDist; x <= viewDist; x++)
+            var viewDist = host.CameraConfig.viewDistanceChunks;
+            for (var x = -viewDist; x <= viewDist; x++)
             {
                 EnqueueVisibleChunksAtColumnOffset(x);
             }
         }
 
-        public void EnqueueVisibleChunksAtColumnOffset(int xOffset)
+        private void EnqueueVisibleChunksAtColumnOffset(int xOffset)
         {
-            int viewDist = host.CameraConfig.viewDistanceChunks;
-            int baseX = runtime.CurrentCameraPosition.x + xOffset;
-            int baseY = runtime.CurrentCameraPosition.y;
-            for (int z = -viewDist; z <= viewDist; z++)
+            var viewDist = host.CameraConfig.viewDistanceChunks;
+            var baseX = runtime.CurrentCameraPosition.x + xOffset;
+            var baseY = runtime.CurrentCameraPosition.y;
+            for (var z = -viewDist; z <= viewDist; z++)
             {
                 var coord = new Vector2Int(baseX, baseY + z);
                 if (
@@ -83,11 +83,11 @@ namespace ProceduralTerrain.Generation
 
         public IEnumerator ProcessLocalChunks()
         {
-            int viewDist = host.CameraConfig.viewDistanceChunks;
-            int batchSize = Mathf.Max(1, host.LOD.visibilityBatchSize);
-            int processed = 0;
+            var viewDist = host.CameraConfig.viewDistanceChunks;
+            var batchSize = Mathf.Max(1, host.LOD.visibilityBatchSize);
+            var processed = 0;
 
-            for (int x = -viewDist; x <= viewDist; x++)
+            for (var x = -viewDist; x <= viewDist; x++)
             {
                 EnqueueVisibleChunksAtColumnOffset(x);
                 processed++;
@@ -102,7 +102,6 @@ namespace ProceduralTerrain.Generation
         }
 
         // Queue scheduling internals
-
         private bool TryEnqueueChunkBuild(Vector2Int coord)
         {
             if (terrainDataProcessor.HasActiveChunk(coord) || !buildState.QueueHash.Add(coord))
@@ -120,7 +119,6 @@ namespace ProceduralTerrain.Generation
             {
                 return;
             }
-
             buildState.SortOrigin = runtime.CurrentCameraPosition;
             buildState.SortBuffer.Clear();
 
@@ -128,9 +126,9 @@ namespace ProceduralTerrain.Generation
             {
                 buildState.SortBuffer.Add(item);
             }
-
             buildState.SortBuffer.Sort(buildState.DistanceComparison);
             buildState.Queue.Clear();
+            
             foreach (var coord in buildState.SortBuffer)
             {
                 buildState.Queue.Enqueue(coord);
@@ -179,13 +177,12 @@ namespace ProceduralTerrain.Generation
 
             private IEnumerator SafeBuildChunk(Vector2Int coord)
             {
-                IEnumerator buildTask = ProcessQueuedChunk(coord);
-                bool canProcess = true;
+                var buildTask = ProcessQueuedChunk(coord);
+                var canProcess = true;
 
                 while (canProcess)
                 {
                     bool hasNextStep;
-
                     try
                     {
                         hasNextStep = buildTask.MoveNext();
@@ -215,7 +212,7 @@ namespace ProceduralTerrain.Generation
                 {
                     yield break;
                 }
-
+                
                 yield return ProcessNeighborData(coord);
 
                 if (!ShouldContinueQueuedChunkBuild(coord))
@@ -275,9 +272,10 @@ namespace ProceduralTerrain.Generation
 
             private bool IsWithinRetentionBounds(Vector2Int coord)
             {
-                int retentionRadius = Mathf.Max(0, host.CameraConfig.viewDistanceChunks);
-                int dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
-                int dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
+                var retentionRadius = Mathf.Max(0, host.CameraConfig.viewDistanceChunks);
+                var dx = Mathf.Abs(coord.x - runtime.CurrentCameraPosition.x);
+                var dz = Mathf.Abs(coord.y - runtime.CurrentCameraPosition.y);
+                
                 return dx <= retentionRadius && dz <= retentionRadius;
             }
 
@@ -291,11 +289,11 @@ namespace ProceduralTerrain.Generation
                 Func<Vector2Int, bool> action
             )
             {
-                for (int x = -1; x <= 1; x++)
+                for (var x = -1; x <= 1; x++)
                 {
-                    for (int z = -1; z <= 1; z++)
+                    for (var z = -1; z <= 1; z++)
                     {
-                        Vector2Int neighbor = center + new Vector2Int(x, z);
+                        var neighbor = center + new Vector2Int(x, z);
                         if (action(neighbor))
                         {
                             yield return null;

@@ -1,6 +1,6 @@
 {
   "name": "Macetini.Development",
-  "rootNamespace": "ProceduralTerrain.Development",
+  "rootNamespace": "ProceduralTerrain",
   "references": [
     "Unity.InputSystem"
   ],

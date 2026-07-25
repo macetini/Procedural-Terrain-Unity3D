@@ -42,9 +42,9 @@ namespace ProceduralTerrain.Generation
                 // Snapshot active keys to avoid mutation during iteration.
                 terrainDataProcessor.GetActiveKeysNonAlloc(keysSnapshot);
 
-                for (int i = 0; i < keysSnapshot.Count; i++)
+                for (var i = 0; i < keysSnapshot.Count; i++)
                 {
-                    Vector2Int key = keysSnapshot[i];
+                    var key = keysSnapshot[i];
 
                     if (terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
                     {
