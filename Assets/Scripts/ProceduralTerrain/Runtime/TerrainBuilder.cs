@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ProceduralTerrain.Generation;
 using ProceduralTerrain.Processing.Data;
@@ -7,25 +8,24 @@ using UnityEngine.InputSystem;
 
 namespace ProceduralTerrain.Runtime
 {
-    public class ProceduralTerrain : MonoBehaviour, ITerrainHost
+    public class TerrainBuilder : MonoBehaviour, ITerrainHost
     {
-        [Header("References")]
+        [Header("References")] 
         public TerrainChunk chunkPrefab;
         public ChunksContainer chunksContainer;
 
-        [Header("Terrain Settings")]
-        public TerrainSettings terrain = new();
+        [Header("Runtime")] 
+        public bool buildOnStart = false;
 
-        [Header("Noise Settings")]
+        [Header("Terrain")] 
+        public TerrainSettings terrain = new();
         public NoiseSettings noise = new();
 
-        [Header("Camera Settings")]
+        [Header("Camera")] 
         public CameraSettings cameraConfig = new();
-
-        [Header("LOD Settings")]
         public LODSettings lod = new();
 
-        [Header("Debug Settings")]
+        [Header("Debug")] 
         public DebugSettings debug = new();
 
         private ITerrainOrchestrator orchestrator;
@@ -33,10 +33,12 @@ namespace ProceduralTerrain.Runtime
         // ITerrainHost explicit implementations (Unity serializes fields, not auto-properties)
         TerrainSettings ITerrainHost.Terrain => terrain;
         NoiseSettings ITerrainHost.Noise => noise;
+        
         CameraSettings ITerrainHost.CameraConfig => cameraConfig;
         LODSettings ITerrainHost.LOD => lod;
         DebugSettings ITerrainHost.Debug => debug;
         TerrainChunk ITerrainHost.ChunkPrefab => chunkPrefab;
+        
         Transform ITerrainHost.Transform => transform;
         Transform ITerrainHost.ChunkParent => chunksContainer.transform;
         int ITerrainHost.ChunkLayer => gameObject.layer;
@@ -56,6 +58,7 @@ namespace ProceduralTerrain.Runtime
                 );
                 return default;
             }
+
             return orchestrator.GetNeighborGrids(chunkCoord);
         }
 
@@ -67,17 +70,18 @@ namespace ProceduralTerrain.Runtime
                     "[ProceduralTerrain] Runtime orchestrator is not initialized.",
                     this
                 );
-                return System.Array.Empty<int>();
+                return Array.Empty<int>();
             }
+
             return orchestrator.GetPrecalculatedTriangles(resolution);
         }
 
-        void OnValidate()
+        private void OnValidate()
         {
             NormalizeSettings();
         }
 
-        void Awake()
+        private void Awake()
         {
             if (!ValidateAndNormalizeSettings())
             {
@@ -85,48 +89,68 @@ namespace ProceduralTerrain.Runtime
                 return;
             }
 
-            EnsureChunksContainer();
-            orchestrator = new TerrainDataGenerator(this);
+            RecreateOrchestrator();
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             orchestrator?.Destroy();
             orchestrator = null;
         }
 
-        void OnDrawGizmosSelected()
+        private void Start()
         {
-            if (debug == null || !debug.showLodRanges)
+            if (!buildOnStart || orchestrator == null)
             {
                 return;
             }
 
-            if (cameraConfig == null || cameraConfig.reference == null || terrain == null)
-            {
-                return;
-            }
-
-            DrawLodRangeGizmo(lod.lod1Distance, new Color(1f, 0.84f, 0.2f, 1f));
-            DrawLodRangeGizmo(lod.lod2Distance, new Color(1f, 0.45f, 0.1f, 1f));
-        }
-
-        void Start()
-        {
-            if (orchestrator == null)
-            {
-                return;
-            }
             orchestrator.BuildTerrain();
         }
 
-        void Update()
+        public void ApplyBuildSettings(
+            TerrainSettings terrainSettings, 
+            NoiseSettings noiseSettings,
+            bool rebuildTerrain = true)
+        {
+            if (terrainSettings == null)
+            {
+                throw new ArgumentNullException(nameof(terrainSettings));
+            }
+
+            if (noiseSettings == null)
+            {
+                throw new ArgumentNullException(nameof(noiseSettings));
+            }
+
+            if (terrain == null)
+            {
+                terrain = new TerrainSettings();
+            }
+
+            if (noise == null)
+            {
+                noise = new NoiseSettings();
+            }
+
+            CopyTerrainSettings(terrainSettings, terrain);
+            CopyNoiseSettings(noiseSettings, noise);
+            NormalizeSettings();
+
+            RecreateOrchestrator();
+
+            if (rebuildTerrain && orchestrator != null)
+            {
+                orchestrator.BuildTerrain();
+            }
+        }
+
+        private void Update()
         {
             if (orchestrator == null)
             {
                 return;
             }
-
             orchestrator.UpdateCurrentCameraPosition();
 
 #if UNITY_EDITOR
@@ -150,10 +174,10 @@ namespace ProceduralTerrain.Runtime
         private void DrawLodRangeGizmo(float chunkDistance, Color color)
         {
             float chunkWorldSize = terrain.chunkSize * terrain.tileSize;
-            float worldDistance = chunkDistance * chunkWorldSize;
+            var worldDistance = chunkDistance * chunkWorldSize;
             float maxHeight = terrain.maxElevationStepsCount * terrain.elevationStepHeight;
 
-            Vector3 center = cameraConfig.reference.transform.position;
+            var center = cameraConfig.reference.transform.position;
             center.y += maxHeight * 0.5f;
 
             Vector3 size = new(worldDistance * 2f, maxHeight, worldDistance * 2f);
@@ -164,13 +188,13 @@ namespace ProceduralTerrain.Runtime
 
         private void EnsureChunksContainer()
         {
-            if (chunksContainer != null)
+            if (chunksContainer)
             {
                 return;
             }
 
             chunksContainer = GetComponentInChildren<ChunksContainer>(true);
-            if (chunksContainer != null)
+            if (chunksContainer)
             {
                 return;
             }
@@ -188,7 +212,7 @@ namespace ProceduralTerrain.Runtime
             terrain?.ClampValues();
             noise?.ClampValues();
             cameraConfig?.ClampValues();
-            lod?.ClampValues(terrain != null ? terrain.chunkSize : 1);
+            lod?.ClampValues(terrain?.chunkSize ?? 1);
             debug?.ClampValues();
         }
 
@@ -196,7 +220,7 @@ namespace ProceduralTerrain.Runtime
         {
             NormalizeSettings();
 
-            if (chunkPrefab == null)
+            if (!chunkPrefab)
             {
                 Debug.LogError(
                     "[ProceduralTerrain] Chunk prefab is not assigned. Assign it under Prefabs > Chunk Prefab in the Inspector.",
@@ -215,6 +239,47 @@ namespace ProceduralTerrain.Runtime
             }
 
             return true;
+        }
+
+        private void RecreateOrchestrator()
+        {
+            EnsureChunksContainer();
+            orchestrator?.Destroy();
+            orchestrator = new TerrainDataGenerator(this);
+        }
+
+        private static void CopyTerrainSettings(TerrainSettings source, TerrainSettings target)
+        {
+            target.chunkSize = source.chunkSize;
+            target.tileSize = source.tileSize;
+            target.elevationStepHeight = source.elevationStepHeight;
+            target.maxElevationStepsCount = source.maxElevationStepsCount;
+            target.skirtDepth = source.skirtDepth;
+        }
+
+        private static void CopyNoiseSettings(NoiseSettings source, NoiseSettings target)
+        {
+            target.seed = source.seed;
+            target.scale = source.scale;
+            target.octaves = source.octaves;
+            target.persistence = source.persistence;
+            target.lacunarity = source.lacunarity;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (debug is not { showLodRanges: true })
+            {
+                return;
+            }
+
+            if (cameraConfig == null || !cameraConfig.reference || terrain == null)
+            {
+                return;
+            }
+
+            DrawLodRangeGizmo(lod.lod1Distance, new Color(1f, 0.84f, 0.2f, 1f));
+            DrawLodRangeGizmo(lod.lod2Distance, new Color(1f, 0.45f, 0.1f, 1f));
         }
     }
 }
