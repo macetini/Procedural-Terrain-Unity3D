@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ProceduralTerrain.Runtime
+namespace ProceduralTerrain.Builder
 {
     public class ChunksContainer : MonoBehaviour
     {

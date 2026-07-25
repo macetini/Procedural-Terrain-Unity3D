@@ -1,6 +1,6 @@
 using ProceduralTerrain.Generation.Data;
 using ProceduralTerrain.Processing;
-using ProceduralTerrain.Runtime;
+using ProceduralTerrain.Builder;
 using UnityEngine;
 
 namespace ProceduralTerrain.Generation

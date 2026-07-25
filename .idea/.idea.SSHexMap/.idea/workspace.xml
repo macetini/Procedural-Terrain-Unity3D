@@ -11,8 +11,87 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a070136a-d4fe-4e9c-88c5-4c7f1ea55fbe" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/ProceduralTerrain.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/ProceduralTerrain.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Effects.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Effects/TerrainFadeEffect.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Effects/TerrainFadeEffect.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/BuildQueue.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/BuildQueue.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/BuildQueueState.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/BuildQueueState.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/CleanupManager.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/CleanupManager.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/CleanupState.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/CleanupState.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/ITerrainDataCoordinator.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/ITerrainDataCoordinator.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/Registry.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/Registry.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/Sampler.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/Sampler.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/Sanitizer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/Sanitizer.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/TerrainDataCoordinator.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/Data/TerrainDataCoordinator.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/ITerrainOrchestrator.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/ITerrainOrchestrator.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/RuntimeState.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/RuntimeState.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/TerrainDataGenerator.Passes.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/TerrainDataGenerator.Passes.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/TerrainDataGenerator.Runtime.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/TerrainDataGenerator.Runtime.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/TerrainDataGenerator.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/TerrainDataGenerator.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/VisibilitySystem.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Generation/VisibilitySystem.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/Data.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/Data/NeighborStruct.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/Data/NeighborStruct.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/Data/TileSample.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/Data/TileSample.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/DataProcessor.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/DataProcessor.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/IChunkPool.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/IChunkPool.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/LodSelector.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/LodSelector.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/MeshGenerator.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/MeshGenerator.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/RuntimeSettings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/RuntimeSettings.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/TerrainChunkPool.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Processing/TerrainChunkPool.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/ChunksContainer.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/ChunksContainer.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/ITerrainHost.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/ITerrainHost.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/TerrainBuilder.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/TerrainBuilder.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/TerrainChunk.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Runtime/TerrainChunk.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/CameraSettings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/CameraSettings.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/DebugSettings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/DebugSettings.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/LODSettings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/LODSettings.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/NoiseSettings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/NoiseSettings.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/TerrainSettings.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Settings/TerrainSettings.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Utils.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Utils/TerrainMath.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Utils/TerrainMath.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Utils/TerrainNoise.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/ProceduralTerrain/Utils/TerrainNoise.cs.meta" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,61 +115,61 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000000000000001" />
-      <entry key="MS500" value="1.001097068894948" />
-      <entry key="S2" value="1.277277076913823" />
-      <entry key="S5" value="2.068357481341267" />
-      <entry key="S10" value="3.058452682005975" />
-      <entry key="S30" value="6.343089313221" />
-      <entry key="S60" value="16.3613230650825" />
-      <entry key="M2" value="46.636009272503955" />
-      <entry key="M5" value="144.95813208451239" />
-      <entry key="M10" value="265.42878024956985" />
-      <entry key="M15" value="345.41183752008754" />
-      <entry key="M30" value="516.8425248568759" />
-      <entry key="H1" value="813.3503572491409" />
-      <entry key="H2" value="1266.032200001363" />
-      <entry key="H4" value="1729.703744518507" />
-      <entry key="D1" value="2365.47898504156" />
-      <entry key="W1" value="2508.067214960416" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000000000021483" />
+      <entry key="S2" value="1.0012111163290445" />
+      <entry key="S5" value="1.0775061201255258" />
+      <entry key="S10" value="1.5173670902274812" />
+      <entry key="S30" value="3.9635797615860278" />
+      <entry key="S60" value="5.83907692157856" />
+      <entry key="M2" value="8.092444976973436" />
+      <entry key="M5" value="37.90422534070323" />
+      <entry key="M10" value="128.70414464436197" />
+      <entry key="M15" value="212.3139572504089" />
+      <entry key="M30" value="405.6531973197278" />
+      <entry key="H1" value="721.5848184168705" />
+      <entry key="H2" value="1194.038348694749" />
+      <entry key="H4" value="1682.4678087625116" />
+      <entry key="D1" value="2361.4852653071734" />
+      <entry key="W1" value="2515.0944542548564" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="5.2243233098443464E-297" />
-      <entry key="S10" value="7.227948055875966E-149" />
-      <entry key="S30" value="4.165543501773368E-50" />
-      <entry key="S60" value="2.0409663156880635E-25" />
-      <entry key="M2" value="4.517705519052799E-13" />
-      <entry key="M5" value="1.153366067622894E-5" />
-      <entry key="M10" value="0.0033963951460605243" />
-      <entry key="M15" value="0.022635644669212425" />
-      <entry key="M30" value="0.15678194995917155" />
-      <entry key="H1" value="0.4681354237020145" />
-      <entry key="H2" value="0.9062657449066976" />
-      <entry key="H4" value="1.3216355753415416" />
-      <entry key="D1" value="1.8616018137099208" />
-      <entry key="W1" value="1.9794859562640026" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="1.5670465494012732E-169" />
+      <entry key="S30" value="5.391305796211851E-57" />
+      <entry key="S60" value="7.342551188934115E-29" />
+      <entry key="M2" value="8.568868763689829E-15" />
+      <entry key="M5" value="2.361399132417274E-6" />
+      <entry key="M10" value="0.001536806986169533" />
+      <entry key="M15" value="0.013341160559264207" />
+      <entry key="M30" value="0.12036395043239735" />
+      <entry key="H1" value="0.4101773652562804" />
+      <entry key="H2" value="0.8483120922573677" />
+      <entry key="H4" value="1.278679689066127" />
+      <entry key="D1" value="1.851378152567457" />
+      <entry key="W1" value="1.9779292793052587" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.11582350773629635" />
-      <entry key="MS500" value="0.6498810954525318" />
-      <entry key="S2" value="1.0635814027437043" />
-      <entry key="S5" value="1.83908005241979" />
-      <entry key="S10" value="2.8572411403050118" />
-      <entry key="S30" value="6.221349418686878" />
-      <entry key="S60" value="16.283547678099104" />
-      <entry key="M2" value="46.58998599292983" />
-      <entry key="M5" value="144.9366156112111" />
-      <entry key="M10" value="265.42031830964953" />
-      <entry key="M15" value="345.42611703959363" />
-      <entry key="M30" value="516.9945225455813" />
-      <entry key="H1" value="813.8153321704679" />
-      <entry key="H2" value="1266.936168256119" />
-      <entry key="H4" value="1731.0238372563292" />
-      <entry key="D1" value="2367.3402369540995" />
-      <entry key="W1" value="2510.04664792676" />
+      <entry key="MS100" value="6.18871752801531E-5" />
+      <entry key="MS500" value="0.14398595529398162" />
+      <entry key="S2" value="0.6167468105485359" />
+      <entry key="S5" value="0.8893453281652541" />
+      <entry key="S10" value="1.4006338369526754" />
+      <entry key="S30" value="3.9104351242815905" />
+      <entry key="S60" value="5.809291325382345" />
+      <entry key="M2" value="8.075720517752654" />
+      <entry key="M5" value="37.89321856646421" />
+      <entry key="M10" value="128.69696901112317" />
+      <entry key="M15" value="212.32013182260718" />
+      <entry key="M30" value="405.7687622597281" />
+      <entry key="H1" value="721.9916622155167" />
+      <entry key="H2" value="1194.884227706806" />
+      <entry key="H4" value="1683.7448544215338" />
+      <entry key="D1" value="2363.336271912283" />
+      <entry key="W1" value="2517.072327218787" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -180,7 +259,7 @@
       <workItem from="1784968628128" duration="4101000" />
       <workItem from="1784973145176" duration="1947000" />
       <workItem from="1784975157466" duration="9387000" />
-      <workItem from="1784987032100" duration="865000" />
+      <workItem from="1784987032100" duration="1537000" />
     </task>
     <servers />
   </component>

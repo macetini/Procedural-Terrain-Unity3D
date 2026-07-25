@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using ProceduralTerrain.Processing.Data;
-using ProceduralTerrain.Runtime;
+using ProceduralTerrain.Builder;
 using ProceduralTerrain.Utils;
 using UnityEngine;
 

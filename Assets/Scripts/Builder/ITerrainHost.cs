@@ -4,7 +4,7 @@ using ProceduralTerrain.Processing.Data;
 using ProceduralTerrain.Settings;
 using UnityEngine;
 
-namespace ProceduralTerrain.Runtime
+namespace ProceduralTerrain.Builder
 {
     public interface ITerrainHost
     {

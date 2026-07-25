@@ -6,7 +6,7 @@ using ProceduralTerrain.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ProceduralTerrain.Runtime
+namespace ProceduralTerrain.Builder
 {
     public class TerrainBuilder : MonoBehaviour, ITerrainHost
     {

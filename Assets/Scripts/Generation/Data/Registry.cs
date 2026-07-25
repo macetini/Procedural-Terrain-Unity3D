@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using ProceduralTerrain.Runtime;
+using ProceduralTerrain.Builder;
 using UnityEngine;
 
 namespace ProceduralTerrain.Generation.Data
