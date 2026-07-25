@@ -130,8 +130,8 @@ namespace ProceduralTerrain.Generation
         {
             var currentX = Mathf.FloorToInt(worldPosition.x / runtime.ChunkBoundSize);
             var currentZ = Mathf.FloorToInt(worldPosition.z / runtime.ChunkBoundSize);
-            
-            return new Vector2Int(currentX, currentZ);
+            var coord = new Vector2Int(currentX, currentZ);
+            return host.WorldBounds.Clamp(coord);
         }
 
         public int[] GetPrecalculatedTriangles(int resolution)

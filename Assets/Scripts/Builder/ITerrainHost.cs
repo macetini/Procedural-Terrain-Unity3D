@@ -12,6 +12,7 @@ namespace ProceduralTerrain.Builder
         TerrainSettings Terrain { get; }
         NoiseSettings Noise { get; }
         CameraSettings CameraConfig { get; }
+        WorldBoundsSettings WorldBounds { get; }
         LODSettings LOD { get; }
         DebugSettings Debug { get; }
         int ChunkLayer { get; }

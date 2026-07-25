@@ -477,7 +477,7 @@ MonoBehaviour:
     showLodRanges: 0
     showChunkLodBounds: 0
     showNormals: 0
-    showColliderBounds: 1
+    showColliderBounds: 0
     orphanSweepPeriod: 3
 --- !u!1 &832575517
 GameObject:

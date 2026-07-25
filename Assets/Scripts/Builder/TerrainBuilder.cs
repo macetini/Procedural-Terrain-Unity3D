@@ -14,8 +14,10 @@ namespace ProceduralTerrain.Builder
         public TerrainChunk chunkPrefab;
         public ChunksContainer chunksContainer;
 
+#if UNITY_EDITOR
         [Header("Runtime")] 
         public bool buildOnStart = false;
+#endif
 
         [Header("Terrain")] 
         public TerrainSettings terrain = new();
@@ -24,6 +26,9 @@ namespace ProceduralTerrain.Builder
         [Header("Camera")] 
         public CameraSettings cameraConfig = new();
         public LODSettings lod = new();
+
+        [Header("World Bounds")]
+        public WorldBoundsSettings worldBounds = new();
 
         [Header("Debug")] 
         public DebugSettings debug = new();
@@ -35,6 +40,7 @@ namespace ProceduralTerrain.Builder
         NoiseSettings ITerrainHost.Noise => noise;
         
         CameraSettings ITerrainHost.CameraConfig => cameraConfig;
+        WorldBoundsSettings ITerrainHost.WorldBounds => worldBounds;
         LODSettings ITerrainHost.LOD => lod;
         DebugSettings ITerrainHost.Debug => debug;
         TerrainChunk ITerrainHost.ChunkPrefab => chunkPrefab;
@@ -100,12 +106,11 @@ namespace ProceduralTerrain.Builder
 
         private void Start()
         {
-            if (!buildOnStart || orchestrator == null)
-            {
-                return;
-            }
+#if UNITY_EDITOR
+            if (!buildOnStart) return;
+#endif
 
-            orchestrator.BuildTerrain();
+            orchestrator?.BuildTerrain();
         }
 
         public void ApplyBuildSettings(
@@ -117,21 +122,13 @@ namespace ProceduralTerrain.Builder
             {
                 throw new ArgumentNullException(nameof(terrainSettings));
             }
-
             if (noiseSettings == null)
             {
                 throw new ArgumentNullException(nameof(noiseSettings));
             }
 
-            if (terrain == null)
-            {
-                terrain = new TerrainSettings();
-            }
-
-            if (noise == null)
-            {
-                noise = new NoiseSettings();
-            }
+            terrain ??= new TerrainSettings();
+            noise ??= new NoiseSettings();
 
             CopyTerrainSettings(terrainSettings, terrain);
             CopyNoiseSettings(noiseSettings, noise);
@@ -229,7 +226,7 @@ namespace ProceduralTerrain.Builder
                 return false;
             }
 
-            if (cameraConfig == null || cameraConfig.reference == null)
+            if (cameraConfig == null || !cameraConfig.reference)
             {
                 Debug.LogError(
                     "[ProceduralTerrain] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
