@@ -14,12 +14,12 @@ namespace ProceduralTerrain.Builder
         public Material terrainMaterial;
 
         [Header("Debug Settings")]
-        public bool showChunkLodBounds = false;
+        public bool showChunkLodBounds;
 
-        public bool showNormals = false;
+        public bool showNormals;
         public int debugNormalLength = 10;
 
-        public bool showColliderBounds = false;
+        public bool showColliderBounds;
 
         [Header("Effects")]
         public TerrainFadeEffect fadeEffect;
@@ -40,7 +40,7 @@ namespace ProceduralTerrain.Builder
         // Data
 
         // Calculations
-        private bool wasVisibleLastCheck = false; // Track state change
+        private bool wasVisibleLastCheck; // Track state change
 
         private MeshGenerator chunkGenerator;
 
@@ -278,6 +278,16 @@ namespace ProceduralTerrain.Builder
 
         private void DrawNormalGizmos()
         {
+            if (!IsVisible)
+            {
+                return;
+            }
+
+            if (chunkGenerator == null || chunkGenerator.CurrentStep <= 0)
+            {
+                return;
+            }
+
             var showNormalsEnabled = Generator.Debug.showNormals || showNormals;
             var hasMesh = FilterReference != null && FilterReference.sharedMesh != null;
 
@@ -290,13 +300,19 @@ namespace ProceduralTerrain.Builder
             var verts = mesh.vertices;
             var norms = mesh.normals;
 
+            if (verts == null || norms == null)
+            {
+                return;
+            }
+
             Gizmos.color = Color.blue;
             // We only loop through the grid vertices (ignore the skirt for clarity)
             var resolution =
                 (chunkGenerator.Settings.ChunkSize / chunkGenerator.CurrentStep) + 1;
             var gridCount = resolution * resolution;
+            var drawCount = Mathf.Min(gridCount, verts.Length, norms.Length);
 
-            for (var i = 0; i < gridCount; i++)
+            for (var i = 0; i < drawCount; i++)
             {
                 // Transform the local vertex position to world space
                 var worldV = transform.TransformPoint(verts[i]);

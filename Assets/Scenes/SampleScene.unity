@@ -473,6 +473,7 @@ MonoBehaviour:
     elevationStepHeight: 16
     maxElevationStepsCount: 16
     skirtDepth: 16
+    orphanSweepPeriod: 3
   noise:
     seed: 1337
     scale: 0.02
@@ -484,8 +485,8 @@ MonoBehaviour:
     frustumPadding: 3
     viewDistanceChunks: 5
   lod:
-    lod1Distance: 3
-    lod2Distance: 5
+    lod1Distance: 5
+    lod2Distance: 7
     visibilityBatchSize: 10
     lod0Step: 1
     lod1Step: 2
@@ -499,7 +500,6 @@ MonoBehaviour:
     showChunkLodBounds: 0
     showNormals: 0
     showColliderBounds: 0
-    orphanSweepPeriod: 3
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,11 +12,10 @@
   <component name="ChangeListManager">
     <list default="true" id="a070136a-d4fe-4e9c-88c5-4c7f1ea55fbe" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Generation/CleanupManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Generation/CleanupManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Runtime/Prefabs/TerrainChunk.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Runtime/Prefabs/TerrainChunk.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Settings/DebugSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Settings/DebugSettings.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Settings/TerrainSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Settings/TerrainSettings.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainChunk.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainChunk.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Runtime/Shaders/TerrainTriplanar.shadergraph" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Runtime/Shaders/TerrainTriplanar.shadergraph" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +33,7 @@
     <setting file="file://$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraFlightController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/Scripts/Development/Camera/CameraStressTest.cs.meta" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/Settings/DefaultVolumeProfile.asset" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Temp/Compiled-Shader Graphs-TerrainTriplanar.shader" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/.jetbrains/acp.json" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
@@ -43,23 +43,23 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.3369322428947075" />
-      <entry key="MS500" value="2.3425851107074473" />
-      <entry key="S2" value="2.806660638766707" />
-      <entry key="S5" value="3.212283380307678" />
-      <entry key="S10" value="6.011524324855444" />
-      <entry key="S30" value="20.17417096178351" />
-      <entry key="S60" value="31.298901246856957" />
-      <entry key="M2" value="39.9739869843491" />
-      <entry key="M5" value="46.71545728328118" />
-      <entry key="M10" value="50.64530291656977" />
-      <entry key="M15" value="57.183948291336634" />
-      <entry key="M30" value="93.05796812479828" />
-      <entry key="H1" value="176.3716562582361" />
-      <entry key="H2" value="400.99455516314714" />
-      <entry key="H4" value="916.6419636834977" />
-      <entry key="D1" value="2361.560045467582" />
-      <entry key="W1" value="2831.6607641277183" />
+      <entry key="MS100" value="1.0012805162402691" />
+      <entry key="MS500" value="2.015111301383456" />
+      <entry key="S2" value="7.828151537670763" />
+      <entry key="S5" value="13.165531301388295" />
+      <entry key="S10" value="16.11022445547151" />
+      <entry key="S30" value="19.949632755589892" />
+      <entry key="S60" value="25.919474998458703" />
+      <entry key="M2" value="36.406015611043166" />
+      <entry key="M5" value="58.105040249401284" />
+      <entry key="M10" value="75.67786374857359" />
+      <entry key="M15" value="87.52800034831337" />
+      <entry key="M30" value="126.88244910524516" />
+      <entry key="H1" value="211.1233509762477" />
+      <entry key="H2" value="433.6335098812202" />
+      <entry key="H4" value="946.6817074997074" />
+      <entry key="D1" value="2403.528205511398" />
+      <entry key="W1" value="2881.112100887286" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -67,37 +67,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="1.8943309182621324E-189" />
-      <entry key="S60" value="7.405355283296469E-95" />
-      <entry key="M2" value="1.484082880325418E-47" />
-      <entry key="M5" value="3.5844053878845627E-19" />
-      <entry key="M10" value="1.0368624079214716E-9" />
-      <entry key="M15" value="1.4788600299853239E-6" />
-      <entry key="M30" value="0.002145447030073648" />
-      <entry key="H1" value="0.08696947566853996" />
-      <entry key="H2" value="0.6029742659464598" />
-      <entry key="H4" value="1.6804799684192635" />
-      <entry key="D1" value="4.145829253936785" />
-      <entry key="W1" value="4.867227279628367" />
+      <entry key="S30" value="3.182797821168284E-194" />
+      <entry key="S60" value="3.0354459319219353E-97" />
+      <entry key="M2" value="9.501593719728886E-49" />
+      <entry key="M5" value="1.1938573620903119E-19" />
+      <entry key="M10" value="5.983961482093482E-10" />
+      <entry key="M15" value="1.0251140312941103E-6" />
+      <entry key="M30" value="0.0017862422187021054" />
+      <entry key="H1" value="0.07935570028043466" />
+      <entry key="H2" value="0.5759760376595943" />
+      <entry key="H4" value="1.6424273151362587" />
+      <entry key="D1" value="4.130033251401204" />
+      <entry key="W1" value="4.864573715276832" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.2696619205029906" />
-      <entry key="MS500" value="2.3212175716664367" />
-      <entry key="S2" value="2.8004394076930144" />
-      <entry key="S5" value="3.2094838320005574" />
-      <entry key="S10" value="6.009036074144726" />
-      <entry key="S30" value="20.171468554688907" />
-      <entry key="S60" value="31.29679874971551" />
-      <entry key="M2" value="39.97263949045864" />
-      <entry key="M5" value="46.71482555354134" />
-      <entry key="M10" value="50.644955383709274" />
-      <entry key="M15" value="57.18366103652813" />
-      <entry key="M30" value="93.05972375167339" />
-      <entry key="H1" value="176.4580317664" />
-      <entry key="H2" value="401.59666820006373" />
-      <entry key="H4" value="918.3214333490796" />
-      <entry key="D1" value="2365.7054563074325" />
-      <entry key="W1" value="2836.5279203578903" />
+      <entry key="MS100" value="0.9671653897788108" />
+      <entry key="MS500" value="1.9997057682893555" />
+      <entry key="S2" value="7.81249847903972" />
+      <entry key="S5" value="13.154847745834811" />
+      <entry key="S10" value="16.10363926603878" />
+      <entry key="S30" value="19.946895902810063" />
+      <entry key="S60" value="25.91768983214011" />
+      <entry key="M2" value="36.40476005383618" />
+      <entry key="M5" value="58.104240771627744" />
+      <entry key="M10" value="75.67734141626855" />
+      <entry key="M15" value="87.52758002447972" />
+      <entry key="M30" value="126.88379666735166" />
+      <entry key="H1" value="211.20210672969668" />
+      <entry key="H2" value="434.2086340289756" />
+      <entry key="H4" value="948.3231327191015" />
+      <entry key="D1" value="2407.6578194896647" />
+      <entry key="W1" value="2885.9766032411753" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -196,7 +196,7 @@
       <workItem from="1785013650044" duration="403000" />
       <workItem from="1785014287930" duration="11000" />
       <workItem from="1785054816451" duration="778000" />
-      <workItem from="1785055638716" duration="6656000" />
+      <workItem from="1785055638716" duration="8283000" />
     </task>
     <task id="LOCAL-00001" summary="feat: Removed Build and BuildDev from version control">
       <option name="closed" value="true" />

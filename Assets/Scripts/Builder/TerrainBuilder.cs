@@ -302,11 +302,13 @@ namespace ProceduralTerrain.Builder
                 new Vector3(viewWorldRadius * 2f, 1f, viewWorldRadius * 2f)
             );
             
+#if UNITY_EDITOR
             UnityEditor.Handles.color = new Color(0f, 0.8f, 1f, 1f);
             UnityEditor.Handles.Label(
                 center + Vector3.right * viewWorldRadius,
                 $"View: {cameraConfig.viewDistanceChunks} chunks\n({viewWorldRadius * 2f:F0} wu wide)"
             );
+#endif
         }
     }
 }
