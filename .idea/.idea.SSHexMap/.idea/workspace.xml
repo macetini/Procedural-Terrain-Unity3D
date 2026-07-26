@@ -12,7 +12,16 @@
   <component name="ChangeListManager">
     <list default="true" id="a070136a-d4fe-4e9c-88c5-4c7f1ea55fbe" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SSHexMap/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/CurrentMaximizeLayout.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainChunk.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Builder/TerrainChunk.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Effects/TerrainFadeEffect.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Effects/TerrainFadeEffect.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Generation/BuildQueue.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Generation/BuildQueue.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/Data/NeighborStruct.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/Data/NeighborStruct.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/MeshGenerator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/MeshGenerator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/RuntimeSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/RuntimeSettings.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Processing/TerrainChunkPool.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Processing/TerrainChunkPool.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Settings/LODSettings.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Settings/LODSettings.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Utils/TerrainMath.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Utils/TerrainMath.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Utils/TerrainNoise.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Utils/TerrainNoise.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/UserSettings/Layouts/default-6000.dwlt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -21,7 +30,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="23" />
+    <option name="cachedIndexableFilesCount" value="22" />
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -40,23 +49,23 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0259230541229634" />
-      <entry key="MS500" value="1.755667427374419" />
-      <entry key="S2" value="3.4072358062029053" />
-      <entry key="S5" value="5.484749267617207" />
-      <entry key="S10" value="7.9062702536740055" />
-      <entry key="S30" value="11.282605770515103" />
-      <entry key="S60" value="12.52804146420202" />
-      <entry key="M2" value="13.233079583353058" />
-      <entry key="M5" value="13.685440708816676" />
-      <entry key="M10" value="13.841436270555105" />
-      <entry key="M15" value="13.904570864454385" />
-      <entry key="M30" value="16.809956033981067" />
-      <entry key="H1" value="74.63685900645774" />
-      <entry key="H2" value="360.55002593381215" />
-      <entry key="H4" value="921.6584077806431" />
-      <entry key="D1" value="2150.1840961552853" />
-      <entry key="W1" value="2500.0091214436648" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0000000000000027" />
+      <entry key="S10" value="1.0000001145516166" />
+      <entry key="S30" value="1.0259501317228834" />
+      <entry key="S60" value="1.7938970248501875" />
+      <entry key="M2" value="7.996262455729887" />
+      <entry key="M5" value="40.101195977271296" />
+      <entry key="M10" value="81.16596536015871" />
+      <entry key="M15" value="106.75009866414338" />
+      <entry key="M30" value="146.05744984883435" />
+      <entry key="H1" value="210.49929012199698" />
+      <entry key="H2" value="465.6779487296184" />
+      <entry key="H4" value="1009.5492127155436" />
+      <entry key="D1" value="2301.0847767736154" />
+      <entry key="W1" value="2684.328409313785" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -64,37 +73,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="1.5172956350792494E-110" />
-      <entry key="S60" value="2.0958156533007963E-55" />
-      <entry key="M2" value="7.895174722271916E-28" />
-      <entry key="M5" value="2.784700915133513E-11" />
-      <entry key="M10" value="9.139066704755899E-6" />
-      <entry key="M15" value="6.3102643027143E-4" />
-      <entry key="M30" value="0.04431778393864202" />
-      <entry key="H1" value="0.3952728375609705" />
-      <entry key="H2" value="1.2854755992333027" />
-      <entry key="H4" value="2.453668400501359" />
-      <entry key="D1" value="4.4157908986190355" />
-      <entry key="W1" value="4.911289064879554" />
+      <entry key="S30" value="2.638799484810625E-133" />
+      <entry key="S60" value="8.740195978586661E-67" />
+      <entry key="M2" value="1.6122997663264422E-33" />
+      <entry key="M5" value="1.475068455782871E-13" />
+      <entry key="M10" value="6.651485616825901E-7" />
+      <entry key="M15" value="1.0999984907058958E-4" />
+      <entry key="M30" value="0.01850334751852531" />
+      <entry key="H1" value="0.2554071825342272" />
+      <entry key="H2" value="1.0333130273936233" />
+      <entry key="H4" value="2.199884620794494" />
+      <entry key="D1" value="4.3361653926608295" />
+      <entry key="W1" value="4.898538713702928" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9844734528985349" />
-      <entry key="MS500" value="1.7426408443427261" />
-      <entry key="S2" value="3.3963662073711363" />
-      <entry key="S5" value="5.450020019749333" />
-      <entry key="S10" value="7.864592306429366" />
-      <entry key="S30" value="11.257229082259277" />
-      <entry key="S60" value="12.513266859112873" />
-      <entry key="M2" value="13.225106429673648" />
-      <entry key="M5" value="13.682101806309154" />
-      <entry key="M10" value="13.839750210634772" />
-      <entry key="M15" value="13.904064911621704" />
-      <entry key="M30" value="16.853642100885118" />
-      <entry key="H1" value="75.03144639989655" />
-      <entry key="H2" value="361.83447428743904" />
-      <entry key="H4" value="924.1109691413778" />
-      <entry key="D1" value="2154.5994984909707" />
-      <entry key="W1" value="2504.920346877047" />
+      <entry key="MS100" value="1.0053601285004557E-4" />
+      <entry key="MS500" value="0.1586588607524756" />
+      <entry key="S2" value="0.6311260160560578" />
+      <entry key="S5" value="0.8318527049474029" />
+      <entry key="S10" value="0.9120597095567188" />
+      <entry key="S30" value="0.9957275368307562" />
+      <entry key="S60" value="1.7785607149651987" />
+      <entry key="M2" value="7.98810197864868" />
+      <entry key="M5" value="40.09697375684625" />
+      <entry key="M10" value="81.16295816661243" />
+      <entry key="M15" value="106.7476629903621" />
+      <entry key="M30" value="146.07413178035148" />
+      <entry key="H1" value="210.7533217271234" />
+      <entry key="H2" value="466.70992023739547" />
+      <entry key="H4" value="1011.7478328395038" />
+      <entry key="D1" value="2305.4205131659387" />
+      <entry key="W1" value="2689.2268777293452" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -109,37 +118,37 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.ml.llm.agents.skills.settings&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;unity.profiler.toolWindow.autoShown&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "editor.preferences.completion.inline",
+    "to.speed.mode.migration.done": "true",
+    "unity.profiler.toolWindow.autoShown": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
     <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
       <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.4.10f1\Editor\Unity.exe" />
@@ -190,6 +199,10 @@
       <workItem from="1784975157466" duration="9387000" />
       <workItem from="1784987032100" duration="5587000" />
       <workItem from="1785010306874" duration="1708000" />
+      <workItem from="1785013650044" duration="403000" />
+      <workItem from="1785014287930" duration="11000" />
+      <workItem from="1785054816451" duration="778000" />
+      <workItem from="1785055638716" duration="1806000" />
     </task>
     <task id="LOCAL-00001" summary="feat: Removed Build and BuildDev from version control">
       <option name="closed" value="true" />

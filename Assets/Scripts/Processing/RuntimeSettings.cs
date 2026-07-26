@@ -20,15 +20,15 @@ namespace ProceduralTerrain.Processing
         public static RuntimeSettings FromHost(ITerrainHost host)
         {
             float chunkBoundSize = host.Terrain.chunkSize * host.Terrain.tileSize;
-            float lodDistance1 = host.LOD.lod1Distance * chunkBoundSize;
-            float lodDistance2 = host.LOD.lod2Distance * chunkBoundSize;
+            var lodDistance1 = host.LOD.lod1Distance * chunkBoundSize;
+            var lodDistance2 = host.LOD.lod2Distance * chunkBoundSize;
 
             float maxHeight =
                 host.Terrain.maxElevationStepsCount * host.Terrain.elevationStepHeight;
 
-            float halfSize = chunkBoundSize * 0.5f;
+            var halfSize = chunkBoundSize * 0.5f;
 
-            float padding = host.CameraConfig.frustumPadding;
+            var padding = host.CameraConfig.frustumPadding;
 
             float skirtDepth = host.Terrain.skirtDepth;
 

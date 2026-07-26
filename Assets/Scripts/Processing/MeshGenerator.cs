@@ -56,7 +56,7 @@ namespace ProceduralTerrain.Processing
 
             meshName = $"{MESH_IDENTIFIER}{chunkCoord.x}_{chunkCoord.y}";
 
-            if (chunk.terrainMaterial != null)
+            if (chunk.terrainMaterial)
             {
                 // Use sharedMaterial to allow the GPU to batch all chunks together
                 chunk.RendererReference.sharedMaterial = chunk.terrainMaterial;
@@ -72,14 +72,13 @@ namespace ProceduralTerrain.Processing
 
         public void UpdateLOD(bool force = false)
         {
-            int targetStep = GetTargetStep();
+            var targetStep = GetTargetStep();
 
             // Only rebuild if the LOD changed OR we are forcing it (initial build)
-            if (targetStep != CurrentStep || force)
-            {
-                CurrentStep = targetStep;
-                BuildProceduralMesh();
-            }
+            if (targetStep == CurrentStep && !force) return;
+            
+            CurrentStep = targetStep;
+            BuildProceduralMesh();
         }
 
         private int GetTargetStep() =>

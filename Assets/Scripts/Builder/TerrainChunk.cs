@@ -8,7 +8,7 @@ namespace ProceduralTerrain.Builder
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public class TerrainChunk : MonoBehaviour
     {
-        public const string NAME = "TerrainChunk:";
+        private const string Name = "TerrainChunk:";
 
         [Header("Settings")]
         public Material terrainMaterial;
@@ -26,27 +26,25 @@ namespace ProceduralTerrain.Builder
 
         public bool IsVisible { get; private set; } = true;
         public int CurrentStep => chunkGenerator.CurrentStep;
-        public Vector2Int ChunkCoord => chunkCoord;
-        public ITerrainHost Generator => generator;
+        public Vector2Int ChunkCoord { get; private set; }
 
-        internal MeshRenderer RendererReference => rendererReference;
-        internal MeshFilter FilterReference => filterReference;
+        public ITerrainHost Generator { get; private set; }
+
+        internal MeshRenderer RendererReference { get; private set; }
+
+        internal MeshFilter FilterReference { get; private set; }
 
         // References
-        private MeshRenderer rendererReference;
-        private MeshFilter filterReference;
         private MeshCollider colliderReference;
 
         // Data
-        private ITerrainHost generator;
-        private Vector2Int chunkCoord;
 
         // Calculations
         private bool wasVisibleLastCheck = false; // Track state change
 
         private MeshGenerator chunkGenerator;
 
-        void Awake()
+        private void Awake()
         {
             EnsureReferences();
             colliderReference.convex = false;
@@ -56,17 +54,17 @@ namespace ProceduralTerrain.Builder
 
         private void EnsureReferences()
         {
-            if (rendererReference == null)
+            if (!RendererReference)
             {
-                rendererReference = GetComponent<MeshRenderer>();
+                RendererReference = GetComponent<MeshRenderer>();
             }
 
-            if (filterReference == null)
+            if (!FilterReference)
             {
-                filterReference = GetComponent<MeshFilter>();
+                FilterReference = GetComponent<MeshFilter>();
             }
 
-            if (colliderReference == null)
+            if (!colliderReference)
             {
                 colliderReference = GetComponent<MeshCollider>();
             }
@@ -83,38 +81,38 @@ namespace ProceduralTerrain.Builder
             wasVisibleLastCheck = false;
             IsVisible = true;
 
-            if (colliderReference != null)
+            if (colliderReference)
             {
                 colliderReference.enabled = true;
             }
 
-            if (fadeEffect != null)
+            if (fadeEffect)
             {
                 fadeEffect.ResetEffect();
             }
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
-            if (filterReference != null && filterReference.sharedMesh != null)
+            if (FilterReference != null && FilterReference.sharedMesh != null)
             {
-                Destroy(filterReference.sharedMesh);
+                Destroy(FilterReference.sharedMesh);
             }
         }
 
         public void InitBuild(ITerrainHost generator, Vector2Int chunkCoord)
         {
-            this.generator = generator;
-            this.chunkCoord = chunkCoord;
+            this.Generator = generator;
+            this.ChunkCoord = chunkCoord;
 
 #if UNITY_EDITOR
-            string local = $"{NAME} ({chunkCoord.x:D3}, {chunkCoord.y:D3})";
+            var local = $"{Name} ({chunkCoord.x:D3}, {chunkCoord.y:D3})";
             gameObject.name = local;
 #endif
 
-            if (terrainMaterial != null && rendererReference != null)
+            if (terrainMaterial && RendererReference)
             {
-                rendererReference.material = terrainMaterial;
+                RendererReference.material = terrainMaterial;
                 showNormals = generator.Debug.showNormals;
             }
 
@@ -123,15 +121,12 @@ namespace ProceduralTerrain.Builder
 
         public void SyncColliderMesh()
         {
-            if (
-                colliderReference != null
-                && filterReference != null
-                && filterReference.sharedMesh != null
-            )
-            {
-                colliderReference.sharedMesh = null; // Force recook when reusing same mesh instance.
-                colliderReference.sharedMesh = filterReference.sharedMesh; // Assign new mesh
-            }
+            if (!colliderReference
+                || !FilterReference
+                || !FilterReference.sharedMesh) return;
+            
+            colliderReference.sharedMesh = null; // Force recook when reusing same mesh instance.
+            colliderReference.sharedMesh = FilterReference.sharedMesh; // Assign new mesh
         }
 
         public void UpdateLOD(bool force = false)
@@ -142,24 +137,24 @@ namespace ProceduralTerrain.Builder
         public void UpdateVisibility(Plane[] planes)
         {
             var settings = chunkGenerator.Settings;
-            Vector3 worldCenter = transform.position + settings.VisibilityBoundsOffset;
+            var worldCenter = transform.position + settings.VisibilityBoundsOffset;
             Bounds checkBounds = new(worldCenter, settings.VisibilityBoundsSize);
 
             // 1. Calculate logical visibility (Frustum check)
-            bool frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
+            var frustumVisible = GeometryUtility.TestPlanesAABB(planes, checkBounds);
             IsVisible = frustumVisible;
 
-            bool finalShowState = frustumVisible && chunkGenerator.IsMeshReady;
-            bool becameVisible = finalShowState && !wasVisibleLastCheck;
+            var finalShowState = frustumVisible && chunkGenerator.IsMeshReady;
+            var becameVisible = finalShowState && !wasVisibleLastCheck;
 
-            if (fadeEffect != null && becameVisible)
+            if (fadeEffect && becameVisible)
             {
                 fadeEffect.Play();
             }
 
-            if (rendererReference.enabled != finalShowState)
+            if (RendererReference.enabled != finalShowState)
             {
-                rendererReference.enabled = finalShowState;
+                RendererReference.enabled = finalShowState;
             }
 
             UpdateColliderVisibility(finalShowState, becameVisible);
@@ -169,18 +164,16 @@ namespace ProceduralTerrain.Builder
 
         private void UpdateColliderVisibility(bool finalShowState, bool becameVisible)
         {
-            if (colliderReference == null)
+            if (!colliderReference)
             {
                 return;
             }
 
-            bool colliderMeshMissingOrStale =
-                finalShowState
-                && (
-                    colliderReference.sharedMesh == null
-                    || filterReference == null
-                    || colliderReference.sharedMesh != filterReference.sharedMesh
-                );
+            var isMeshMissingOrStale = !colliderReference.sharedMesh
+                || !FilterReference
+                || colliderReference.sharedMesh != FilterReference.sharedMesh;
+
+            var colliderMeshMissingOrStale = finalShowState && isMeshMissingOrStale;
 
             if (becameVisible || colliderMeshMissingOrStale)
             {
@@ -199,7 +192,7 @@ namespace ProceduralTerrain.Builder
 
         public void StartFadeIn()
         {
-            if (fadeEffect != null)
+            if (fadeEffect)
             {
                 fadeEffect.Play();
             }
@@ -209,32 +202,32 @@ namespace ProceduralTerrain.Builder
         // -------------------------------------------- [Gizmos] ------------------------------------------
         // ------------------------------------------------------------------------------------------------
 
-        void OnDrawGizmos()
+        private void OnDrawGizmos()
         {
-            if (generator != null && generator.Debug != null)
-            {
-                EnsureReferences();
+            if (Generator is not { Debug: not null }) return;
+            
+            EnsureReferences();
 
-                DrawChunkBoundsGizmos();
-                DrawColliderGizmo();
-                DrawNormalGizmos();
-            }
+            DrawChunkBoundsGizmos();
+            DrawColliderGizmo();
+            DrawNormalGizmos();
         }
 
         private void DrawChunkBoundsGizmos()
         {
-            if (
-                (generator.Debug.showChunkLodBounds || showChunkLodBounds)
-                && chunkGenerator != null
-                && chunkGenerator.CurrentStep >= 0
-            )
-            {
-                var settings = chunkGenerator.Settings;
-                Vector3 center = transform.position + settings.VisibilityBoundsOffset;
+            var showBounds = Generator.Debug.showChunkLodBounds || showChunkLodBounds;
+            var hasValidStep = chunkGenerator is { CurrentStep: >= 0 };
 
-                Gizmos.color = GetLodGizmoColor(chunkGenerator.CurrentStep, generator.LOD);
-                Gizmos.DrawWireCube(center, settings.VisibilityBoundsSize);
+            if (!showBounds || !hasValidStep)
+            {
+                return;
             }
+            
+            var settings = chunkGenerator.Settings;
+            var center = transform.position + settings.VisibilityBoundsOffset;
+
+            Gizmos.color = GetLodGizmoColor(chunkGenerator.CurrentStep, Generator.LOD);
+            Gizmos.DrawWireCube(center, settings.VisibilityBoundsSize);
         }
 
         private static Color GetLodGizmoColor(int currentStep, LODSettings lod)
@@ -249,17 +242,12 @@ namespace ProceduralTerrain.Builder
                 return Color.yellow;
             }
 
-            if (currentStep == lod.lod2Step)
-            {
-                return new Color(1f, 0.45f, 0.1f, 1f);
-            }
-
-            return Color.gray;
+            return currentStep == lod.lod2Step ? new Color(1f, 0.45f, 0.1f, 1f) : Color.gray;
         }
 
         private void DrawColliderGizmo()
         {
-            if (!generator.Debug.showColliderBounds && !showColliderBounds)
+            if (!Generator.Debug.showColliderBounds && !showColliderBounds)
             {
                 return;
             }
@@ -269,14 +257,14 @@ namespace ProceduralTerrain.Builder
                 return;
             }
 
-            Mesh colliderMesh = colliderReference.sharedMesh;
+            var colliderMesh = colliderReference.sharedMesh;
             if (colliderMesh == null)
             {
                 return;
             }
 
-            Bounds bounds = colliderMesh.bounds;
-            Matrix4x4 previousMatrix = Gizmos.matrix;
+            var bounds = colliderMesh.bounds;
+            var previousMatrix = Gizmos.matrix;
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireCube(bounds.center, bounds.size);
@@ -285,34 +273,32 @@ namespace ProceduralTerrain.Builder
 
         private void DrawNormalGizmos()
         {
-            if (
-                (generator.Debug.showNormals || showNormals)
-                && filterReference != null
-                && filterReference.sharedMesh != null
-            )
+            var showNormalsEnabled = Generator.Debug.showNormals || showNormals;
+            var hasMesh = FilterReference != null && FilterReference.sharedMesh != null;
+
+            if (!showNormalsEnabled || !hasMesh)
             {
-                Mesh mesh = filterReference.sharedMesh;
-                if (mesh != null)
-                {
-                    Vector3[] verts = filterReference.sharedMesh.vertices;
-                    Vector3[] norms = mesh.normals;
+                return;
+            }
 
-                    Gizmos.color = Color.blue;
-                    // We only loop through the grid vertices (ignore the skirt for clarity)
-                    int resolution =
-                        (chunkGenerator.Settings.ChunkSize / chunkGenerator.CurrentStep) + 1;
-                    int gridCount = resolution * resolution;
+            var mesh = FilterReference.sharedMesh;
+            var verts = mesh.vertices;
+            var norms = mesh.normals;
 
-                    for (int i = 0; i < gridCount; i++)
-                    {
-                        // Transform the local vertex position to world space
-                        Vector3 worldV = transform.TransformPoint(verts[i]);
-                        // Transform the normal to world space
-                        Vector3 worldN = transform.TransformDirection(norms[i]);
-                        // Draw the normal line (DebugNormalLength is the length of the line)
-                        Gizmos.DrawLine(worldV, worldV + worldN * debugNormalLength);
-                    }
-                }
+            Gizmos.color = Color.blue;
+            // We only loop through the grid vertices (ignore the skirt for clarity)
+            var resolution =
+                (chunkGenerator.Settings.ChunkSize / chunkGenerator.CurrentStep) + 1;
+            var gridCount = resolution * resolution;
+
+            for (var i = 0; i < gridCount; i++)
+            {
+                // Transform the local vertex position to world space
+                var worldV = transform.TransformPoint(verts[i]);
+                // Transform the normal to world space
+                var worldN = transform.TransformDirection(norms[i]);
+                // Draw the normal line (DebugNormalLength is the length of the line)
+                Gizmos.DrawLine(worldV, worldV + worldN * debugNormalLength);
             }
         }
     }

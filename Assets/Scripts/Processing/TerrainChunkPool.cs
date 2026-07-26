@@ -42,7 +42,7 @@ namespace ProceduralTerrain.Processing
             while (pool.Count > 0)
             {
                 var chunk = pool.Pop();
-                if (chunk == null)
+                if (!chunk)
                 {
                     continue; // destroyed externally, skip
                 }
@@ -60,7 +60,7 @@ namespace ProceduralTerrain.Processing
 
         public void Return(TerrainChunk chunk)
         {
-            if (chunk == null)
+            if (!chunk)
             {
                 Debug.LogWarning("Attempted to return a null chunk to the pool.", parent);
                 return;
@@ -83,7 +83,7 @@ namespace ProceduralTerrain.Processing
             while (pool.Count > 0)
             {
                 var chunk = pool.Pop();
-                if (chunk != null)
+                if (chunk)
                 {
                     Object.Destroy(chunk.gameObject);
                 }

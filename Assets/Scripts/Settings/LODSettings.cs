@@ -14,7 +14,7 @@ namespace ProceduralTerrain.Settings
 
         public void ClampValues(int chunkSize)
         {
-            int safeChunkSize = Mathf.Max(1, chunkSize);
+            var safeChunkSize = Mathf.Max(1, chunkSize);
 
             lod1Distance = Mathf.Max(0f, lod1Distance);
             lod2Distance = Mathf.Max(lod1Distance, lod2Distance);

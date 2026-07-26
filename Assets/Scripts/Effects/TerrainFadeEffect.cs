@@ -39,7 +39,7 @@ namespace ProceduralTerrain.Effects
             while (elapsed < fadeDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / fadeDuration);
+                var t = Mathf.Clamp01(elapsed / fadeDuration);
                 SetAlpha(t);
                 yield return null;
             }

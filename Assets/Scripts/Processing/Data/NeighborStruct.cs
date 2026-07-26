@@ -5,7 +5,7 @@ namespace ProceduralTerrain.Processing.Data
 {
     public struct NeighborStruct
     {
-        public TileSample[,] Center,
+        private TileSample[,] Center,
             West,
             South,
             SouthWest,
@@ -51,15 +51,15 @@ namespace ProceduralTerrain.Processing.Data
             }
 
             // Determine Directional Indices (-1, 0, or 1)
-            int dirX = GetDirectionIndex(x, chunkSize);
-            int dirZ = GetDirectionIndex(z, chunkSize);
+            var dirX = GetDirectionIndex(x, chunkSize);
+            var dirZ = GetDirectionIndex(z, chunkSize);
 
             // Map to Local Neighbor Coordinates
-            int nx = MapCoordinate(x, chunkSize);
-            int nz = MapCoordinate(z, chunkSize);
+            var nx = MapCoordinate(x, chunkSize);
+            var nz = MapCoordinate(z, chunkSize);
 
             // Retrieve Neighbor Grid
-            TileSample[,] targetGrid = GetNeighborByDir(dirX, dirZ);
+            var targetGrid = GetNeighborByDir(dirX, dirZ);
 
             if (targetGrid != null)
             {
@@ -67,8 +67,8 @@ namespace ProceduralTerrain.Processing.Data
             }
 
             // Fallback: Clamp to Center's nearest edge
-            int fx = Mathf.Clamp(x, 0, chunkSize - 1);
-            int fz = Mathf.Clamp(z, 0, chunkSize - 1);
+            var fx = Mathf.Clamp(x, 0, chunkSize - 1);
+            var fz = Mathf.Clamp(z, 0, chunkSize - 1);
 
             return Center[fx, fz].Elevation;
         }
@@ -80,12 +80,7 @@ namespace ProceduralTerrain.Processing.Data
                 return -1;
             }
 
-            if (val >= limit)
-            {
-                return 1;
-            }
-
-            return 0;
+            return val >= limit ? 1 : 0;
         }
 
         private static int MapCoordinate(int val, int limit)

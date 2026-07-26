@@ -164,7 +164,7 @@ namespace ProceduralTerrain.Generation
 
                 while (buildState.Queue.Count > 0 && !runtime.IsBuildCancelled)
                 {
-                    Vector2Int coord = buildState.Queue.Dequeue();
+                    var coord = buildState.Queue.Dequeue();
                     yield return SafeBuildChunk(coord);
 
                     buildState.QueueHash.Remove(coord);
