@@ -52,14 +52,14 @@ namespace ProceduralTerrain.Generation
 
         private bool ShouldRunOrphanSweep()
         {
-            if (host.Debug.orphanSweepPeriod < 0)
+            switch (host.Debug.orphanSweepPeriod)
             {
-                return false;
+                case < 0:
+                    return false;
+                case 0:
+                    return true;
             }
-            if (host.Debug.orphanSweepPeriod == 0)
-            {
-                return true;
-            }
+
             cleanup.CleanupPassCounter++;
             
             if (cleanup.CleanupPassCounter < host.Debug.orphanSweepPeriod)
@@ -114,7 +114,6 @@ namespace ProceduralTerrain.Generation
         }
 
         // Tile-data eviction and bounds helpers
-
         private void LogCleanupSummary()
         {
             if (!host.Debug.cleanupLogs)
@@ -130,7 +129,7 @@ namespace ProceduralTerrain.Generation
         private void RemoveChunk(Vector2Int coord, TerrainChunk chunk)
         {
             if (
-                terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk activeChunk)
+                terrainDataProcessor.TryGetActiveChunk(coord, out var activeChunk)
                 && activeChunk == chunk
             )
             {

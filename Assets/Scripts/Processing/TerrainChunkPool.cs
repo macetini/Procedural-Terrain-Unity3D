@@ -12,15 +12,13 @@ namespace ProceduralTerrain.Processing
         private readonly int maxSize;
         private readonly int chunkLayerMask;
 
-        public int Count => pool.Count;
-
         /// <summary>
         /// Calculates the maximum number of chunks visible in a square grid
         /// around the camera: (viewDistance * 2 + 1)².
         /// </summary>
         public static int CalculateMaxSize(int viewDistanceChunks)
         {
-            int side = viewDistanceChunks * 2 + 1;
+            var side = viewDistanceChunks * 2 + 1;
             return side * side;
         }
 

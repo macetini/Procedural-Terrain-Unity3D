@@ -7,7 +7,7 @@ namespace ProceduralTerrain.Settings
     {
         [Tooltip("Half-width of the playable area in chunks from the world origin. Set to 0 to disable bounds.")]
         [Min(0)]
-        public int maxChunkRadius = 0;
+        public int maxChunkRadius;
 
         /// <summary>Returns true when bounds limiting is active.</summary>
         public bool IsEnabled => maxChunkRadius > 0;

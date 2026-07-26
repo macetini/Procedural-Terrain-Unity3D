@@ -8,17 +8,13 @@ namespace ProceduralTerrain.Generation.Data
 {
     internal interface ITerrainDataCoordinator
     {
-        void SetChunkDisposeAction(Action<TerrainChunk> action);
-        void ClearAll();
         void Clear(Vector2Int coord);
 
         // Sampler
         void GenerateRawData(Vector2Int coord);
         bool HasTileData(Vector2Int coord);
-        NeighborStruct GetNeighborGrids(Vector2Int coord);
 
         // Sanitizer
-        void SanitizeData(Vector2Int cameraOrigin, int dataRadius);
         void MarkSanitized(Vector2Int coord);
         bool IsSanitized(Vector2Int coord);
         void SanitizeGlobalChunk(Vector2Int coord);

@@ -5,15 +5,15 @@ namespace ProceduralTerrain.Processing.Data
 {
     public struct NeighborStruct
     {
-        private TileSample[,] Center,
-            West,
-            South,
-            SouthWest,
-            East,
-            North,
-            NorthWest,
-            NorthEast,
-            SouthEast;
+        private TileSample[,] center,
+            west,
+            south,
+            southWest,
+            east,
+            north,
+            northWest,
+            northEast,
+            southEast;
 
         public static NeighborStruct GetNeighborGrids(
             Vector2Int coord,
@@ -23,31 +23,31 @@ namespace ProceduralTerrain.Processing.Data
             NeighborStruct neighbors = new();
 
             // Cardinal
-            tileMap.TryGetValue(coord, out neighbors.Center);
-            tileMap.TryGetValue(coord + Vector2Int.left, out neighbors.West);
-            tileMap.TryGetValue(coord + Vector2Int.down, out neighbors.South);
-            tileMap.TryGetValue(coord + Vector2Int.right, out neighbors.East);
-            tileMap.TryGetValue(coord + Vector2Int.up, out neighbors.North);
+            tileMap.TryGetValue(coord, out neighbors.center);
+            tileMap.TryGetValue(coord + Vector2Int.left, out neighbors.west);
+            tileMap.TryGetValue(coord + Vector2Int.down, out neighbors.south);
+            tileMap.TryGetValue(coord + Vector2Int.right, out neighbors.east);
+            tileMap.TryGetValue(coord + Vector2Int.up, out neighbors.north);
 
             // Diagonals
-            tileMap.TryGetValue(coord + new Vector2Int(-1, -1), out neighbors.SouthWest);
-            tileMap.TryGetValue(coord + new Vector2Int(-1, 1), out neighbors.NorthWest);
-            tileMap.TryGetValue(coord + new Vector2Int(1, 1), out neighbors.NorthEast);
-            tileMap.TryGetValue(coord + new Vector2Int(1, -1), out neighbors.SouthEast);
+            tileMap.TryGetValue(coord + new Vector2Int(-1, -1), out neighbors.southWest);
+            tileMap.TryGetValue(coord + new Vector2Int(-1, 1), out neighbors.northWest);
+            tileMap.TryGetValue(coord + new Vector2Int(1, 1), out neighbors.northEast);
+            tileMap.TryGetValue(coord + new Vector2Int(1, -1), out neighbors.southEast);
 
             return neighbors;
         }
 
         public readonly float GetElevation(int x, int z, int chunkSize)
         {
-            if (Center == null)
+            if (center == null)
             {
                 return 0f;
             }
 
             if (x >= 0 && x < chunkSize && z >= 0 && z < chunkSize)
             {
-                return Center[x, z].Elevation;
+                return center[x, z].Elevation;
             }
 
             // Determine Directional Indices (-1, 0, or 1)
@@ -70,7 +70,7 @@ namespace ProceduralTerrain.Processing.Data
             var fx = Mathf.Clamp(x, 0, chunkSize - 1);
             var fz = Mathf.Clamp(z, 0, chunkSize - 1);
 
-            return Center[fx, fz].Elevation;
+            return center[fx, fz].Elevation;
         }
 
         private static int GetDirectionIndex(int val, int limit)
@@ -103,14 +103,14 @@ namespace ProceduralTerrain.Processing.Data
             // Switch expressions are much cleaner than nested ternaries
             return (dx, dz) switch
             {
-                (-1, 0) => West,
-                (1, 0) => East,
-                (0, -1) => South,
-                (0, 1) => North,
-                (-1, -1) => SouthWest,
-                (-1, 1) => NorthWest,
-                (1, 1) => NorthEast,
-                (1, -1) => SouthEast,
+                (-1, 0) => west,
+                (1, 0) => east,
+                (0, -1) => south,
+                (0, 1) => north,
+                (-1, -1) => southWest,
+                (-1, 1) => northWest,
+                (1, 1) => northEast,
+                (1, -1) => southEast,
                 _ => null,
             };
         }

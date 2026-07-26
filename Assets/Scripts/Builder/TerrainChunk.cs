@@ -121,9 +121,14 @@ namespace ProceduralTerrain.Builder
 
         public void SyncColliderMesh()
         {
-            if (!colliderReference
-                || !FilterReference
-                || !FilterReference.sharedMesh) return;
+            var canSyncCollider = colliderReference
+                && FilterReference
+                && FilterReference.sharedMesh;
+
+            if (!canSyncCollider)
+            {
+                return;
+            }
             
             colliderReference.sharedMesh = null; // Force recook when reusing same mesh instance.
             colliderReference.sharedMesh = FilterReference.sharedMesh; // Assign new mesh

@@ -28,18 +28,16 @@ namespace ProceduralTerrain.Generation.Data
 
         public void RemoveTile(Vector2Int coord)
         {
-            if (tileMap.TryGetValue(coord, out var data))
-            {
-                arrayPool.Push(data);
-                tileMap.Remove(coord);
-            }
+            if (!tileMap.TryGetValue(coord, out var data)) return;
+            
+            arrayPool.Push(data);
+            tileMap.Remove(coord);
         }
 
         public void GetTileKeysNonAlloc(List<Vector2Int> targetList)
         {
             targetList.Clear();
-            foreach (var key in tileMap.Keys)
-                targetList.Add(key);
+            targetList.AddRange(tileMap.Keys);
         }
 
         public void GenerateRawData(Vector2Int coord)
@@ -49,15 +47,15 @@ namespace ProceduralTerrain.Generation.Data
                 return;
             }
 
-            TileSample[,] data = RentArray();
-            int offsetX = coord.x * chunkSize;
-            int offsetZ = coord.y * chunkSize;
+            var data = RentArray();
+            var offsetX = coord.x * chunkSize;
+            var offsetZ = coord.y * chunkSize;
 
-            for (int x = 0; x < chunkSize; x++)
+            for (var x = 0; x < chunkSize; x++)
             {
-                for (int z = 0; z < chunkSize; z++)
+                for (var z = 0; z < chunkSize; z++)
                 {
-                    int elevation = noise.GetElevation(offsetX + x, offsetZ + z);
+                    var elevation = noise.GetElevation(offsetX + x, offsetZ + z);
                     data[x, z] = new TileSample(x, z, elevation);
                 }
             }

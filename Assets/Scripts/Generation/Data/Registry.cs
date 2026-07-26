@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ProceduralTerrain.Builder;
 using UnityEngine;
 
@@ -20,14 +21,14 @@ namespace ProceduralTerrain.Generation.Data
 
         public void RegisterChunk(Vector2Int coord, TerrainChunk chunk)
         {
-            if (activeChunks.TryGetValue(coord, out TerrainChunk existingChunk))
+            if (activeChunks.TryGetValue(coord, out var existingChunk))
             {
                 if (existingChunk == chunk)
                 {
                     return;
                 }
 
-                if (existingChunk != null)
+                if (existingChunk)
                 {
                     DisposeChunk(existingChunk);
                 }
@@ -44,13 +45,11 @@ namespace ProceduralTerrain.Generation.Data
 
         public void ClearAll()
         {
-            foreach (var chunk in activeChunks.Values)
+            foreach (var chunk in activeChunks.Values.Where(chunk => chunk))
             {
-                if (chunk != null)
-                {
-                    DisposeChunk(chunk);
-                }
+                DisposeChunk(chunk);
             }
+
             activeChunks.Clear();
         }
 
@@ -69,10 +68,7 @@ namespace ProceduralTerrain.Generation.Data
         public void GetActiveKeysNonAlloc(List<Vector2Int> targetList)
         {
             targetList.Clear();
-            foreach (var key in activeChunks.Keys)
-            {
-                targetList.Add(key);
-            }
+            targetList.AddRange(activeChunks.Keys);
         }
     }
 }

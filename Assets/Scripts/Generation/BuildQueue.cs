@@ -15,7 +15,6 @@ namespace ProceduralTerrain.Generation
         private readonly BuildQueueState buildState = new();
         private readonly RuntimeState runtime;
         private readonly ITerrainDataCoordinator terrainDataProcessor;
-        private readonly IChunkPool chunkPool;
         private readonly ITerrainHost host;
         private readonly BuildWorker buildWorker;
 
@@ -28,7 +27,6 @@ namespace ProceduralTerrain.Generation
         {
             this.runtime = runtime;
             this.terrainDataProcessor = terrainDataProcessor;
-            this.chunkPool = chunkPool;
             this.host = host;
             buildWorker = new BuildWorker(runtime, terrainDataProcessor, chunkPool, host);
         }
@@ -58,7 +56,7 @@ namespace ProceduralTerrain.Generation
                 var coord = new Vector2Int(baseX, baseY + z);
                 if (
                     !TryEnqueueChunkBuild(coord)
-                    && terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk)
+                    && terrainDataProcessor.TryGetActiveChunk(coord, out var chunk)
                 )
                 {
                     chunk.UpdateLOD();
@@ -264,7 +262,7 @@ namespace ProceduralTerrain.Generation
 
             private void StartChunkFadeIn(Vector2Int coord)
             {
-                if (terrainDataProcessor.TryGetActiveChunk(coord, out TerrainChunk chunk))
+                if (terrainDataProcessor.TryGetActiveChunk(coord, out var chunk))
                 {
                     chunk.StartFadeIn();
                 }
@@ -279,12 +277,12 @@ namespace ProceduralTerrain.Generation
                 return dx <= retentionRadius && dz <= retentionRadius;
             }
 
-            private IEnumerator RunNeighborPass(Vector2Int coord, Func<Vector2Int, bool> action)
+            private static IEnumerator RunNeighborPass(Vector2Int coord, Func<Vector2Int, bool> action)
             {
-                yield return IterateNeighbors3x3(coord, action);
+                yield return IterateNeighbors3X3(coord, action);
             }
 
-            private IEnumerator IterateNeighbors3x3(
+            private static IEnumerator IterateNeighbors3X3(
                 Vector2Int center,
                 Func<Vector2Int, bool> action
             )

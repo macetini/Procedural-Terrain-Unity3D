@@ -26,16 +26,15 @@ namespace ProceduralTerrain.Generation.Data
 
         public void SanitizeCurrentTileMeshData(Vector2Int cameraOrigin, int dataRadius)
         {
-            for (int x = -dataRadius; x <= dataRadius; x++)
+            for (var x = -dataRadius; x <= dataRadius; x++)
             {
-                for (int z = -dataRadius; z <= dataRadius; z++)
+                for (var z = -dataRadius; z <= dataRadius; z++)
                 {
                     Vector2Int coord = new(cameraOrigin.x + x, cameraOrigin.y + z);
-                    if (!sanitizedSet.Contains(coord)) // We only need to sanitize if the mesh hasn't been built yet
-                    {
-                        SanitizeGlobalChunk(coord);
-                        sanitizedSet.Add(coord);
-                    }
+                    if (sanitizedSet.Contains(coord)) continue; // We only need to sanitize if the mesh hasn't been built yet
+                    
+                    SanitizeGlobalChunk(coord);
+                    sanitizedSet.Add(coord);
                 }
             }
         }
@@ -48,13 +47,13 @@ namespace ProceduralTerrain.Generation.Data
             tileMap.TryGetValue(coord + Vector2Int.right, out TileSample[,] eastData);
             tileMap.TryGetValue(coord + Vector2Int.up, out TileSample[,] northData);
 
-            int edge = chunkSize - 1;
+            var edge = chunkSize - 1;
 
-            for (int x = 0; x < chunkSize; x++)
+            for (var x = 0; x < chunkSize; x++)
             {
-                for (int z = 0; z < chunkSize; z++)
+                for (var z = 0; z < chunkSize; z++)
                 {
-                    ref TileSample current = ref currentData[x, z];
+                    ref var current = ref currentData[x, z];
 
                     // East neighbor clamping
                     if (x < edge)

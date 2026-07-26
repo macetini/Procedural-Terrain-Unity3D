@@ -226,16 +226,14 @@ namespace ProceduralTerrain.Builder
                 return false;
             }
 
-            if (cameraConfig == null || !cameraConfig.reference)
-            {
-                Debug.LogError(
-                    "[ProceduralTerrain] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
-                    this
-                );
-                return false;
-            }
+            if (cameraConfig != null && cameraConfig.reference) return true;
+            
+            Debug.LogError(
+                "[ProceduralTerrain] Camera reference is not assigned. Assign it under Camera Settings > Reference in the Inspector.",
+                this
+            );
+            return false;
 
-            return true;
         }
 
         private void RecreateOrchestrator()

@@ -52,7 +52,7 @@ namespace ProceduralTerrain.Utils
             return (resolution - 1) * (resolution - 1) * 6;
         }
 
-        private static int GenerateSkirtTriangles(int resolution, int[] tris, int trisCount)
+        private static void GenerateSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
             var southTris = GenerateSouthSkirtTriangles(resolution, tris, trisCount);
             var northTris = GenerateNorthSkirtTriangles(resolution, tris, trisCount + southTris);
@@ -62,13 +62,11 @@ namespace ProceduralTerrain.Utils
                 trisCount + southTris + northTris
             );
             
-            var eastTris = GenerateEastSkirtTriangles(
+            GenerateEastSkirtTriangles(
                 resolution,
                 tris,
                 trisCount + southTris + northTris + westTris
             );
-
-            return southTris + northTris + westTris + eastTris;
         }
 
         private static int GenerateSouthSkirtTriangles(int resolution, int[] tris, int trisCount)
@@ -132,7 +130,7 @@ namespace ProceduralTerrain.Utils
             return (resolution - 1) * 6;
         }
 
-        private static int GenerateEastSkirtTriangles(int resolution, int[] tris, int trisCount)
+        private static void GenerateEastSkirtTriangles(int resolution, int[] tris, int trisCount)
         {
             var gridCount = resolution * resolution;
             var eStart = gridCount + resolution * 3;
@@ -150,7 +148,6 @@ namespace ProceduralTerrain.Utils
                 tris[trisCount++] = esT;
                 tris[trisCount++] = esB;
             }
-            return (resolution - 1) * 6;
         }
     }
 }

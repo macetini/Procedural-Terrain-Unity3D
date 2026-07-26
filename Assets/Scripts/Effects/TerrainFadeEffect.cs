@@ -9,15 +9,15 @@ namespace ProceduralTerrain.Effects
         [Header("Fade Settings")]
         public float fadeDuration = 0.6f;
 
-        private Renderer _renderer;
-        private MaterialPropertyBlock _propBlock;
-        private Coroutine _fadeCoroutine;
+        private Renderer localRenderer;
+        private MaterialPropertyBlock propBlock;
+        private Coroutine fadeCoroutine;
         private static readonly int AlphaID = Shader.PropertyToID("_Alpha");
 
         private void Awake()
         {
-            _renderer = GetComponent<Renderer>();
-            _propBlock = new MaterialPropertyBlock();
+            localRenderer = GetComponent<Renderer>();
+            propBlock = new MaterialPropertyBlock();
 
             // Start at 0 so it doesn't "snap" visible before the coroutine starts
             SetAlpha(0);
@@ -25,11 +25,11 @@ namespace ProceduralTerrain.Effects
 
         public void Play()
         {
-            if (_fadeCoroutine != null)
+            if (fadeCoroutine != null)
             {
-                StopCoroutine(_fadeCoroutine);
+                StopCoroutine(fadeCoroutine);
             }
-            _fadeCoroutine = StartCoroutine(FadeRoutine());
+            fadeCoroutine = StartCoroutine(FadeRoutine());
         }
 
         private IEnumerator FadeRoutine()
@@ -45,22 +45,22 @@ namespace ProceduralTerrain.Effects
             }
 
             SetAlpha(1.0f);
-            _fadeCoroutine = null;
+            fadeCoroutine = null;
         }
 
         private void SetAlpha(float alpha)
         {
-            _propBlock.SetFloat(AlphaID, alpha);
-            _renderer.SetPropertyBlock(_propBlock);
+            propBlock.SetFloat(AlphaID, alpha);
+            localRenderer.SetPropertyBlock(propBlock);
         }
 
         // Reset for pool reuse — must stop coroutine before GO deactivates
         public void ResetEffect()
         {
-            if (_fadeCoroutine != null)
+            if (fadeCoroutine != null)
             {
-                StopCoroutine(_fadeCoroutine);
-                _fadeCoroutine = null;
+                StopCoroutine(fadeCoroutine);
+                fadeCoroutine = null;
             }
             SetAlpha(0);
         }

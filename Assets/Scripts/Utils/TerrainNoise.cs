@@ -27,14 +27,7 @@ namespace ProceduralTerrain.Utils
             this.lacunarity = lacunarity;
             this.maxSteps = maxSteps;
         }
-
-        /// <summary>
-        /// The core Mirrored Elevation function
-        /// </summary>
-        /// <param name="scale">Base frequency (e.g., 0.02f)</param>
-        /// <param name="octaves">How many layers of detail (e.g., 4)</param>
-        /// <param name="persistence">How much each octave's amplitude diminishes (e.g., 0.5f)</param>
-        /// <param name="lacunarity">How much the frequency increases per octave (e.g., 2.0f)</param>
+        
         public int GetElevation(int x, int z)
         {
             float total = 0;

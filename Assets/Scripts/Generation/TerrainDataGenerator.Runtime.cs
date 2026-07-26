@@ -9,7 +9,7 @@ namespace ProceduralTerrain.Generation
         private IEnumerator WorldMonitoringRoutine()
         {
             Vector2Int lastProcessedPos = new(-9999, -9999);
-            while (runtime.WorldMonitoringActive && host != null && host.IsActiveAndEnabled)
+            while (runtime.WorldMonitoringActive && host is { IsActiveAndEnabled: true })
             {
                 if (TryProcessCameraMovement(ref lastProcessedPos))
                 {

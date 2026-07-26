@@ -46,7 +46,7 @@ namespace ProceduralTerrain.Generation
                 {
                     var key = keysSnapshot[i];
 
-                    if (terrainDataProcessor.TryGetActiveChunk(key, out TerrainChunk chunk))
+                    if (terrainDataProcessor.TryGetActiveChunk(key, out var chunk))
                     {
                         chunk.UpdateVisibility(runtime.CameraPlanes);
 

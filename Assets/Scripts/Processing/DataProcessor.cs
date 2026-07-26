@@ -33,12 +33,12 @@ namespace ProceduralTerrain.Processing
 
         public void Init(
             RuntimeSettings settings,
-            Func<Vector2Int, NeighborStruct> neighborProvider,
-            Func<int, int[]> triangleProvider
+            Func<Vector2Int, NeighborStruct> neighborProviderFunc,
+            Func<int, int[]> triangleProviderFunc
         )
         {
-            this.neighborProvider = neighborProvider;
-            this.triangleProvider = triangleProvider;
+            neighborProvider = neighborProviderFunc;
+            triangleProvider = triangleProviderFunc;
 
             chunkSize = settings.ChunkSize;
             tileSize = settings.TileSize;
@@ -64,10 +64,10 @@ namespace ProceduralTerrain.Processing
             neighbors = neighborProvider(chunkCoord);
         }
 
-        private void InitializeResolution(int resolutionStep)
+        private void InitializeResolution(int targetResolutionStep)
         {
-            this.resolutionStep = resolutionStep;
-            resolution = chunkSize / resolutionStep + 1;
+            resolutionStep = targetResolutionStep;
+            resolution = chunkSize / targetResolutionStep + 1;
         }
 
         private void InitializeMeshData()

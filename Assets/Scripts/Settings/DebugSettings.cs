@@ -3,12 +3,12 @@ namespace ProceduralTerrain.Settings
     [System.Serializable]
     public class DebugSettings
     {
-        public bool cleanupLogs = false;
-        public bool showViewDistance = false;
-        public bool showLodRanges = false;
-        public bool showChunkLodBounds = false;
-        public bool showNormals = false;
-        public bool showColliderBounds = false;
+        public bool cleanupLogs;
+        public bool showViewDistance;
+        public bool showLodRanges;
+        public bool showChunkLodBounds;
+        public bool showNormals;
+        public bool showColliderBounds;
         public int orphanSweepPeriod = 3; // Run orphan sweep every N cleanup cycles (0 = always, -1 = never)
 
         public void ClampValues()

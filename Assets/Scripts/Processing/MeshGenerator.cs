@@ -5,7 +5,7 @@ namespace ProceduralTerrain.Processing
 {
     public class MeshGenerator
     {
-        private const string MESH_IDENTIFIER = "TerrainChunk_";
+        private const string MeshIdentifier = "TerrainChunk_";
         
         private readonly DataProcessor processor = new();
 
@@ -18,7 +18,7 @@ namespace ProceduralTerrain.Processing
         private readonly TerrainChunk chunk;
 
         public int CurrentStep { get; private set; } = -1;
-        public bool IsMeshReady { get; private set; } = false;
+        public bool IsMeshReady { get; private set; }
         public RuntimeSettings Settings => settings;
 
         public MeshGenerator(TerrainChunk chunk)
@@ -32,14 +32,14 @@ namespace ProceduralTerrain.Processing
             IsMeshReady = false;
         }
 
-        public void Init(ITerrainHost host, Vector2Int chunkCoord)
+        public void Init(ITerrainHost hostLoc, Vector2Int chunkCoordLoc)
         {
-            this.host = host;
-            this.chunkCoord = chunkCoord;
-            settings = RuntimeSettings.FromHost(host);
-            if (host.CameraConfig != null && host.CameraConfig.reference != null)
+            this.host = hostLoc;
+            this.chunkCoord = chunkCoordLoc;
+            settings = RuntimeSettings.FromHost(hostLoc);
+            if (hostLoc.CameraConfig != null && hostLoc.CameraConfig.reference)
             {
-                cameraTransform = host.CameraConfig.reference.transform;
+                cameraTransform = hostLoc.CameraConfig.reference.transform;
             }
             else
             {
@@ -54,7 +54,7 @@ namespace ProceduralTerrain.Processing
             chunk.RendererReference.enabled = false;
             IsMeshReady = false;
 
-            meshName = $"{MESH_IDENTIFIER}{chunkCoord.x}_{chunkCoord.y}";
+            meshName = $"{MeshIdentifier}{chunkCoordLoc.x}_{chunkCoordLoc.y}";
 
             if (chunk.terrainMaterial)
             {
@@ -64,8 +64,8 @@ namespace ProceduralTerrain.Processing
 
             processor.Init(
                 settings,
-                coord => host.GetNeighborGrids(coord),
-                resolution => host.GetPrecalculatedTriangles(resolution)
+                hostLoc.GetNeighborGrids,
+                hostLoc.GetPrecalculatedTriangles
             );
             UpdateLOD(true);
         }
