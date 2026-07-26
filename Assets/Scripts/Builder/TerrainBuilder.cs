@@ -16,7 +16,7 @@ namespace ProceduralTerrain.Builder
 
 #if UNITY_EDITOR
         [Header("Runtime")] 
-        public bool buildOnStart = false;
+        public bool buildOnStart ;
 #endif
 
         [Header("Terrain")] 
@@ -250,6 +250,7 @@ namespace ProceduralTerrain.Builder
             target.elevationStepHeight = source.elevationStepHeight;
             target.maxElevationStepsCount = source.maxElevationStepsCount;
             target.skirtDepth = source.skirtDepth;
+            target.orphanSweepPeriod = source.orphanSweepPeriod;
         }
 
         private static void CopyNoiseSettings(NoiseSettings source, NoiseSettings target)
@@ -300,14 +301,12 @@ namespace ProceduralTerrain.Builder
                 center,
                 new Vector3(viewWorldRadius * 2f, 1f, viewWorldRadius * 2f)
             );
-
-#if UNITY_EDITOR
+            
             UnityEditor.Handles.color = new Color(0f, 0.8f, 1f, 1f);
             UnityEditor.Handles.Label(
                 center + Vector3.right * viewWorldRadius,
                 $"View: {cameraConfig.viewDistanceChunks} chunks\n({viewWorldRadius * 2f:F0} wu wide)"
             );
-#endif
         }
     }
 }

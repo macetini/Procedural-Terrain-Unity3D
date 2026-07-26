@@ -52,7 +52,7 @@ namespace ProceduralTerrain.Generation
 
         private bool ShouldRunOrphanSweep()
         {
-            switch (host.Debug.orphanSweepPeriod)
+            switch (host.Terrain.orphanSweepPeriod)
             {
                 case < 0:
                     return false;
@@ -62,7 +62,7 @@ namespace ProceduralTerrain.Generation
 
             cleanup.CleanupPassCounter++;
             
-            if (cleanup.CleanupPassCounter < host.Debug.orphanSweepPeriod)
+            if (cleanup.CleanupPassCounter < host.Terrain.orphanSweepPeriod)
             {
                 return false;
             }
